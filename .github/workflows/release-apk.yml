@@ -24,6 +24,12 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Create .env from secrets
+        run: |
+          echo "MAL_CLIENT_ID=${{ secrets.MAL_CLIENT_ID }}" >> .env
+          echo "MAL_CLIENT_SECRET=${{ secrets.MAL_CLIENT_SECRET }}" >> .env
+          echo "MAL_REDIRECT_URI=${{ secrets.MAL_REDIRECT_URI }}" >> .env
+
       - run: flutter build apk --release
 
       - uses: softprops/action-gh-release@v2
