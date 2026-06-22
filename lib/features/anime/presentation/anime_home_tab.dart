@@ -7,7 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 enum ListSort {
   name('Name'),
   score('Score'),
-  episodes('Episodes');
+  episodes('Episodes'),
+  airing('Airing');
 
   const ListSort(this.label);
   final String label;

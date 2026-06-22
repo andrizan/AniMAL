@@ -21,7 +21,7 @@ class AnimeListTab extends ConsumerWidget {
   final ListSort sortBy;
   final bool ascending;
 
-  List<Anime> _sort(List<Anime> list) {
+  List<Anime> _sort(List<Anime> list, Map<int, AiringEntry> airingMap) {
     final sorted = List<Anime>.from(list)
     ..sort((a, b) {
       int cmp;
@@ -36,6 +36,10 @@ class AnimeListTab extends ConsumerWidget {
           final aEps = a.numEpisodes ?? 0;
           final bEps = b.numEpisodes ?? 0;
           cmp = aEps.compareTo(bEps);
+        case ListSort.airing:
+          final aTime = airingMap[a.id]?.timeUntilAiring ?? 999999999;
+          final bTime = airingMap[b.id]?.timeUntilAiring ?? 999999999;
+          cmp = aTime.compareTo(bTime);
       }
       return ascending ? cmp : -cmp;
     });
@@ -77,12 +81,12 @@ class AnimeListTab extends ConsumerWidget {
           );
         }
 
-        final sorted = _sort(animeList);
         final airingMap = asyncAiringMap.when(
           data: (map) => map,
           loading: () => <int, AiringEntry>{},
           error: (_, __) => <int, AiringEntry>{},
         );
+        final sorted = _sort(animeList, airingMap);
 
         return RefreshIndicator(
           onRefresh: () async {
