@@ -16,12 +16,18 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> {
-  Stream<Uri>? _linkStream;
+  StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
     unawaited(_initDeepLinks());
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _initDeepLinks() async {
@@ -34,8 +40,7 @@ class _AppState extends ConsumerState<App> {
     }
 
     // Handle incoming links while app is running
-    _linkStream = appLinks.uriLinkStream;
-    _linkStream?.listen(_handleLink);
+    _linkSubscription = appLinks.uriLinkStream.listen(_handleLink);
   }
 
   void _handleLink(Uri uri) {

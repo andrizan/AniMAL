@@ -7,22 +7,6 @@ final anilistApiProvider = Provider<AniListApi>((ref) {
   return AniListApi(logger: ref.watch(loggerProvider));
 });
 
-/// Fetches weekly airing schedule from AniList.
-/// Returns map of day -> list of schedule entries.
-final anilistWeeklyScheduleProvider =
-    FutureProvider<Map<String, List<AniListScheduleEntry>>>((ref) async {
-  final api = ref.watch(anilistApiProvider);
-  return api.getWeeklyAiringSchedule();
-});
-
-/// Fetches characters + staff from AniList by MAL ID.
-// ignore: specify_nonobvious_property_types
-final anilistPeopleProvider =
-    FutureProvider.family<AniListAnimePeople, int>((ref, malId) async {
-  final api = ref.watch(anilistApiProvider);
-  return api.getCharactersAndStaff(malId);
-});
-
 /// Fetches character detail from AniList by character ID.
 /// Auto-disposes when no widgets are watching.
 // ignore: specify_nonobvious_property_types
@@ -41,22 +25,6 @@ final anilistStaffDetailProvider =
         (ref, staffId) async {
   final api = ref.watch(anilistApiProvider);
   return api.getStaffDetail(staffId);
-});
-
-/// Fetches next airing schedule for an anime by MAL ID.
-// ignore: specify_nonobvious_property_types
-final anilistNextAiringProvider =
-    FutureProvider.family<AniListNextAiring?, int>((ref, malId) async {
-  final api = ref.watch(anilistApiProvider);
-  return api.getNextAiringSchedule(malId);
-});
-
-/// Fetches external links for an anime by MAL ID.
-// ignore: specify_nonobvious_property_types
-final anilistExternalLinksProvider =
-    FutureProvider.family<List<AniListExternalLink>, int>((ref, malId) async {
-  final api = ref.watch(anilistApiProvider);
-  return api.getExternalLinks(malId);
 });
 
 /// Fetches characters, staff, next airing, and external links in one call.

@@ -22,7 +22,11 @@ class DioClient {
     );
 
     _dio.interceptors.addAll([
-      AuthInterceptor(tokenStorage: tokenStorage, logger: logger),
+      AuthInterceptor(
+        tokenStorage: tokenStorage,
+        dio: _dio,
+        logger: logger,
+      ),
       LogInterceptor(
         requestBody: true,
         responseBody: true,

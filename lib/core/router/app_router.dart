@@ -60,7 +60,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.animeDetail,
         name: 'animeDetail',
         builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          if (id == null) return const HomePage();
           return AnimeDetailPage(animeId: id);
         },
       ),
@@ -68,7 +69,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.characterProfile,
         name: 'characterProfile',
         builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          if (id == null) return const HomePage();
           return CharacterProfilePage(characterId: id);
         },
       ),
@@ -76,7 +78,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.staffProfile,
         name: 'staffProfile',
         builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          if (id == null) return const HomePage();
           return StaffProfilePage(staffId: id);
         },
       ),

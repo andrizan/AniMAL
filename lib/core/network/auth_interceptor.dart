@@ -10,11 +10,15 @@ import 'package:logger/logger.dart';
 /// and handles 401 responses by attempting a token refresh.
 class AuthInterceptor extends Interceptor {
   AuthInterceptor({
-    required this._tokenStorage,
+    required SecureTokenStorage tokenStorage,
+    required Dio dio,
     Logger? logger,
-  }) : _logger = logger ?? Logger();
+  })  : _tokenStorage = tokenStorage,
+        _dio = dio,
+        _logger = logger ?? Logger();
 
   final SecureTokenStorage _tokenStorage;
+  final Dio _dio;
   final Logger _logger;
   bool _isRefreshing = false;
 
@@ -51,8 +55,7 @@ class AuthInterceptor extends Interceptor {
           final token = await _tokenStorage.getAccessToken();
           err.requestOptions.headers['Authorization'] = 'Bearer $token';
 
-          final dio = Dio();
-          final response = await dio.fetch<dynamic>(err.requestOptions);
+          final response = await _dio.fetch<dynamic>(err.requestOptions);
           handler.resolve(response);
           return;
         }
@@ -74,8 +77,7 @@ class AuthInterceptor extends Interceptor {
       return false;
     }
 
-    final dio = Dio();
-    final response = await dio.post<String>(
+    final response = await _dio.post<String>(
       Env.malTokenUrl,
       options: Options(contentType: Headers.formUrlEncodedContentType),
       data: {
