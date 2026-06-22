@@ -238,7 +238,7 @@ class AnimeDetailPage extends ConsumerWidget {
                         _MyListStatusCard(
                           detail: detail,
                           onStatusChanged: () =>
-                              _invalidateAll(ref),
+                              _invalidateAll(ref, currentStatus: detail.myListStatus?.status),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -356,14 +356,13 @@ class AnimeDetailPage extends ConsumerWidget {
     );
   }
 
-  void _invalidateAll(WidgetRef ref) {
-    ref
-      ..invalidate(animeDetailProvider(animeId))
-      ..invalidate(userAnimeListProvider(WatchStatus.watching))
-      ..invalidate(userAnimeListProvider(WatchStatus.planToWatch))
-      ..invalidate(userAnimeListProvider(WatchStatus.onHold))
-      ..invalidate(userAnimeListProvider(WatchStatus.completed))
-      ..invalidate(userAnimeListProvider(WatchStatus.dropped));
+  void _invalidateAll(WidgetRef ref, {WatchStatus? currentStatus}) {
+    ref.invalidate(animeDetailProvider(animeId));
+    if (currentStatus != null) {
+      ref.invalidate(userAnimeListProvider(currentStatus));
+    } else {
+      ref.invalidate(userAnimeListProvider(WatchStatus.watching));
+    }
   }
 
   String _capitalize(String s) =>
@@ -664,14 +663,13 @@ class _ActionButtons extends ConsumerWidget {
   final AnimeDetail detail;
   final bool inList;
 
-  void _invalidateAll(WidgetRef ref) {
-    ref
-      ..invalidate(animeDetailProvider(animeId))
-      ..invalidate(userAnimeListProvider(WatchStatus.watching))
-      ..invalidate(userAnimeListProvider(WatchStatus.planToWatch))
-      ..invalidate(userAnimeListProvider(WatchStatus.onHold))
-      ..invalidate(userAnimeListProvider(WatchStatus.completed))
-      ..invalidate(userAnimeListProvider(WatchStatus.dropped));
+  void _invalidateAll(WidgetRef ref, {WatchStatus? currentStatus}) {
+    ref.invalidate(animeDetailProvider(animeId));
+    if (currentStatus != null) {
+      ref.invalidate(userAnimeListProvider(currentStatus));
+    } else {
+      ref.invalidate(userAnimeListProvider(WatchStatus.watching));
+    }
   }
 
   @override
@@ -686,7 +684,7 @@ class _ActionButtons extends ConsumerWidget {
               animeId,
               status: WatchStatus.watching,
             );
-            _invalidateAll(ref);
+            _invalidateAll(ref, currentStatus: WatchStatus.watching);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Added to Watching')),
@@ -726,7 +724,8 @@ class _ActionButtons extends ConsumerWidget {
           if (confirmed == true && context.mounted) {
             final repo = ref.read(animeRepositoryProvider);
             await repo.deleteAnimeFromList(animeId);
-            _invalidateAll(ref);
+            final currentStatus = detail.myListStatus?.status ?? WatchStatus.watching;
+            _invalidateAll(ref, currentStatus: currentStatus);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Removed from list')),

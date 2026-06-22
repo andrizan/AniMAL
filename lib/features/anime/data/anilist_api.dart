@@ -15,6 +15,16 @@ class AniListApi {
   late final Dio _dio;
   final Logger _logger;
 
+  // ── Cache for weekly schedule ──
+  Map<String, List<AniListScheduleEntry>>? _cachedWeeklySchedule;
+  DateTime? _weeklyScheduleCacheTime;
+  static const _cacheDuration = Duration(minutes: 15);
+
+  bool get _isWeeklyCacheValid =>
+      _cachedWeeklySchedule != null &&
+      _weeklyScheduleCacheTime != null &&
+      DateTime.now().difference(_weeklyScheduleCacheTime!) < _cacheDuration;
+
   Future<dynamic> _query(String query, [Map<String, dynamic>? variables]) async {
     _logger.d('AniList: sending GraphQL query');
 
@@ -140,8 +150,16 @@ class AniListApi {
   /// Fetch airing schedule for the entire week.
   ///
   /// Returns a map of day -> list of schedule entries.
+  /// Cached for 15 minutes.
   Future<Map<String, List<AniListScheduleEntry>>>
       getWeeklyAiringSchedule() async {
+    if (_isWeeklyCacheValid) {
+      _logger.d('AniList weekly schedule cache hit');
+      return _cachedWeeklySchedule!;
+    }
+
+    _logger.d('AniList: fetching weekly schedule');
+
     final q = '''
       query {
         Page(page: 1, perPage: 50) {
@@ -243,6 +261,10 @@ class AniListApi {
     for (final entry in grouped.entries) {
       entry.value.sort((a, b) => a.airingAt.compareTo(b.airingAt));
     }
+
+    // Cache the result
+    _cachedWeeklySchedule = grouped;
+    _weeklyScheduleCacheTime = DateTime.now();
 
     return grouped;
   }

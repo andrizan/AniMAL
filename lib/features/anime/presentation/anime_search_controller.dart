@@ -1,10 +1,10 @@
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/anime_detail.dart';
 import 'package:animal/features/anime/presentation/anime_providers.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// FutureProvider family for anime search.
-final FutureProviderFamily<List<Anime>, String> animeSearchProvider =
+final animeSearchProvider =
     FutureProvider.family<List<Anime>, String>((ref, query) async {
   if (query.trim().isEmpty) return [];
   final repo = ref.watch(animeRepositoryProvider);
@@ -12,7 +12,7 @@ final FutureProviderFamily<List<Anime>, String> animeSearchProvider =
 });
 
 /// FutureProvider for anime ranking.
-final FutureProvider<List<Anime>> animeRankingProvider =
+final animeRankingProvider =
     FutureProvider<List<Anime>>((ref) async {
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getAnimeRanking();
@@ -20,8 +20,9 @@ final FutureProvider<List<Anime>> animeRankingProvider =
 
 /// FutureProvider family for anime detail by ID.
 /// Returns `null` if the anime doesn't exist on MAL (404).
-final FutureProviderFamily<AnimeDetail?, int> animeDetailProvider =
-    FutureProvider.family<AnimeDetail?, int>((ref, animeId) async {
+/// Auto-disposes when no widgets are watching.
+final animeDetailProvider =
+    FutureProvider.autoDispose.family<AnimeDetail?, int>((ref, animeId) async {
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getAnimeDetail(animeId);
 });
