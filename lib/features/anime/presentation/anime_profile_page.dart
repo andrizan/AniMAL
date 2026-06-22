@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/theme_provider.dart';
 import 'package:animal/features/anime/presentation/anime_profile_controller.dart';
 import 'package:animal/features/auth/presentation/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -13,6 +14,7 @@ class AnimeProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authStatus = ref.watch(authControllerProvider);
     final asyncUser = ref.watch(userInfoProvider);
+    final themeMode = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
@@ -264,6 +266,49 @@ class AnimeProfilePage extends ConsumerWidget {
                       context.pushNamed('login');
                     }
                   },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Icon(
+                    themeMode == ThemeMode.system
+                        ? Icons.brightness_auto
+                        : themeMode == ThemeMode.dark
+                            ? Icons.dark_mode
+                            : Icons.light_mode,
+                  ),
+                  title: const Text('Theme'),
+                  subtitle: Text(
+                    themeMode == ThemeMode.system
+                        ? 'System'
+                        : themeMode == ThemeMode.dark
+                            ? 'Dark'
+                            : 'Light',
+                  ),
+                  trailing: DropdownButton<ThemeMode>(
+                    value: themeMode,
+                    underline: const SizedBox.shrink(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        ref
+                            .read(themeModeProvider.notifier)
+                            .setThemeMode(value);
+                      }
+                    },
+                    items: const [
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('System'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('Light'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('Dark'),
+                      ),
+                    ],
+                  ),
                 ),
                 const Divider(height: 1),
                 ListTile(

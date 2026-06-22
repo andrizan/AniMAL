@@ -1,4 +1,5 @@
 import 'package:animal/core/router/app_router.dart';
+import 'package:animal/core/theme/theme_provider.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,6 +150,7 @@ class _AppState extends ConsumerState<App> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'AniMAL',
@@ -167,7 +169,7 @@ class _AppState extends ConsumerState<App> {
         fontFamily: GoogleFonts.inter().fontFamily,
         fontFamilyFallback: const ['Noto Sans JP'],
       ),
-      themeMode: ThemeMode.dark,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }
