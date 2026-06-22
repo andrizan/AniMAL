@@ -1,5 +1,6 @@
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
+import 'package:animal/features/anime/presentation/anime_airing_providers.dart';
 import 'package:animal/features/anime/presentation/anime_list_controller.dart';
 import 'package:animal/features/anime/presentation/anime_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -17,12 +18,16 @@ class AnimeCard extends ConsumerWidget {
     super.key,
     required this.anime,
     this.trailing,
+    this.nextAiring,
   });
 
   final Anime anime;
 
   /// Optional trailing widget below the main info (e.g. countdown).
   final Widget? trailing;
+
+  /// Optional next airing info from AniList schedule.
+  final AiringEntry? nextAiring;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -223,7 +228,14 @@ class AnimeCard extends ConsumerWidget {
                             ),
                           ],
                           const Spacer(),
-                          if (trailing != null) trailing!,
+                          if (nextAiring != null)
+                            _NextEpisodeBadge(
+                              episode: nextAiring!.episode,
+                              countdown: nextAiring!.countdown ?? '',
+                              isUrgent: nextAiring!.isUrgent,
+                            )
+                          else if (trailing != null)
+                            trailing!,
                         ],
                       ),
                     ],
@@ -529,4 +541,54 @@ class _CoverImage extends StatelessWidget {
         'music' => 'MV',
         _ => type.toUpperCase(),
       };
+}
+
+/// Next episode badge shown on anime cards.
+class _NextEpisodeBadge extends StatelessWidget {
+  const _NextEpisodeBadge({
+    required this.episode,
+    required this.countdown,
+    required this.isUrgent,
+  });
+
+  final int episode;
+  final String countdown;
+  final bool isUrgent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isUrgent
+            ? theme.colorScheme.errorContainer
+            : theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.timer,
+            size: 12,
+            color: isUrgent
+                ? theme.colorScheme.onErrorContainer
+                : theme.colorScheme.onPrimaryContainer,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Ep $episode · $countdown',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: isUrgent
+                  ? theme.colorScheme.onErrorContainer
+                  : theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

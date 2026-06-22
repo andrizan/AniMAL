@@ -1,5 +1,6 @@
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
+import 'package:animal/features/anime/presentation/anime_airing_providers.dart';
 import 'package:animal/features/anime/presentation/anime_card.dart';
 import 'package:animal/features/anime/presentation/anime_home_tab.dart';
 import 'package:animal/features/anime/presentation/anime_list_controller.dart';
@@ -44,6 +45,7 @@ class AnimeListTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncAnime = ref.watch(userAnimeListProvider(status));
+    final asyncAiringMap = ref.watch(airingByMalIdProvider);
     final theme = Theme.of(context);
 
     return asyncAnime.when(
@@ -76,16 +78,27 @@ class AnimeListTab extends ConsumerWidget {
         }
 
         final sorted = _sort(animeList);
+        final airingMap = asyncAiringMap.when(
+          data: (map) => map,
+          loading: () => <int, AiringEntry>{},
+          error: (_, __) => <int, AiringEntry>{},
+        );
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(userAnimeListProvider(status)),
+          onRefresh: () async {
+            ref.invalidate(userAnimeListProvider(status));
+            ref.invalidate(airingByMalIdProvider);
+          },
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: sorted.length,
             itemBuilder: (context, index) {
               final anime = sorted[index];
-              return AnimeCard(anime: anime);
+              final nextAiring = airingMap[anime.id];
+              return AnimeCard(
+                anime: anime,
+                nextAiring: nextAiring,
+              );
             },
           ),
         );
