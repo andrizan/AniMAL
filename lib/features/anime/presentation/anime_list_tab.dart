@@ -1,7 +1,7 @@
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
+import 'package:animal/features/anime/presentation/anime_card.dart';
 import 'package:animal/features/anime/presentation/anime_home_tab.dart';
-import 'package:animal/features/anime/presentation/anime_list_card.dart';
 import 'package:animal/features/anime/presentation/anime_list_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,7 +85,7 @@ class AnimeListTab extends ConsumerWidget {
             itemCount: sorted.length,
             itemBuilder: (context, index) {
               final anime = sorted[index];
-              return AnimeListCard(anime: anime);
+              return AnimeCard(anime: anime);
             },
           ),
         );

@@ -1,6 +1,6 @@
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/season.dart';
-import 'package:animal/features/anime/presentation/anime_list_card.dart';
+import 'package:animal/features/anime/presentation/anime_card.dart';
 import 'package:animal/features/anime/presentation/anime_schedule_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -322,18 +322,7 @@ class _SeasonAnimeList extends ConsumerWidget {
               ref.invalidate(animeScheduleProvider(params)),
           child: CustomScrollView(
             slivers: [
-              // Summary
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Text(
-                    '${animeList.length} anime · ${season.label} $year',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
               // Anime grouped by day
               for (int i = 0; i < _days.length; i++) ...[
@@ -345,7 +334,7 @@ class _SeasonAnimeList extends ConsumerWidget {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final anime = grouped[_days[i]]![index];
-                        return AnimeListCard(anime: anime, showBroadcast: false);
+                        return AnimeCard(anime: anime);
                       },
                       childCount: grouped[_days[i]]!.length,
                     ),
@@ -353,23 +342,13 @@ class _SeasonAnimeList extends ConsumerWidget {
                 ],
               ],
 
-              // No broadcast info
+              // Anime without broadcast info
               if (noBroadcast.isNotEmpty) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text(
-                      'No Broadcast Info',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) =>
-                        AnimeListCard(anime: noBroadcast[index], showBroadcast: false),
+                    (context, index) {
+                      return AnimeCard(anime: noBroadcast[index]);
+                    },
                     childCount: noBroadcast.length,
                   ),
                 ),
@@ -448,7 +427,7 @@ class _LaterAnimeList extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: animeList.length,
             itemBuilder: (context, index) {
-              return AnimeListCard(anime: animeList[index], showBroadcast: false);
+              return AnimeCard(anime: animeList[index]);
             },
           ),
         );

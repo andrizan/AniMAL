@@ -263,22 +263,27 @@ class _CoverImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SizedBox(
-      width: 80,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (anime.mainPicture?.medium != null) CachedNetworkImage(
-                  imageUrl: anime.mainPicture!.medium!,
-                  fit: BoxFit.cover,
-                ) else Container(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.movie,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 80,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (anime.mainPicture?.medium != null)
+              CachedNetworkImage(
+                imageUrl: anime.mainPicture!.medium!,
+                fit: BoxFit.cover,
+              )
+            else
+              Container(
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Icon(
+                  Icons.movie,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
+              ),
         if (statusLabel != null)
           Positioned(
             top: 2,
@@ -319,8 +324,9 @@ class _CoverImage extends StatelessWidget {
               ),
             ),
           ),
-      ],
-    ),
+          ],
+        ),
+      ),
     );
   }
 

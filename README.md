@@ -5,12 +5,12 @@ Unofficial MyAnimeList client built with Flutter. Track your anime, view schedul
 ## Features
 
 - **Home** — My anime lists: Watching, Plan to Watch, On Hold, Completed, Dropped
-- **Airing** — Weekly airing schedule from AniList (Monday–Sunday)
-- **Calendar** — Seasonal anime browser by year/season (up to 50 years back)
+- **Airing** — Weekly airing schedule with countdown (data from AniList + MAL scores)
+- **Calendar** — Seasonal anime browser by year/season (up to 50 years)
 - **Profile** — MAL user stats, settings, logout
 - **Search** — Search anime or browse top rankings
-- **Detail** — Anime info, synopsis, genres, broadcast, related anime, characters & staff (from AniList)
-- **List Management** — Add, update score/episodes/status, and remove anime
+- **Detail** — Anime info, synopsis, genres, broadcast, related anime, characters & staff
+- **List Management** — Add, update score/episodes/status, and remove anime via modal
 - **MAL Login** — OAuth2 PKCE authentication with MyAnimeList
 
 ## Tech Stack
@@ -30,7 +30,7 @@ Unofficial MyAnimeList client built with Flutter. Track your anime, view schedul
 
 | API | Usage |
 |-----|-------|
-| [MyAnimeList API v2](https://myanimelist.net/apiconfig) | User list, anime detail, search, ranking, seasonal |
+| [MyAnimeList API v2](https://myanimelist.net/apiconfig) | User list, anime detail, search, ranking, seasonal, scores |
 | [AniList GraphQL](https://anilist.gitbook.io/anilist-apiv2-docs/) | Characters, voice actors, staff, weekly airing schedule |
 
 ## Project Structure
@@ -50,15 +50,16 @@ lib/
 │   │   │   └── mal_anime_api.dart   # MAL REST client
 │   │   ├── domain/                  # Freezed models
 │   │   └── presentation/
+│   │       ├── anime_card.dart      # Unified card widget (all pages)
 │   │       ├── anime_airing_page.dart
-│   │       ├── anime_card.dart
+│   │       ├── anime_airing_providers.dart
 │   │       ├── anime_detail_page.dart
 │   │       ├── anime_home_tab.dart
-│   │       ├── anime_list_card.dart
 │   │       ├── anime_list_tab.dart
 │   │       ├── anime_profile_page.dart
 │   │       ├── anime_schedule_page.dart
 │   │       ├── anime_search_page.dart
+│   │       ├── anilist_providers.dart
 │   │       ├── full_screen_image.dart
 │   │       ├── home_page.dart
 │   │       └── ...
@@ -84,8 +85,8 @@ lib/
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/andrizan/AniMAL.git
-   cd AniMAL
+   git clone <repo-url>
+   cd animal
    ```
 
 2. Install dependencies:
@@ -125,8 +126,6 @@ flutter build apk
 flutter build ios
 ```
 
-The `.env` file is bundled with the app and read at startup. No `--dart-define` flags needed.
-
 ## MAL API Endpoints
 
 | Endpoint | Description |
@@ -144,10 +143,10 @@ The `.env` file is bundled with the app and read at startup. No `--dart-define` 
 
 | Query | Description |
 |-------|-------------|
+| `Page.airingSchedules` | Weekly airing schedule (airingAt, episode, timeUntilAiring) |
 | `Media` (by `idMal`) | Characters + voice actors |
 | `Character` | Character detail + media appearances |
 | `Staff` | Staff detail + works |
-| `Page.airingSchedules` | Weekly airing schedule |
 
 ## License
 [MIT License](LICENSE)

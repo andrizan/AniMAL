@@ -21,7 +21,10 @@ class AniListApi {
     try {
       final response = await _dio.post<dynamic>(
         '',
-        data: {'query': query, 'variables': ?variables},
+        data: {
+          'query': query,
+          if (variables != null) 'variables': variables,
+        },
       );
 
       final body = response.data as Map<String, dynamic>;
@@ -34,9 +37,230 @@ class AniListApi {
       return body['data'];
     } on DioException catch (e) {
       _logger.e('AniList DioException: ${e.message}');
+      if (e.response?.data != null) {
+        _logger.e('AniList response: ${e.response?.data}');
+      }
       rethrow;
     }
   }
+
+  /// Fetch airing schedule for a specific day of the week.
+  ///
+  /// Returns anime airing on [dayOfWeek] with their schedule info.
+  /// [dayOfWeek] should be lowercase: 'monday', 'tuesday', etc.
+  Future<List<AniListScheduleEntry>> getAiringScheduleForDay(
+    String dayOfWeek,
+  ) async {
+    final q = '''
+      query {
+        Page(page: 1, perPage: 50) {
+          airingSchedules(
+            notYetAired: true
+            sort: TIME
+          ) {
+            id
+            airingAt
+            episode
+            timeUntilAiring
+            media {
+              id
+              idMal
+              title {
+                romaji
+                english
+                native
+              }
+              coverImage {
+                medium
+                large
+              }
+              status
+              episodes
+              meanScore
+              genres
+              description
+              format
+              startDate {
+                year
+                month
+                day
+              }
+            }
+          }
+        }
+      }
+    ''';
+
+    final data = await _query(q) as Map<String, dynamic>;
+    final page = data['Page'] as Map<String, dynamic>;
+    final schedules = page['airingSchedules'] as List<dynamic>;
+
+    final entries = schedules.map((s) {
+      final schedule = s as Map<String, dynamic>;
+      final media = schedule['media'] as Map<String, dynamic>;
+      final title = media['title'] as Map<String, dynamic>;
+      final cover = media['coverImage'] as Map<String, dynamic>?;
+
+      final airingAt = schedule['airingAt'] as int;
+      final airingDate =
+          DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
+
+      final genres = (media['genres'] as List<dynamic>?)
+              ?.map((g) => g as String)
+              .toList() ??
+          [];
+
+      return AniListScheduleEntry(
+        anilistId: media['id'] as int,
+        malId: media['idMal'] as int?,
+        title: title['romaji'] as String,
+        titleEnglish: title['english'] as String?,
+        titleNative: title['native'] as String?,
+        imageUrl: cover?['medium'] as String?,
+        imageUrlLarge: cover?['large'] as String?,
+        status: media['status'] as String?,
+        episodes: media['episodes'] as int?,
+        meanScore: (media['meanScore'] as num?)?.toDouble(),
+        genres: genres,
+        format: media['format'] as String?,
+        description: media['description'] as String?,
+        airingAt: airingDate,
+        episode: schedule['episode'] as int?,
+        timeUntilAiring: schedule['timeUntilAiring'] as int?,
+      );
+    }).toList();
+
+    // Filter by day of week
+    return entries.where((e) {
+      final day = _dayName(e.airingAt.weekday);
+      return day == dayOfWeek;
+    }).toList();
+  }
+
+  /// Fetch airing schedule for the entire week.
+  ///
+  /// Returns a map of day -> list of schedule entries.
+  Future<Map<String, List<AniListScheduleEntry>>>
+      getWeeklyAiringSchedule() async {
+    final q = '''
+      query {
+        Page(page: 1, perPage: 50) {
+          airingSchedules(
+            notYetAired: true
+            sort: TIME
+          ) {
+            id
+            airingAt
+            episode
+            timeUntilAiring
+            media {
+              id
+              idMal
+              title {
+                romaji
+                english
+                native
+              }
+              coverImage {
+                medium
+                large
+              }
+              status
+              episodes
+              meanScore
+              genres
+              description
+              format
+              startDate {
+                year
+                month
+                day
+              }
+            }
+          }
+        }
+      }
+    ''';
+
+    final data = await _query(q) as Map<String, dynamic>;
+    final page = data['Page'] as Map<String, dynamic>;
+    final schedules = page['airingSchedules'] as List<dynamic>;
+
+    final entries = schedules.map((s) {
+      final schedule = s as Map<String, dynamic>;
+      final media = schedule['media'] as Map<String, dynamic>;
+      final title = media['title'] as Map<String, dynamic>;
+      final cover = media['coverImage'] as Map<String, dynamic>?;
+
+      final airingAt = schedule['airingAt'] as int;
+      final airingDate =
+          DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
+
+      final genres = (media['genres'] as List<dynamic>?)
+              ?.map((g) => g as String)
+              .toList() ??
+          [];
+
+      return AniListScheduleEntry(
+        anilistId: media['id'] as int,
+        malId: media['idMal'] as int?,
+        title: title['romaji'] as String,
+        titleEnglish: title['english'] as String?,
+        titleNative: title['native'] as String?,
+        imageUrl: cover?['medium'] as String?,
+        imageUrlLarge: cover?['large'] as String?,
+        status: media['status'] as String?,
+        episodes: media['episodes'] as int?,
+        meanScore: (media['meanScore'] as num?)?.toDouble(),
+        genres: genres,
+        format: media['format'] as String?,
+        description: media['description'] as String?,
+        airingAt: airingDate,
+        episode: schedule['episode'] as int?,
+        timeUntilAiring: schedule['timeUntilAiring'] as int?,
+      );
+    }).toList();
+
+    // Group by day of week
+    final grouped = <String, List<AniListScheduleEntry>>{
+      'monday': [],
+      'tuesday': [],
+      'wednesday': [],
+      'thursday': [],
+      'friday': [],
+      'saturday': [],
+      'sunday': [],
+    };
+
+    for (final entry in entries) {
+      final day = _dayName(entry.airingAt.weekday);
+      if (grouped.containsKey(day)) {
+        grouped[day]!.add(entry);
+      }
+    }
+
+    // Sort each day by airing time
+    for (final entry in grouped.entries) {
+      entry.value.sort((a, b) => a.airingAt.compareTo(b.airingAt));
+    }
+
+    return grouped;
+  }
+
+  String _dayName(int weekday) {
+    return switch (weekday) {
+      1 => 'monday',
+      2 => 'tuesday',
+      3 => 'wednesday',
+      4 => 'thursday',
+      5 => 'friday',
+      6 => 'saturday',
+      7 => 'sunday',
+      _ => 'monday',
+    };
+  }
+
+  // ── Existing methods ─────────────────────────────────────────
 
   Future<AniListAnimePeople> getCharactersAndStaff(int malId) async {
     const q = r'''
@@ -65,8 +289,8 @@ class AniListApi {
     final media = data['Media'] as Map<String, dynamic>?;
     if (media == null) return const AniListAnimePeople();
 
-    // Parse characters
-    final charEdges = (media['characters'] as Map<String, dynamic>)['edges'] as List<dynamic>;
+    final charEdges =
+        (media['characters'] as Map<String, dynamic>)['edges'] as List<dynamic>;
     final characters = charEdges.map((e) {
       final edge = e as Map<String, dynamic>;
       final node = edge['node'] as Map<String, dynamic>;
@@ -97,8 +321,8 @@ class AniListApi {
       );
     }).toList();
 
-    // Parse staff
-    final staffEdges = (media['staff'] as Map<String, dynamic>)['edges'] as List<dynamic>;
+    final staffEdges =
+        (media['staff'] as Map<String, dynamic>)['edges'] as List<dynamic>;
     final staff = staffEdges.map((e) {
       final edge = e as Map<String, dynamic>;
       final node = edge['node'] as Map<String, dynamic>;
@@ -138,7 +362,8 @@ class AniListApi {
     final image = c['image'] as Map<String, dynamic>;
     final dob = c['dateOfBirth'] as Map<String, dynamic>?;
 
-    final mediaEdges = (c['media'] as Map<String, dynamic>)['edges'] as List<dynamic>;
+    final mediaEdges =
+        (c['media'] as Map<String, dynamic>)['edges'] as List<dynamic>;
     final media = mediaEdges.map((e) {
       final edge = e as Map<String, dynamic>;
       final node = edge['node'] as Map<String, dynamic>;
@@ -195,7 +420,8 @@ class AniListApi {
     final dob = s['dateOfBirth'] as Map<String, dynamic>?;
     final dod = s['dateOfDeath'] as Map<String, dynamic>?;
 
-    final mediaEdges = (s['staffMedia'] as Map<String, dynamic>)['edges'] as List<dynamic>;
+    final mediaEdges =
+        (s['staffMedia'] as Map<String, dynamic>)['edges'] as List<dynamic>;
     final works = mediaEdges.map((e) {
       final edge = e as Map<String, dynamic>;
       final node = edge['node'] as Map<String, dynamic>;
@@ -228,112 +454,10 @@ class AniListApi {
       age: s['age'] as int?,
       yearsActive: (s['yearsActive'] as List<dynamic>?)?.cast<int>(),
       homeTown: s['homeTown'] as String?,
-      occupations: (s['primaryOccupations'] as List<dynamic>?)?.cast<String>(),
+      occupations:
+          (s['primaryOccupations'] as List<dynamic>?)?.cast<String>(),
       mediaWorks: works,
     );
-  }
-
-  /// Fetch airing schedule for the current week from AniList.
-  ///
-  /// Returns anime grouped by day of week with broadcast time.
-  Future<List<AniListScheduleEntry>> getWeeklyAiringSchedule() async {
-    final now = DateTime.now();
-    // Start of week (Monday)
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final start = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
-    final end = start.add(const Duration(days: 7));
-
-    final startUnix = start.millisecondsSinceEpoch ~/ 1000;
-    final endUnix = end.millisecondsSinceEpoch ~/ 1000;
-
-    const q = r'''
-      query ($start: Int, $end: Int) {
-        Page(page: 1, perPage: 50) {
-          airingSchedules(
-            airingAt_greater: $start
-            airingAt_lesser: $end
-            sort: [TIME]
-          ) {
-            id
-            airingAt
-            episode
-            media {
-              id
-              idMal
-              title {
-                romaji
-                english
-                native
-              }
-              coverImage {
-                medium
-                large
-              }
-              status
-              episodes
-              meanScore
-              genres {
-                name
-              }
-            }
-          }
-        }
-      }
-    ''';
-
-    final data = await _query(q, {
-      'start': startUnix,
-      'end': endUnix,
-    }) as Map<String, dynamic>;
-
-    final page = data['Page'] as Map<String, dynamic>;
-    final schedules = page['airingSchedules'] as List<dynamic>;
-
-    return schedules.map((s) {
-      final schedule = s as Map<String, dynamic>;
-      final media = schedule['media'] as Map<String, dynamic>;
-      final title = media['title'] as Map<String, dynamic>;
-      final cover = media['coverImage'] as Map<String, dynamic>?;
-
-      final airingAt = schedule['airingAt'] as int;
-      final airingDate =
-          DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
-      final dayOfWeek = _dayName(airingDate.weekday);
-
-      final genres = (media['genres'] as List<dynamic>?)
-              ?.map((g) => (g as Map<String, dynamic>)['name'] as String)
-              .toList() ??
-          [];
-
-      return AniListScheduleEntry(
-        anilistId: media['id'] as int,
-        malId: media['idMal'] as int?,
-        title: title['romaji'] as String,
-        titleEnglish: title['english'] as String?,
-        titleNative: title['native'] as String?,
-        imageUrl: cover?['medium'] as String?,
-        status: media['status'] as String?,
-        episodes: media['episodes'] as int?,
-        meanScore: media['meanScore'] as int?,
-        genres: genres,
-        airingAt: airingDate,
-        dayOfWeek: dayOfWeek,
-        episode: schedule['episode'] as int?,
-      );
-    }).toList();
-  }
-
-  String _dayName(int weekday) {
-    return switch (weekday) {
-      1 => 'monday',
-      2 => 'tuesday',
-      3 => 'wednesday',
-      4 => 'thursday',
-      5 => 'friday',
-      6 => 'saturday',
-      7 => 'sunday',
-      _ => 'monday',
-    };
   }
 }
 
@@ -347,8 +471,12 @@ class AniListAnimePeople {
 
 class AniListCharacter {
   const AniListCharacter({
-    required this.id, required this.name,
-    this.nativeName, this.imageUrl, this.role, this.voiceActors = const [],
+    required this.id,
+    required this.name,
+    this.nativeName,
+    this.imageUrl,
+    this.role,
+    this.voiceActors = const [],
   });
   final int id;
   final String name;
@@ -360,8 +488,11 @@ class AniListCharacter {
 
 class AniListVoiceActor {
   const AniListVoiceActor({
-    required this.id, required this.name,
-    this.nativeName, this.imageUrl, this.language,
+    required this.id,
+    required this.name,
+    this.nativeName,
+    this.imageUrl,
+    this.language,
   });
   final int id;
   final String name;
@@ -372,8 +503,11 @@ class AniListVoiceActor {
 
 class AniListStaff {
   const AniListStaff({
-    required this.id, required this.name,
-    this.nativeName, this.imageUrl, this.role,
+    required this.id,
+    required this.name,
+    this.nativeName,
+    this.imageUrl,
+    this.role,
   });
   final int id;
   final String name;
@@ -384,10 +518,16 @@ class AniListStaff {
 
 class AniListCharacterDetail {
   const AniListCharacterDetail({
-    required this.id, required this.name,
-    this.nativeName, this.imageUrl, this.description,
-    this.birthYear, this.birthMonth, this.birthDay,
-    this.age, this.gender,
+    required this.id,
+    required this.name,
+    this.nativeName,
+    this.imageUrl,
+    this.description,
+    this.birthYear,
+    this.birthMonth,
+    this.birthDay,
+    this.age,
+    this.gender,
     this.mediaAppearances = const [],
   });
   final int id;
@@ -395,9 +535,7 @@ class AniListCharacterDetail {
   final String? nativeName;
   final String? imageUrl;
   final String? description;
-  final int? birthYear;
-  final int? birthMonth;
-  final int? birthDay;
+  final int? birthYear, birthMonth, birthDay;
   final String? age;
   final String? gender;
   final List<AniListMediaAppearance> mediaAppearances;
@@ -405,11 +543,21 @@ class AniListCharacterDetail {
 
 class AniListStaffDetail {
   const AniListStaffDetail({
-    required this.id, required this.name,
-    this.nativeName, this.imageUrl, this.description, this.gender,
-    this.birthYear, this.birthMonth, this.birthDay,
-    this.deathYear, this.deathMonth, this.deathDay,
-    this.age, this.yearsActive, this.homeTown,
+    required this.id,
+    required this.name,
+    this.nativeName,
+    this.imageUrl,
+    this.description,
+    this.gender,
+    this.birthYear,
+    this.birthMonth,
+    this.birthDay,
+    this.deathYear,
+    this.deathMonth,
+    this.deathDay,
+    this.age,
+    this.yearsActive,
+    this.homeTown,
     this.occupations,
     this.mediaWorks = const [],
   });
@@ -419,12 +567,8 @@ class AniListStaffDetail {
   final String? imageUrl;
   final String? description;
   final String? gender;
-  final int? birthYear;
-  final int? birthMonth;
-  final int? birthDay;
-  final int? deathYear;
-  final int? deathMonth;
-  final int? deathDay;
+  final int? birthYear, birthMonth, birthDay;
+  final int? deathYear, deathMonth, deathDay;
   final int? age;
   final List<int>? yearsActive;
   final String? homeTown;
@@ -432,16 +576,15 @@ class AniListStaffDetail {
   final List<AniListMediaAppearance> mediaWorks;
 }
 
-class AniListExternalLink {
-  const AniListExternalLink({required this.url, this.site});
-  final String url;
-  final String? site;
-}
-
 class AniListMediaAppearance {
   const AniListMediaAppearance({
-    required this.anilistId, required this.title, this.malId,
-    this.titleEnglish, this.imageUrl, this.type, this.role,
+    required this.anilistId,
+    this.malId,
+    required this.title,
+    this.titleEnglish,
+    this.imageUrl,
+    this.type,
+    this.role,
   });
   final int anilistId;
   final int? malId;
@@ -455,15 +598,21 @@ class AniListMediaAppearance {
 class AniListScheduleEntry {
   const AniListScheduleEntry({
     required this.anilistId,
-    required this.title, required this.airingAt, required this.dayOfWeek, this.malId,
+    this.malId,
+    required this.title,
     this.titleEnglish,
     this.titleNative,
     this.imageUrl,
+    this.imageUrlLarge,
     this.status,
     this.episodes,
     this.meanScore,
     this.genres = const [],
+    this.format,
+    this.description,
+    required this.airingAt,
     this.episode,
+    this.timeUntilAiring,
   });
   final int anilistId;
   final int? malId;
@@ -471,11 +620,14 @@ class AniListScheduleEntry {
   final String? titleEnglish;
   final String? titleNative;
   final String? imageUrl;
+  final String? imageUrlLarge;
   final String? status;
   final int? episodes;
-  final int? meanScore;
+  final double? meanScore;
   final List<String> genres;
+  final String? format;
+  final String? description;
   final DateTime airingAt;
-  final String dayOfWeek;
   final int? episode;
+  final int? timeUntilAiring;
 }

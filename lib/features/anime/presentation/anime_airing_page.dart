@@ -1,13 +1,15 @@
-import 'package:animal/features/anime/data/anilist_api.dart';
-import 'package:animal/features/anime/presentation/anilist_providers.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:animal/features/anime/domain/anime.dart';
+import 'package:animal/features/anime/domain/broadcast.dart';
+import 'package:animal/features/anime/domain/anime_detail.dart';
+import 'package:animal/features/anime/presentation/anime_airing_providers.dart';
+import 'package:animal/features/anime/presentation/anime_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Airing page showing weekly anime schedule from AniList.
+/// Airing page showing weekly anime schedule.
 ///
-/// Displays anime grouped by day of week (Monday-Sunday),
-/// sorted by airing time.
+/// Data: AniList schedule (airingAt, episode, countdown)
+///       + MAL score (mean).
 class AnimeAiringPage extends ConsumerStatefulWidget {
   const AnimeAiringPage({super.key});
 
@@ -30,13 +32,13 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
   ];
 
   static const _dayLabels = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
   ];
 
   @override
@@ -58,7 +60,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
 
   @override
   Widget build(BuildContext context) {
-    final asyncSchedule = ref.watch(anilistAiringScheduleProvider);
+    final asyncSchedule = ref.watch(weeklyAiringProvider);
     final theme = Theme.of(context);
 
     return asyncSchedule.when(
@@ -75,8 +77,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
               const Text('Failed to load airing schedule'),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () =>
-                    ref.invalidate(anilistAiringScheduleProvider),
+                onPressed: () => ref.invalidate(weeklyAiringProvider),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -84,51 +85,10 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
           ),
         ),
       ),
-      data: (schedule) {
-        // Group by day of week
-        final grouped = <String, List<AniListScheduleEntry>>{};
-        for (final day in _days) {
-          grouped[day] = [];
-        }
-
-        for (final entry in schedule) {
-          if (grouped.containsKey(entry.dayOfWeek)) {
-            grouped[entry.dayOfWeek]!.add(entry);
-          }
-        }
-
-        // Sort by airing time within each day
-        for (final entry in grouped.entries) {
-          entry.value.sort((a, b) => a.airingAt.compareTo(b.airingAt));
-        }
-
+      data: (grouped) {
         return Column(
           children: [
-            // Refresh bar
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Row(
-                children: [
-                  Text(
-                    '${schedule.length} airing this week',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    iconSize: 20,
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'Refresh',
-                    onPressed: () =>
-                        ref.invalidate(anilistAiringScheduleProvider),
-                  ),
-                ],
-              ),
-            ),
-
-            // Day tabs
+            // Scrollable day tabs
             TabBar(
               controller: _tabController,
               isScrollable: true,
@@ -149,7 +109,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
               child: TabBarView(
                 controller: _tabController,
                 children: _days.map((day) {
-                  final animeForDay = grouped[day]!;
+                  final animeForDay = grouped[day] ?? [];
 
                   if (animeForDay.isEmpty) {
                     return Center(
@@ -173,12 +133,13 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
 
                   return RefreshIndicator(
                     onRefresh: () async =>
-                        ref.invalidate(anilistAiringScheduleProvider),
+                        ref.invalidate(weeklyAiringProvider),
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemCount: animeForDay.length,
                       itemBuilder: (context, index) {
-                        return _ScheduleCard(entry: animeForDay[index]);
+                        final entry = animeForDay[index];
+                        return _AiringCard(entry: entry);
                       },
                     ),
                   );
@@ -192,173 +153,97 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
   }
 }
 
-/// Card for a scheduled anime airing.
-class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({required this.entry});
+/// Airing card with countdown trailing widget.
+class _AiringCard extends StatelessWidget {
+  const _AiringCard({required this.entry});
 
-  final AniListScheduleEntry entry;
+  final AiringEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final countdown = entry.countdown;
+    final isUrgent = entry.isUrgent;
+    final airingTime = _formatAiringTime(entry.airingAt);
+
+    // Build a minimal Anime for the unified card
+    final anime = Anime(
+      id: entry.malId ?? entry.anilistId,
+      title: entry.title,
+      mainPicture: entry.imageUrl != null
+          ? MainPicture(medium: entry.imageUrl, large: entry.imageUrl)
+          : null,
+      mean: entry.malScore,
+      numEpisodes: entry.episodes,
+      genres: entry.genres.map((g) => Genre(id: 0, name: g)).toList(),
+      broadcast: airingTime != null
+          ? Broadcast(startTime: airingTime)
+          : null,
+    );
+
+    return AnimeCard(
+      anime: anime,
+      trailing: countdown != null
+          ? _CountdownChip(
+              countdown: countdown,
+              episode: entry.episode,
+              isUrgent: isUrgent,
+            )
+          : null,
+    );
+  }
+
+  String? _formatAiringTime(DateTime airingAt) {
+    final local = airingAt.toLocal();
+    return '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+/// Countdown chip shown on airing cards.
+class _CountdownChip extends StatelessWidget {
+  const _CountdownChip({
+    required this.countdown,
+    required this.episode,
+    required this.isUrgent,
+  });
+
+  final String countdown;
+  final int episode;
+  final bool isUrgent;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final timeStr =
-        '${entry.airingAt.hour.toString().padLeft(2, '0')}:'
-        '${entry.airingAt.minute.toString().padLeft(2, '0')}';
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
-      child: SizedBox(
-        height: 125,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Cover image
-            SizedBox(
-              width: 80,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (entry.imageUrl != null) CachedNetworkImage(
-                          imageUrl: entry.imageUrl!,
-                          fit: BoxFit.cover,
-                        ) else ColoredBox(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.movie,
-                            size: 20,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                  // Episode badge
-                  if (entry.episode != null)
-                    Positioned(
-                      top: 2,
-                      left: 2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: Text(
-                          'Ep ${entry.episode}',
-                          style: TextStyle(
-                            color: theme.colorScheme.onPrimary,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isUrgent
+            ? theme.colorScheme.errorContainer
+            : theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.timer,
+            size: 12,
+            color: isUrgent
+                ? theme.colorScheme.onErrorContainer
+                : theme.colorScheme.onPrimaryContainer,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Ep $episode · $countdown',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: isUrgent
+                  ? theme.colorScheme.onErrorContainer
+                  : theme.colorScheme.onPrimaryContainer,
             ),
-
-            // Info section
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      entry.titleEnglish ?? entry.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    // Japanese title
-                    if (entry.titleNative != null &&
-                        entry.titleNative!.isNotEmpty)
-                      Text(
-                        entry.titleNative!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-
-                    // Genres
-                    if (entry.genres.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Wrap(
-                          spacing: 4,
-                          runSpacing: 2,
-                          children: entry.genres.take(3).map((g) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color:
-                                    theme.colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              child: Text(
-                                g,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: theme
-                                      .colorScheme.onSecondaryContainer,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-
-                    const Spacer(),
-
-                    // Bottom: airing time + score + episodes
-                    Row(
-                      children: [
-                        Icon(Icons.access_time,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$timeStr JST',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        if (entry.meanScore != null) ...[
-                          const SizedBox(width: 12),
-                          const Icon(Icons.star_rounded,
-                              size: 14, color: Colors.amber),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${entry.meanScore}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                        const Spacer(),
-                        if (entry.episodes != null)
-                          Text(
-                            '${entry.episodes} eps',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

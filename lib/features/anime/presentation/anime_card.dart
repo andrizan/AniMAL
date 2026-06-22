@@ -1,120 +1,532 @@
 import 'package:animal/features/anime/domain/anime.dart';
+import 'package:animal/features/anime/domain/watch_status.dart';
+import 'package:animal/features/anime/presentation/anime_list_controller.dart';
+import 'package:animal/features/anime/presentation/anime_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-/// A card widget displaying an anime's cover image, title, and
-/// optional progress / score info. Used in grid layouts.
-class AnimeCard extends StatelessWidget {
+/// Unified anime card used across all pages.
+///
+/// Layout: full-height image (left) + info (right).
+/// Image has rounded corners only on the left side.
+/// Supports edit modal via 3-dot button or long press.
+class AnimeCard extends ConsumerWidget {
   const AnimeCard({
-    required this.anime, super.key,
-    this.onTap,
-    this.onDismissed,
+    super.key,
+    required this.anime,
+    this.trailing,
   });
 
   final Anime anime;
-  final VoidCallback? onTap;
-  final VoidCallback? onDismissed;
+
+  /// Optional trailing widget below the main info (e.g. countdown).
+  final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final jaTitle = anime.alternativeTitles?.ja;
+    final episodes = anime.numEpisodes;
+    final statusLabel = _statusLabel(anime.status);
+    final statusColor = _statusColor(anime.status);
+    final personalScore = anime.myListStatus?.score;
+    final watchedEps = anime.myListStatus?.numEpisodesWatched;
 
-    Widget card = Card(
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
       child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: anime.mainPicture?.medium != null
-                  ? CachedNetworkImage(
-                      imageUrl:
-                          anime.mainPicture!.large ?? anime.mainPicture!.medium!,
-                      fit: BoxFit.cover,
-                      placeholder: (_, _) => Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.primary,
+        onTap: () => context.pushNamed(
+          'animeDetail',
+          pathParameters: {'id': '${anime.id}'},
+        ),
+        onLongPress: () => _showUpdateModal(context, ref),
+        child: SizedBox(
+          height: 120,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Cover image (left rounded only) ──
+              _CoverImage(
+                anime: anime,
+                statusLabel: statusLabel,
+                statusColor: statusColor,
+              ),
+
+              // ── Info section ──
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title row + edit button
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              anime.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.more_vert,
+                                size: 18,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              padding: EdgeInsets.zero,
+                              onPressed: () =>
+                                  _showUpdateModal(context, ref),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Japanese title
+                      if (jaTitle != null && jaTitle.isNotEmpty)
+                        Text(
+                          jaTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
+
+                      // Genres
+                      if (anime.genres.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Wrap(
+                            spacing: 4,
+                            runSpacing: 2,
+                            children: anime.genres.take(3).map((g) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color:
+                                      theme.colorScheme.secondaryContainer,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(
+                                  g.name,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color: theme
+                                        .colorScheme.onSecondaryContainer,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+
+                      const Spacer(),
+
+                      // Scores + episodes
+                      Row(
+                        children: [
+                          // Average score
+                          if (anime.mean != null) ...[
+                            const Icon(Icons.star_rounded,
+                                size: 14, color: Colors.amber),
+                            const SizedBox(width: 2),
+                            Text(
+                              anime.mean!.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                          // Personal score
+                          if (personalScore != null &&
+                              personalScore > 0) ...[
+                            const SizedBox(width: 10),
+                            Icon(Icons.star,
+                                size: 14, color: theme.colorScheme.primary),
+                            const SizedBox(width: 2),
+                            Text(
+                              '$personalScore',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          // Episodes
+                          if (watchedEps != null && episodes != null)
+                            Text(
+                              '$watchedEps/$episodes ep',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            )
+                          else if (episodes != null)
+                            Text(
+                              '${episodes}ep',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
                       ),
-                      errorWidget: (_, _, _) => Icon(
-                        Icons.broken_image,
-                        color: theme.colorScheme.onSurfaceVariant,
+
+                      // Bottom: rating + broadcast/trailing
+                      Row(
+                        children: [
+                          if (anime.rating != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.errorContainer,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                _ratingLabel(anime.rating!),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          if (anime.broadcast?.startTime != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.access_time,
+                                size: 12,
+                                color: theme.colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 2),
+                            Text(
+                              _convertJstToLocal(
+                                  anime.broadcast!.startTime!)!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 11,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          if (trailing != null) trailing!,
+                        ],
                       ),
-                    )
-                  : ColoredBox(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.movie,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String? _convertJstToLocal(String? jstTime) {
+    if (jstTime == null || jstTime.isEmpty) return null;
+    try {
+      final parts = jstTime.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final now = DateTime.now();
+      final jstDate =
+          DateTime.utc(now.year, now.month, now.day, hour - 9, minute);
+      final localDate = jstDate.toLocal();
+      return '${localDate.hour.toString().padLeft(2, '0')}:'
+          '${localDate.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return jstTime;
+    }
+  }
+
+  String? _statusLabel(String? status) => switch (status) {
+        'currently_airing' => 'AIRING',
+        'finished_airing' => 'FINISHED',
+        'not_yet_aired' => 'UPCOMING',
+        _ => null,
+      };
+
+  Color _statusColor(String? status) => switch (status) {
+        'currently_airing' => Colors.green,
+        'finished_airing' => Colors.blue,
+        'not_yet_aired' => Colors.orange,
+        _ => Colors.grey,
+      };
+
+  String _ratingLabel(String rating) => switch (rating) {
+        'g' => 'G',
+        'pg' => 'PG',
+        'pg_13' => 'PG-13',
+        'r' => 'R',
+        'r+' => 'R+',
+        'rx' => 'Rx',
+        _ => rating.toUpperCase(),
+      };
+
+  void _showUpdateModal(BuildContext context, WidgetRef ref) {
+    final currentStatus = anime.myListStatus?.status ?? WatchStatus.watching;
+    final currentScore = anime.myListStatus?.score ?? 0;
+    final currentEps = anime.myListStatus?.numEpisodesWatched ?? 0;
+    final totalEps = anime.numEpisodes;
+
+    int selectedScore = currentScore;
+    int selectedEps = currentEps;
+    WatchStatus selectedStatus = currentStatus;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     anime.title,
+                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Status
+                  Text('Status',
+                      style: Theme.of(ctx).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: WatchStatus.values.map((s) {
+                      return ChoiceChip(
+                        label: Text(s.label),
+                        selected: selectedStatus == s,
+                        onSelected: (_) =>
+                            setModalState(() => selectedStatus = s),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Episodes
+                  Text('Episodes Watched',
+                      style: Theme.of(ctx).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        onPressed: selectedEps > 0
+                            ? () => setModalState(() => selectedEps--)
+                            : null,
+                      ),
+                      SizedBox(
+                        width: 70,
+                        child: TextField(
+                          controller:
+                              TextEditingController(text: '$selectedEps'),
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 8),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            suffixText:
+                                totalEps != null ? '/$totalEps' : null,
+                          ),
+                          onSubmitted: (v) {
+                            final parsed = int.tryParse(v);
+                            if (parsed != null && parsed >= 0) {
+                              setModalState(() => selectedEps = parsed);
+                            }
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: (totalEps == null ||
+                                selectedEps < totalEps)
+                            ? () => setModalState(() => selectedEps++)
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Score
+                  Text('Score',
+                      style: Theme.of(ctx).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  DropdownButton<int>(
+                    value: selectedScore,
+                    isExpanded: true,
+                    items: List.generate(11, (i) {
+                      return DropdownMenuItem(
+                        value: i,
+                        child: Text(i == 0 ? 'Not rated' : '$i'),
+                      );
+                    }),
+                    onChanged: (v) {
+                      if (v != null) setModalState(() => selectedScore = v);
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () async {
+                        final repo = ref.read(animeRepositoryProvider);
+                        await repo.updateAnimeListStatus(
+                          anime.id,
+                          status: selectedStatus,
+                          numWatchedEpisodes: selectedEps,
+                          score: selectedScore,
+                        );
+                        for (final s in WatchStatus.values) {
+                          ref.invalidate(userAnimeListProvider(s));
+                        }
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('${anime.title} updated')),
+                          );
+                        }
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Cover image with left-side rounded corners only.
+class _CoverImage extends StatelessWidget {
+  const _CoverImage({
+    required this.anime,
+    required this.statusLabel,
+    required this.statusColor,
+  });
+
+  final Anime anime;
+  final String? statusLabel;
+  final Color statusColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(12),
+        bottomLeft: Radius.circular(12),
+      ),
+      child: SizedBox(
+        width: 80,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Image
+            anime.mainPicture?.medium != null
+                ? CachedNetworkImage(
+                    imageUrl: anime.mainPicture!.medium!,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: Icon(
+                      Icons.movie,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+            // Status badge (top-left)
+            if (statusLabel != null)
+              Positioned(
+                top: 2,
+                left: 2,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Text(
+                    statusLabel!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            // Media type badge (bottom-left)
+            if (anime.mediaType != null)
+              Positioned(
+                bottom: 2,
+                left: 2,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Text(
+                    _mediaTypeLabel(anime.mediaType!),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  if (anime.myListStatus != null)
-                    Text(
-                      '${anime.myListStatus!.numEpisodesWatched ?? 0}'
-                      ' / ${anime.numEpisodes ?? '?'} eps',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    )
-                  else if (anime.mean != null)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          anime.mean!.toStringAsFixed(2),
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                ],
+                ),
               ),
-            ),
           ],
         ),
       ),
     );
-
-    if (onDismissed != null) {
-      card = Dismissible(
-        key: ValueKey(anime.id),
-        direction: DismissDirection.endToStart,
-        confirmDismiss: (_) async {
-          onDismissed!();
-          return true;
-        },
-        background: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
-          color: theme.colorScheme.error,
-          child: Icon(Icons.delete, color: theme.colorScheme.onError),
-        ),
-        child: card,
-      );
-    }
-
-    return card;
   }
+
+  String _mediaTypeLabel(String type) => switch (type) {
+        'tv' => 'TV',
+        'movie' => 'MOVIE',
+        'ova' => 'OVA',
+        'ona' => 'ONA',
+        'special' => 'SP',
+        'music' => 'MV',
+        _ => type.toUpperCase(),
+      };
 }
