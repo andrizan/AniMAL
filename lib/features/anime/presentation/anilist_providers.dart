@@ -36,3 +36,10 @@ final anilistStaffDetailProvider =
   final api = ref.watch(anilistApiProvider);
   return api.getStaffDetail(staffId);
 });
+
+/// Fetches next airing schedule for an anime by MAL ID.
+final anilistNextAiringProvider =
+    FutureProvider.family<AniListNextAiring?, int>((ref, malId) async {
+  final api = ref.watch(anilistApiProvider);
+  return api.getNextAiringSchedule(malId);
+});

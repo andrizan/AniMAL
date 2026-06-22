@@ -281,6 +281,9 @@ class AnimeDetailPage extends ConsumerWidget {
                         const SizedBox(height: 20),
                       ],
 
+                      // ── Next Episode ──
+                      _NextEpisodeSection(malId: animeId),
+
                       // ── Source ──
                       if (detail.source != null &&
                           detail.source!.isNotEmpty) ...[
@@ -883,6 +886,99 @@ class _RelatedAnimeTile extends StatelessWidget {
           pathParameters: {'id': '${node.id}'},
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Next Episode Section (from AniList)
+// ═══════════════════════════════════════════════════════════════════
+
+class _NextEpisodeSection extends ConsumerWidget {
+  const _NextEpisodeSection({required this.malId});
+
+  final int malId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncNext = ref.watch(anilistNextAiringProvider(malId));
+    final theme = Theme.of(context);
+
+    return asyncNext.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (next) {
+        if (next == null) return const SizedBox.shrink();
+
+        final isUrgent = next.isUrgent;
+        final localAiring = next.airingAt.toLocal();
+        final timeStr =
+            '${localAiring.hour.toString().padLeft(2, '0')}:'
+            '${localAiring.minute.toString().padLeft(2, '0')}';
+        final dateStr =
+            '${localAiring.day}/${localAiring.month} at $timeStr';
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Next Episode',
+                  style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isUrgent
+                      ? theme.colorScheme.errorContainer
+                      : theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.upcoming,
+                      size: 20,
+                      color: isUrgent
+                          ? theme.colorScheme.onErrorContainer
+                          : theme.colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Episode ${next.episode}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: isUrgent
+                                  ? theme.colorScheme.onErrorContainer
+                                  : theme.colorScheme
+                                      .onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$dateStr · ${next.countdown}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isUrgent
+                                  ? theme.colorScheme.onErrorContainer
+                                  : theme.colorScheme
+                                      .onPrimaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

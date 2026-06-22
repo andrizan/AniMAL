@@ -340,6 +340,38 @@ class AniListApi {
     return AniListAnimePeople(characters: characters, staff: staff);
   }
 
+  /// Fetch the next upcoming airing schedule for a specific anime by MAL ID.
+  ///
+  /// Returns the next not-yet-aired episode info, or `null` if none found.
+  Future<AniListNextAiring?> getNextAiringSchedule(int malId) async {
+    const q = r'''
+      query ($idMal: Int) {
+        Media(idMal: $idMal, type: ANIME) {
+          nextAiringEpisode {
+            airingAt
+            episode
+            timeUntilAiring
+          }
+        }
+      }
+    ''';
+
+    final data = await _query(q, {'idMal': malId}) as Map<String, dynamic>;
+    final media = data['Media'] as Map<String, dynamic>?;
+    if (media == null) return null;
+
+    final next = media['nextAiringEpisode'] as Map<String, dynamic>?;
+    if (next == null) return null;
+
+    return AniListNextAiring(
+      airingAt: DateTime.fromMillisecondsSinceEpoch(
+        (next['airingAt'] as int) * 1000,
+      ),
+      episode: next['episode'] as int,
+      timeUntilAiring: next['timeUntilAiring'] as int,
+    );
+  }
+
   Future<AniListCharacterDetail> getCharacterDetail(int id) async {
     const q = r'''
       query ($id: Int) {
@@ -630,4 +662,27 @@ class AniListScheduleEntry {
   final DateTime airingAt;
   final int? episode;
   final int? timeUntilAiring;
+}
+
+class AniListNextAiring {
+  const AniListNextAiring({
+    required this.airingAt,
+    required this.episode,
+    required this.timeUntilAiring,
+  });
+  final DateTime airingAt;
+  final int episode;
+  final int timeUntilAiring;
+
+  String get countdown {
+    if (timeUntilAiring <= 0) return 'Aired';
+    final days = timeUntilAiring ~/ 86400;
+    final hours = (timeUntilAiring % 86400) ~/ 3600;
+    final minutes = (timeUntilAiring % 3600) ~/ 60;
+    if (days > 0) return '${days}d ${hours}h';
+    if (hours > 0) return '${hours}h ${minutes}m';
+    return '${minutes}m';
+  }
+
+  bool get isUrgent => timeUntilAiring > 0 && timeUntilAiring < 21600;
 }
