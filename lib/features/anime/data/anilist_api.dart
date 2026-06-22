@@ -33,7 +33,7 @@ class AniListApi {
         '',
         data: {
           'query': query,
-          ?variables: variables,
+          if (variables != null) 'variables': variables,
         },
       );
 
@@ -47,6 +47,8 @@ class AniListApi {
       return body['data'];
     } on DioException catch (e) {
       _logger.e('AniList DioException: ${e.message}');
+      _logger.e('AniList type: ${e.type}');
+      _logger.e('AniList error: ${e.error}');
       if (e.response?.data != null) {
         _logger.e('AniList response: ${e.response?.data}');
       }
