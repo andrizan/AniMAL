@@ -1,9 +1,8 @@
 import 'package:animal/features/anime/domain/anime.dart';
+import 'package:animal/features/anime/presentation/anime_card.dart';
 import 'package:animal/features/anime/presentation/anime_search_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Search page for finding anime by keyword or browsing the ranking.
 class AnimeSearchPage extends ConsumerStatefulWidget {
@@ -82,47 +81,10 @@ class _AnimeListView extends StatelessWidget {
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: anime.length,
       itemBuilder: (context, index) {
-        final item = anime[index];
-        return ListTile(
-          leading: item.mainPicture?.medium != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: CachedNetworkImage(
-                    imageUrl: item.mainPicture!.medium!,
-                    width: 48,
-                    height: 68,
-                    fit: BoxFit.cover,
-                    placeholder: (_, _) => const SizedBox(
-                      width: 48,
-                      height: 68,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : const SizedBox(width: 48, height: 68),
-          title: Text(
-            item.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            [
-              if (item.mean != null) '⭐ ${item.mean}',
-              if (item.numEpisodes != null) '${item.numEpisodes} eps',
-              if (item.status != null) item.status,
-            ].join(' · '),
-          ),
-          onTap: () => context.pushNamed(
-            'animeDetail',
-            pathParameters: {'id': '${item.id}'},
-          ),
-        );
+        return AnimeCard(anime: anime[index]);
       },
     );
   }
