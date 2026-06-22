@@ -21,6 +21,7 @@ class AnimeDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncDetail = ref.watch(animeDetailProvider(animeId));
+    final asyncExtra = ref.watch(anilistAnimeExtraProvider(animeId));
     final theme = Theme.of(context);
 
     return asyncDetail.when(
@@ -282,8 +283,11 @@ class AnimeDetailPage extends ConsumerWidget {
                         const SizedBox(height: 20),
                       ],
 
-                      // ── Next Episode ──
-                      _NextEpisodeSection(malId: animeId),
+                      // ── Next Episode, External Links, Characters & Staff ──
+                      _AniListExtraSection(
+                        malId: animeId,
+                        asyncExtra: asyncExtra,
+                      ),
 
                       // ── Source ──
                       if (detail.source != null &&
@@ -333,13 +337,6 @@ class AnimeDetailPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 20),
                       ],
-
-                      // ── External Links ──
-                      _ExternalLinksSection(malId: animeId),
-
-                      // ── Characters & Staff (from AniList) ──
-                      _CharactersStaffSection(malId: animeId),
-                      const SizedBox(height: 20),
 
                       // ── Action Buttons ──
                       _ActionButtons(
@@ -895,74 +892,237 @@ class _RelatedAnimeTile extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// External Links Section (from AniList)
+// AniList Extra Section (combined: next airing + external links + people)
 // ═══════════════════════════════════════════════════════════════════
 
-class _ExternalLinksSection extends ConsumerWidget {
-  const _ExternalLinksSection({required this.malId});
+class _AniListExtraSection extends StatefulWidget {
+  const _AniListExtraSection({
+    required this.malId,
+    required this.asyncExtra,
+  });
 
   final int malId;
+  final AsyncValue<AniListAnimeExtra> asyncExtra;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncLinks = ref.watch(anilistExternalLinksProvider(malId));
+  State<_AniListExtraSection> createState() => _AniListExtraSectionState();
+}
+
+class _AniListExtraSectionState extends State<_AniListExtraSection> {
+  bool _showAllCharacters = false;
+  bool _showAllStaff = false;
+
+  static const _defaultLimit = 4;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return asyncLinks.when(
+    return widget.asyncExtra.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
-      data: (links) {
-        if (links.isEmpty) return const SizedBox.shrink();
+      data: (extra) {
+        final nextAiring = extra.nextAiring;
+        final links = extra.externalLinks;
+        final people = extra.people;
 
-        final official =
-            links.where((l) => l.type == 'INFO').toList();
-        final streaming =
-            links.where((l) => l.type == 'STREAMING').toList();
-        final social =
-            links.where((l) => l.type == 'SOCIAL').toList();
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('External Links',
-                  style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  ...official.map((l) => _LinkChip(
-                        label: l.displaySite,
-                        url: l.url,
-                        icon: Icons.language,
-                        color: theme.colorScheme.primaryContainer,
-                        textColor:
-                            theme.colorScheme.onPrimaryContainer,
-                      )),
-                  ...streaming.map((l) => _LinkChip(
-                        label: l.displaySite,
-                        url: l.url,
-                        icon: Icons.play_circle_outline,
-                        color: theme.colorScheme.tertiaryContainer,
-                        textColor:
-                            theme.colorScheme.onTertiaryContainer,
-                      )),
-                  ...social.map((l) => _LinkChip(
-                        label: l.displaySite,
-                        url: l.url,
-                        icon: Icons.public,
-                        color: theme.colorScheme.secondaryContainer,
-                        textColor:
-                            theme.colorScheme.onSecondaryContainer,
-                      )),
-                ],
-              ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Next Episode ──
+            if (nextAiring != null) ...[
+              _buildNextEpisode(theme, nextAiring),
             ],
-          ),
+
+            // ── External Links ──
+            if (links.isNotEmpty) ...[
+              _buildExternalLinks(theme, links),
+            ],
+
+            // ── Characters & Staff ──
+            if (people.characters.isNotEmpty ||
+                people.staff.isNotEmpty) ...[
+              _buildCharactersAndStaff(theme, people),
+              const SizedBox(height: 20),
+            ],
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildNextEpisode(ThemeData theme, AniListNextAiring next) {
+    final isUrgent = next.isUrgent;
+    final localAiring = next.airingAt.toLocal();
+    final timeStr =
+        '${localAiring.hour.toString().padLeft(2, '0')}:'
+        '${localAiring.minute.toString().padLeft(2, '0')}';
+    final dateStr = '${localAiring.day}/${localAiring.month} at $timeStr';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Next Episode', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isUrgent
+                  ? theme.colorScheme.errorContainer
+                  : theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.upcoming,
+                  size: 20,
+                  color: isUrgent
+                      ? theme.colorScheme.onErrorContainer
+                      : theme.colorScheme.onPrimaryContainer,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Episode ${next.episode}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isUrgent
+                              ? theme.colorScheme.onErrorContainer
+                              : theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$dateStr · ${next.countdown}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isUrgent
+                              ? theme.colorScheme.onErrorContainer
+                              : theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExternalLinks(
+      ThemeData theme, List<AniListExternalLink> links) {
+    final official = links.where((l) => l.type == 'INFO').toList();
+    final streaming = links.where((l) => l.type == 'STREAMING').toList();
+    final social = links.where((l) => l.type == 'SOCIAL').toList();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('External Links', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ...official.map((l) => _LinkChip(
+                    label: l.displaySite,
+                    url: l.url,
+                    icon: Icons.language,
+                    color: theme.colorScheme.primaryContainer,
+                    textColor: theme.colorScheme.onPrimaryContainer,
+                  )),
+              ...streaming.map((l) => _LinkChip(
+                    label: l.displaySite,
+                    url: l.url,
+                    icon: Icons.play_circle_outline,
+                    color: theme.colorScheme.tertiaryContainer,
+                    textColor: theme.colorScheme.onTertiaryContainer,
+                  )),
+              ...social.map((l) => _LinkChip(
+                    label: l.displaySite,
+                    url: l.url,
+                    icon: Icons.public,
+                    color: theme.colorScheme.secondaryContainer,
+                    textColor: theme.colorScheme.onSecondaryContainer,
+                  )),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCharactersAndStaff(
+      ThemeData theme, AniListAnimePeople people) {
+    final charLimit =
+        _showAllCharacters ? people.characters.length : _defaultLimit;
+    final staffLimit =
+        _showAllStaff ? people.staff.length : _defaultLimit;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Characters
+        if (people.characters.isNotEmpty) ...[
+          Row(
+            children: [
+              Text('Characters & Voice Actors',
+                  style: theme.textTheme.titleSmall),
+              const Spacer(),
+              if (people.characters.length > _defaultLimit)
+                TextButton(
+                  onPressed: () =>
+                      setState(() => _showAllCharacters = !_showAllCharacters),
+                  child: Text(
+                    _showAllCharacters
+                        ? 'Show Less'
+                        : 'See All (${people.characters.length})',
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...people.characters
+              .take(charLimit)
+              .map((c) => _CharacterTile(character: c)),
+          const SizedBox(height: 20),
+        ],
+
+        // Staff
+        if (people.staff.isNotEmpty) ...[
+          Row(
+            children: [
+              Text('Staff', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              if (people.staff.length > _defaultLimit)
+                TextButton(
+                  onPressed: () =>
+                      setState(() => _showAllStaff = !_showAllStaff),
+                  child: Text(
+                    _showAllStaff
+                        ? 'Show Less'
+                        : 'See All (${people.staff.length})',
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...people.staff
+              .take(staffLimit)
+              .map((s) => _StaffTile(staff: s)),
+        ],
+      ],
     );
   }
 }
@@ -1011,224 +1171,6 @@ class _LinkChip extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// Next Episode Section (from AniList)
-// ═══════════════════════════════════════════════════════════════════
-
-class _NextEpisodeSection extends ConsumerWidget {
-  const _NextEpisodeSection({required this.malId});
-
-  final int malId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncNext = ref.watch(anilistNextAiringProvider(malId));
-    final theme = Theme.of(context);
-
-    return asyncNext.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (next) {
-        if (next == null) return const SizedBox.shrink();
-
-        final isUrgent = next.isUrgent;
-        final localAiring = next.airingAt.toLocal();
-        final timeStr =
-            '${localAiring.hour.toString().padLeft(2, '0')}:'
-            '${localAiring.minute.toString().padLeft(2, '0')}';
-        final dateStr =
-            '${localAiring.day}/${localAiring.month} at $timeStr';
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Next Episode',
-                  style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isUrgent
-                      ? theme.colorScheme.errorContainer
-                      : theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.upcoming,
-                      size: 20,
-                      color: isUrgent
-                          ? theme.colorScheme.onErrorContainer
-                          : theme.colorScheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Episode ${next.episode}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: isUrgent
-                                  ? theme.colorScheme.onErrorContainer
-                                  : theme.colorScheme
-                                      .onPrimaryContainer,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '$dateStr · ${next.countdown}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isUrgent
-                                  ? theme.colorScheme.onErrorContainer
-                                  : theme.colorScheme
-                                      .onPrimaryContainer,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// Characters & Staff Section (from AniList)
-// ═══════════════════════════════════════════════════════════════════
-
-class _CharactersStaffSection extends ConsumerStatefulWidget {
-  const _CharactersStaffSection({required this.malId});
-
-  final int malId;
-
-  @override
-  ConsumerState<_CharactersStaffSection> createState() =>
-      _CharactersStaffSectionState();
-}
-
-class _CharactersStaffSectionState
-    extends ConsumerState<_CharactersStaffSection> {
-  bool _showAllCharacters = false;
-  bool _showAllStaff = false;
-
-  static const _defaultLimit = 4;
-
-  @override
-  Widget build(BuildContext context) {
-    final asyncPeople = ref.watch(anilistPeopleProvider(widget.malId));
-    final theme = Theme.of(context);
-
-    return asyncPeople.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, _) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(Icons.error_outline,
-                size: 32, color: theme.colorScheme.error),
-            const SizedBox(height: 8),
-            Text(
-              'Failed to load characters',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () => ref.invalidate(
-                anilistPeopleProvider(widget.malId),
-              ),
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-      data: (people) {
-        if (people.characters.isEmpty && people.staff.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final charLimit = _showAllCharacters
-            ? people.characters.length
-            : _defaultLimit;
-        final staffLimit =
-            _showAllStaff ? people.staff.length : _defaultLimit;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Characters ──
-            if (people.characters.isNotEmpty) ...[
-              Row(
-                children: [
-                  Text('Characters & Voice Actors',
-                      style: theme.textTheme.titleSmall),
-                  const Spacer(),
-                  if (people.characters.length > _defaultLimit)
-                    TextButton(
-                      onPressed: () => setState(
-                        () => _showAllCharacters = !_showAllCharacters,
-                      ),
-                      child: Text(
-                        _showAllCharacters
-                            ? 'Show Less'
-                            : 'See All (${people.characters.length})',
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ...people.characters
-                  .take(charLimit)
-                  .map((c) => _CharacterTile(character: c)),
-              const SizedBox(height: 20),
-            ],
-
-            // ── Staff ──
-            if (people.staff.isNotEmpty) ...[
-              Row(
-                children: [
-                  Text('Staff', style: theme.textTheme.titleSmall),
-                  const Spacer(),
-                  if (people.staff.length > _defaultLimit)
-                    TextButton(
-                      onPressed: () => setState(
-                        () => _showAllStaff = !_showAllStaff,
-                      ),
-                      child: Text(
-                        _showAllStaff
-                            ? 'Show Less'
-                            : 'See All (${people.staff.length})',
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ...people.staff
-                  .take(staffLimit)
-                  .map((s) => _StaffTile(staff: s)),
-            ],
-          ],
-        );
-      },
     );
   }
 }

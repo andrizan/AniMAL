@@ -404,6 +404,127 @@ class AniListApi {
     }).toList();
   }
 
+  /// Fetch characters, staff, next airing, and external links in one call.
+  Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) async {
+    const q = r'''
+      query ($idMal: Int) {
+        Media(idMal: $idMal, type: ANIME) {
+          characters(sort: ROLE, perPage: 25) {
+            edges {
+              role
+              node { id name { full native } image { medium } }
+              voiceActors(language: JAPANESE) {
+                id name { full native } image { medium } language
+              }
+            }
+          }
+          staff(sort: RELEVANCE, perPage: 20) {
+            edges {
+              role
+              node { id name { full native } image { medium } }
+            }
+          }
+          nextAiringEpisode {
+            airingAt
+            episode
+            timeUntilAiring
+          }
+          externalLinks {
+            id url site type language icon
+          }
+        }
+      }
+    ''';
+
+    final data = await _query(q, {'idMal': malId}) as Map<String, dynamic>;
+    final media = data['Media'] as Map<String, dynamic>?;
+    if (media == null) return const AniListAnimeExtra();
+
+    // Characters + Staff
+    final charEdges =
+        (media['characters'] as Map<String, dynamic>)['edges'] as List<dynamic>;
+    final characters = charEdges.map((e) {
+      final edge = e as Map<String, dynamic>;
+      final node = edge['node'] as Map<String, dynamic>;
+      final name = node['name'] as Map<String, dynamic>;
+      final image = node['image'] as Map<String, dynamic>;
+
+      final vaRaw = (edge['voiceActors'] as List<dynamic>?) ?? [];
+      final vas = vaRaw.map((v) {
+        final vm = v as Map<String, dynamic>;
+        final vn = vm['name'] as Map<String, dynamic>;
+        final vi = vm['image'] as Map<String, dynamic>;
+        return AniListVoiceActor(
+          id: vm['id'] as int,
+          name: vn['full'] as String,
+          nativeName: vn['native'] as String?,
+          imageUrl: vi['medium'] as String?,
+          language: vm['language'] as String?,
+        );
+      }).toList();
+
+      return AniListCharacter(
+        id: node['id'] as int,
+        name: name['full'] as String,
+        nativeName: name['native'] as String?,
+        imageUrl: image['medium'] as String?,
+        role: edge['role'] as String?,
+        voiceActors: vas,
+      );
+    }).toList();
+
+    final staffEdges =
+        (media['staff'] as Map<String, dynamic>)['edges'] as List<dynamic>;
+    final staff = staffEdges.map((e) {
+      final edge = e as Map<String, dynamic>;
+      final node = edge['node'] as Map<String, dynamic>;
+      final name = node['name'] as Map<String, dynamic>;
+      final image = node['image'] as Map<String, dynamic>;
+      return AniListStaff(
+        id: node['id'] as int,
+        name: name['full'] as String,
+        nativeName: name['native'] as String?,
+        imageUrl: image['medium'] as String?,
+        role: edge['role'] as String?,
+      );
+    }).toList();
+
+    final people = AniListAnimePeople(characters: characters, staff: staff);
+
+    // Next Airing
+    final nextRaw = media['nextAiringEpisode'] as Map<String, dynamic>?;
+    AniListNextAiring? nextAiring;
+    if (nextRaw != null) {
+      nextAiring = AniListNextAiring(
+        airingAt: DateTime.fromMillisecondsSinceEpoch(
+          (nextRaw['airingAt'] as int) * 1000,
+        ),
+        episode: nextRaw['episode'] as int,
+        timeUntilAiring: nextRaw['timeUntilAiring'] as int,
+      );
+    }
+
+    // External Links
+    final linksRaw = media['externalLinks'] as List<dynamic>? ?? [];
+    final externalLinks = linksRaw.map((l) {
+      final link = l as Map<String, dynamic>;
+      return AniListExternalLink(
+        id: link['id'] as int,
+        url: link['url'] as String,
+        site: link['site'] as String?,
+        type: link['type'] as String?,
+        language: link['language'] as String?,
+        icon: link['icon'] as String?,
+      );
+    }).toList();
+
+    return AniListAnimeExtra(
+      people: people,
+      nextAiring: nextAiring,
+      externalLinks: externalLinks,
+    );
+  }
+
   Future<AniListCharacterDetail> getCharacterDetail(int id) async {
     const q = r'''
       query ($id: Int) {
@@ -736,4 +857,15 @@ class AniListExternalLink {
   final String? icon;
 
   String get displaySite => site ?? Uri.parse(url).host;
+}
+
+class AniListAnimeExtra {
+  const AniListAnimeExtra({
+    this.people = const AniListAnimePeople(),
+    this.nextAiring,
+    this.externalLinks = const [],
+  });
+  final AniListAnimePeople people;
+  final AniListNextAiring? nextAiring;
+  final List<AniListExternalLink> externalLinks;
 }

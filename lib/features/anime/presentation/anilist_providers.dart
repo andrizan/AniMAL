@@ -50,3 +50,10 @@ final anilistExternalLinksProvider =
   final api = ref.watch(anilistApiProvider);
   return api.getExternalLinks(malId);
 });
+
+/// Fetches characters, staff, next airing, and external links in one call.
+final anilistAnimeExtraProvider =
+    FutureProvider.family<AniListAnimeExtra, int>((ref, malId) async {
+  final api = ref.watch(anilistApiProvider);
+  return api.getAnimeExtraInfo(malId);
+});
