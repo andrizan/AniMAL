@@ -1,4 +1,4 @@
-package com.example.animal
+package com.andrizan.animal
 
 import io.flutter.embedding.android.FlutterActivity
 
