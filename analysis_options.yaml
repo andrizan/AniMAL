@@ -1,0 +1,10 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  errors:
+    non_abstract_class_inherits_abstract_member: ignore
+
+linter:
+  rules:
+    public_member_api_docs: false
+    lines_longer_than_80_chars: false
