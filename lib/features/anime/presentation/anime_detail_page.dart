@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Detail page for a single anime.
 class AnimeDetailPage extends ConsumerWidget {
@@ -332,6 +333,9 @@ class AnimeDetailPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 20),
                       ],
+
+                      // ── External Links ──
+                      _ExternalLinksSection(malId: animeId),
 
                       // ── Characters & Staff (from AniList) ──
                       _CharactersStaffSection(malId: animeId),
@@ -884,6 +888,127 @@ class _RelatedAnimeTile extends StatelessWidget {
         onTap: () => context.pushNamed(
           'animeDetail',
           pathParameters: {'id': '${node.id}'},
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// External Links Section (from AniList)
+// ═══════════════════════════════════════════════════════════════════
+
+class _ExternalLinksSection extends ConsumerWidget {
+  const _ExternalLinksSection({required this.malId});
+
+  final int malId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncLinks = ref.watch(anilistExternalLinksProvider(malId));
+    final theme = Theme.of(context);
+
+    return asyncLinks.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (links) {
+        if (links.isEmpty) return const SizedBox.shrink();
+
+        final official =
+            links.where((l) => l.type == 'INFO').toList();
+        final streaming =
+            links.where((l) => l.type == 'STREAMING').toList();
+        final social =
+            links.where((l) => l.type == 'SOCIAL').toList();
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('External Links',
+                  style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ...official.map((l) => _LinkChip(
+                        label: l.displaySite,
+                        url: l.url,
+                        icon: Icons.language,
+                        color: theme.colorScheme.primaryContainer,
+                        textColor:
+                            theme.colorScheme.onPrimaryContainer,
+                      )),
+                  ...streaming.map((l) => _LinkChip(
+                        label: l.displaySite,
+                        url: l.url,
+                        icon: Icons.play_circle_outline,
+                        color: theme.colorScheme.tertiaryContainer,
+                        textColor:
+                            theme.colorScheme.onTertiaryContainer,
+                      )),
+                  ...social.map((l) => _LinkChip(
+                        label: l.displaySite,
+                        url: l.url,
+                        icon: Icons.public,
+                        color: theme.colorScheme.secondaryContainer,
+                        textColor:
+                            theme.colorScheme.onSecondaryContainer,
+                      )),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LinkChip extends StatelessWidget {
+  const _LinkChip({
+    required this.label,
+    required this.url,
+    required this.icon,
+    required this.color,
+    required this.textColor,
+  });
+
+  final String label;
+  final String url;
+  final IconData icon;
+  final Color color;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        final uri = Uri.parse(url);
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: textColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
+            ),
+          ],
         ),
       ),
     );

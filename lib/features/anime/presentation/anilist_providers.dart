@@ -43,3 +43,10 @@ final anilistNextAiringProvider =
   final api = ref.watch(anilistApiProvider);
   return api.getNextAiringSchedule(malId);
 });
+
+/// Fetches external links for an anime by MAL ID.
+final anilistExternalLinksProvider =
+    FutureProvider.family<List<AniListExternalLink>, int>((ref, malId) async {
+  final api = ref.watch(anilistApiProvider);
+  return api.getExternalLinks(malId);
+});

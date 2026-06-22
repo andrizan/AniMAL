@@ -372,6 +372,38 @@ class AniListApi {
     );
   }
 
+  /// Fetch external links for an anime by MAL ID.
+  ///
+  /// Returns official sites, streaming platforms, and social media.
+  Future<List<AniListExternalLink>> getExternalLinks(int malId) async {
+    const q = r'''
+      query ($idMal: Int) {
+        Media(idMal: $idMal, type: ANIME) {
+          externalLinks {
+            id url site type language icon
+          }
+        }
+      }
+    ''';
+
+    final data = await _query(q, {'idMal': malId}) as Map<String, dynamic>;
+    final media = data['Media'] as Map<String, dynamic>?;
+    if (media == null) return [];
+
+    final links = media['externalLinks'] as List<dynamic>? ?? [];
+    return links.map((l) {
+      final link = l as Map<String, dynamic>;
+      return AniListExternalLink(
+        id: link['id'] as int,
+        url: link['url'] as String,
+        site: link['site'] as String?,
+        type: link['type'] as String?,
+        language: link['language'] as String?,
+        icon: link['icon'] as String?,
+      );
+    }).toList();
+  }
+
   Future<AniListCharacterDetail> getCharacterDetail(int id) async {
     const q = r'''
       query ($id: Int) {
@@ -685,4 +717,23 @@ class AniListNextAiring {
   }
 
   bool get isUrgent => timeUntilAiring > 0 && timeUntilAiring < 21600;
+}
+
+class AniListExternalLink {
+  const AniListExternalLink({
+    required this.id,
+    required this.url,
+    this.site,
+    this.type,
+    this.language,
+    this.icon,
+  });
+  final int id;
+  final String url;
+  final String? site;
+  final String? type;
+  final String? language;
+  final String? icon;
+
+  String get displaySite => site ?? Uri.parse(url).host;
 }
