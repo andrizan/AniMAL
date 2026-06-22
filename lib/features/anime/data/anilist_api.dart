@@ -63,11 +63,23 @@ class AniListApi {
   Future<List<AniListScheduleEntry>> getAiringScheduleForDay(
     String dayOfWeek,
   ) async {
-    const q = '''
-      query {
-        Page(page: 1, perPage: 50) {
+    // Calculate the target day's start/end timestamps (local time)
+    final now = DateTime.now();
+    final targetWeekday = _weekdayNumber(dayOfWeek);
+    final diff = targetWeekday - now.weekday;
+    final targetDate = now.add(Duration(days: diff >= 0 ? diff : diff + 7));
+    final dayStart = DateTime(targetDate.year, targetDate.month, targetDate.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+    final startSec = dayStart.millisecondsSinceEpoch ~/ 1000;
+    final endSec = dayEnd.millisecondsSinceEpoch ~/ 1000;
+
+    const q = r'''
+      query ($startAt: Int, $endAt: Int, $page: Int) {
+        Page(page: $page, perPage: 50) {
+          pageInfo { hasNextPage }
           airingSchedules(
-            notYetAired: true
+            airingAt_greater: $startAt
+            airingAt_lesser: $endAt
             sort: TIME
           ) {
             id
@@ -103,56 +115,71 @@ class AniListApi {
       }
     ''';
 
-    final data = await _query(q) as Map<String, dynamic>;
-    final page = data['Page'] as Map<String, dynamic>;
-    final schedules = page['airingSchedules'] as List<dynamic>;
+    final allEntries = <AniListScheduleEntry>[];
+    var page = 1;
+    var hasNextPage = true;
 
-    final entries = schedules.map((s) {
-      final schedule = s as Map<String, dynamic>;
-      final media = schedule['media'] as Map<String, dynamic>;
-      final title = media['title'] as Map<String, dynamic>;
-      final cover = media['coverImage'] as Map<String, dynamic>?;
+    while (hasNextPage && page <= 5) {
+      final data = await _query(q, {
+        'startAt': startSec,
+        'endAt': endSec,
+        'page': page,
+      }) as Map<String, dynamic>;
 
-      final airingAt = schedule['airingAt'] as int;
-      final airingDate =
-          DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
+      final pageData = data['Page'] as Map<String, dynamic>;
+      final pageInfo = pageData['pageInfo'] as Map<String, dynamic>;
+      hasNextPage = pageInfo['hasNextPage'] as bool? ?? false;
 
-      final genres = (media['genres'] as List<dynamic>?)
-              ?.map((g) => g as String)
-              .toList() ??
-          [];
+      final schedules = pageData['airingSchedules'] as List<dynamic>;
 
-      return AniListScheduleEntry(
-        anilistId: media['id'] as int,
-        malId: media['idMal'] as int?,
-        title: title['romaji'] as String,
-        titleEnglish: title['english'] as String?,
-        titleNative: title['native'] as String?,
-        imageUrl: cover?['medium'] as String?,
-        imageUrlLarge: cover?['large'] as String?,
-        status: media['status'] as String?,
-        episodes: media['episodes'] as int?,
-        meanScore: (media['meanScore'] as num?)?.toDouble(),
-        genres: genres,
-        format: media['format'] as String?,
-        description: media['description'] as String?,
-        airingAt: airingDate,
-        episode: schedule['episode'] as int?,
-        timeUntilAiring: schedule['timeUntilAiring'] as int?,
-      );
-    }).toList();
+      for (final s in schedules) {
+        final schedule = s as Map<String, dynamic>;
+        final media = schedule['media'] as Map<String, dynamic>;
+        final title = media['title'] as Map<String, dynamic>;
+        final cover = media['coverImage'] as Map<String, dynamic>?;
 
-    // Filter by day of week
-    return entries.where((e) {
-      final day = _dayName(e.airingAt.weekday);
-      return day == dayOfWeek;
-    }).toList();
+        final airingAt = schedule['airingAt'] as int;
+        final airingDate =
+            DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
+
+        final genres = (media['genres'] as List<dynamic>?)
+                ?.map((g) => g as String)
+                .toList() ??
+            [];
+
+        allEntries.add(AniListScheduleEntry(
+          anilistId: media['id'] as int,
+          malId: media['idMal'] as int?,
+          title: title['romaji'] as String,
+          titleEnglish: title['english'] as String?,
+          titleNative: title['native'] as String?,
+          imageUrl: cover?['medium'] as String?,
+          imageUrlLarge: cover?['large'] as String?,
+          status: media['status'] as String?,
+          episodes: media['episodes'] as int?,
+          meanScore: (media['meanScore'] as num?)?.toDouble(),
+          genres: genres,
+          format: media['format'] as String?,
+          description: media['description'] as String?,
+          airingAt: airingDate,
+          episode: schedule['episode'] as int?,
+          timeUntilAiring: schedule['timeUntilAiring'] as int?,
+        ));
+      }
+
+      page++;
+    }
+
+    return allEntries;
   }
 
   /// Fetch airing schedule for the entire week.
   ///
   /// Returns a map of day -> list of schedule entries.
   /// Cached for 15 minutes.
+  ///
+  /// Uses date range filtering (Monday 00:00 to next Monday 00:00 local)
+  /// with pagination to ensure full week coverage.
   Future<Map<String, List<AniListScheduleEntry>>>
       getWeeklyAiringSchedule() async {
     if (_isWeeklyCacheValid) {
@@ -162,11 +189,25 @@ class AniListApi {
 
     _logger.d('AniList: fetching weekly schedule');
 
-    const q = '''
-      query {
-        Page(page: 1, perPage: 50) {
+    // Calculate Monday 00:00 and next Monday 00:00 (local time → UTC seconds)
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime(monday.year, monday.month, monday.day);
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final startSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+    final endSec = weekEnd.millisecondsSinceEpoch ~/ 1000;
+
+    _logger.d(
+      'AniList week range: ${weekStart.toIso8601String()} – ${weekEnd.toIso8601String()}',
+    );
+
+    const q = r'''
+      query ($startAt: Int, $endAt: Int, $page: Int) {
+        Page(page: $page, perPage: 50) {
+          pageInfo { hasNextPage }
           airingSchedules(
-            notYetAired: true
+            airingAt_greater: $startAt
+            airingAt_lesser: $endAt
             sort: TIME
           ) {
             id
@@ -202,44 +243,62 @@ class AniListApi {
       }
     ''';
 
-    final data = await _query(q) as Map<String, dynamic>;
-    final page = data['Page'] as Map<String, dynamic>;
-    final schedules = page['airingSchedules'] as List<dynamic>;
+    final allEntries = <AniListScheduleEntry>[];
+    var page = 1;
+    var hasNextPage = true;
 
-    final entries = schedules.map((s) {
-      final schedule = s as Map<String, dynamic>;
-      final media = schedule['media'] as Map<String, dynamic>;
-      final title = media['title'] as Map<String, dynamic>;
-      final cover = media['coverImage'] as Map<String, dynamic>?;
+    while (hasNextPage && page <= 10) {
+      final data = await _query(q, {
+        'startAt': startSec,
+        'endAt': endSec,
+        'page': page,
+      }) as Map<String, dynamic>;
 
-      final airingAt = schedule['airingAt'] as int;
-      final airingDate =
-          DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
+      final pageData = data['Page'] as Map<String, dynamic>;
+      final pageInfo = pageData['pageInfo'] as Map<String, dynamic>;
+      hasNextPage = pageInfo['hasNextPage'] as bool? ?? false;
 
-      final genres = (media['genres'] as List<dynamic>?)
-              ?.map((g) => g as String)
-              .toList() ??
-          [];
+      final schedules = pageData['airingSchedules'] as List<dynamic>;
 
-      return AniListScheduleEntry(
-        anilistId: media['id'] as int,
-        malId: media['idMal'] as int?,
-        title: title['romaji'] as String,
-        titleEnglish: title['english'] as String?,
-        titleNative: title['native'] as String?,
-        imageUrl: cover?['medium'] as String?,
-        imageUrlLarge: cover?['large'] as String?,
-        status: media['status'] as String?,
-        episodes: media['episodes'] as int?,
-        meanScore: (media['meanScore'] as num?)?.toDouble(),
-        genres: genres,
-        format: media['format'] as String?,
-        description: media['description'] as String?,
-        airingAt: airingDate,
-        episode: schedule['episode'] as int?,
-        timeUntilAiring: schedule['timeUntilAiring'] as int?,
-      );
-    }).toList();
+      for (final s in schedules) {
+        final schedule = s as Map<String, dynamic>;
+        final media = schedule['media'] as Map<String, dynamic>;
+        final title = media['title'] as Map<String, dynamic>;
+        final cover = media['coverImage'] as Map<String, dynamic>?;
+
+        final airingAt = schedule['airingAt'] as int;
+        final airingDate =
+            DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
+
+        final genres = (media['genres'] as List<dynamic>?)
+                ?.map((g) => g as String)
+                .toList() ??
+            [];
+
+        allEntries.add(AniListScheduleEntry(
+          anilistId: media['id'] as int,
+          malId: media['idMal'] as int?,
+          title: title['romaji'] as String,
+          titleEnglish: title['english'] as String?,
+          titleNative: title['native'] as String?,
+          imageUrl: cover?['medium'] as String?,
+          imageUrlLarge: cover?['large'] as String?,
+          status: media['status'] as String?,
+          episodes: media['episodes'] as int?,
+          meanScore: (media['meanScore'] as num?)?.toDouble(),
+          genres: genres,
+          format: media['format'] as String?,
+          description: media['description'] as String?,
+          airingAt: airingDate,
+          episode: schedule['episode'] as int?,
+          timeUntilAiring: schedule['timeUntilAiring'] as int?,
+        ));
+      }
+
+      page++;
+    }
+
+    _logger.d('AniList: fetched ${allEntries.length} schedule entries');
 
     // Group by day of week
     final grouped = <String, List<AniListScheduleEntry>>{
@@ -252,7 +311,7 @@ class AniListApi {
       'sunday': [],
     };
 
-    for (final entry in entries) {
+    for (final entry in allEntries) {
       final day = _dayName(entry.airingAt.weekday);
       if (grouped.containsKey(day)) {
         grouped[day]!.add(entry);
@@ -262,6 +321,10 @@ class AniListApi {
     // Sort each day by airing time
     for (final entry in grouped.entries) {
       entry.value.sort((a, b) => a.airingAt.compareTo(b.airingAt));
+    }
+
+    for (final e in grouped.entries) {
+      _logger.d('  ${e.key}: ${e.value.length} entries');
     }
 
     // Cache the result
@@ -281,6 +344,19 @@ class AniListApi {
       6 => 'saturday',
       7 => 'sunday',
       _ => 'monday',
+    };
+  }
+
+  int _weekdayNumber(String dayName) {
+    return switch (dayName) {
+      'monday' => 1,
+      'tuesday' => 2,
+      'wednesday' => 3,
+      'thursday' => 4,
+      'friday' => 5,
+      'saturday' => 6,
+      'sunday' => 7,
+      _ => 1,
     };
   }
 

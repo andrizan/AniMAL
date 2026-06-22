@@ -98,13 +98,20 @@ class AiringRepository {
         results[0] as Map<String, List<AniListScheduleEntry>>;
     final malAnimeMap = results[1] as Map<int, Anime>;
 
+    _logger.d(
+      'Merge: ${anilistSchedule.values.fold<int>(0, (sum, l) => sum + l.length)} '
+      'AniList entries, ${malAnimeMap.length} MAL entries',
+    );
+
     // Merge: AniList schedule + MAL score
     final merged = <String, List<AiringEntry>>{};
+    var matchedCount = 0;
     for (final day in anilistSchedule.keys) {
       merged[day] = anilistSchedule[day]!.map((entry) {
         final malAnime = entry.malId != null
             ? malAnimeMap[entry.malId!]
             : null;
+        if (malAnime != null) matchedCount++;
 
         return AiringEntry(
           anilistId: entry.anilistId,
@@ -122,6 +129,14 @@ class AiringRepository {
           format: entry.format,
         );
       }).toList();
+    }
+
+    _logger.d('Merge: $matchedCount entries matched with MAL scores');
+
+    for (final e in merged.entries) {
+      if (e.value.isNotEmpty) {
+        _logger.d('  ${e.key}: ${e.value.length} airing entries');
+      }
     }
 
     _cachedSchedule = merged;
@@ -151,15 +166,17 @@ class AiringRepository {
       final season = Season.fromDate(now);
       final year = now.year;
 
+      _logger.d('Fetching MAL seasonal: $season $year');
       final animeList = await _malApi.getSeasonalAnime(
         year: year,
         season: season,
         limit: 500,
       );
 
+      _logger.d('MAL seasonal returned ${animeList.length} anime');
       return {for (final a in animeList) a.id: a};
     } on Exception catch (e) {
-      _logger.w('MAL seasonal fetch failed', error: e);
+      _logger.e('MAL seasonal fetch failed', error: e);
       return {};
     }
   }

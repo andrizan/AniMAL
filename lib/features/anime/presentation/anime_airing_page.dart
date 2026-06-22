@@ -178,6 +178,10 @@ class _AiringCard extends StatelessWidget {
       broadcast: airingTime != null
           ? Broadcast(startTime: airingTime)
           : null,
+      alternativeTitles: AlternativeTitles(
+        en: entry.titleEnglish,
+        ja: entry.titleNative,
+      ),
     );
 
     return AnimeCard(
