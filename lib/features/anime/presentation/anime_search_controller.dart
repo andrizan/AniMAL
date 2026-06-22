@@ -19,8 +19,9 @@ final FutureProvider<List<Anime>> animeRankingProvider =
 });
 
 /// FutureProvider family for anime detail by ID.
-final FutureProviderFamily<AnimeDetail, int> animeDetailProvider =
-    FutureProvider.family<AnimeDetail, int>((ref, animeId) async {
+/// Returns `null` if the anime doesn't exist on MAL (404).
+final FutureProviderFamily<AnimeDetail?, int> animeDetailProvider =
+    FutureProvider.family<AnimeDetail?, int>((ref, animeId) async {
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getAnimeDetail(animeId);
 });

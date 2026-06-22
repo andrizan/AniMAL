@@ -51,6 +51,35 @@ class AnimeDetailPage extends ConsumerWidget {
         ),
       ),
       data: (detail) {
+        if (detail == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.search_off,
+                        size: 48,
+                        color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(height: 16),
+                    const Text('Anime not found'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This anime may not be available on MyAnimeList.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
         final inList = detail.myListStatus != null;
 
         return Scaffold(

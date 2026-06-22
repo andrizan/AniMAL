@@ -480,6 +480,7 @@ class _MediaAppearanceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final typeLabel = _formatMediaType(media.type);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 3),
@@ -510,15 +511,40 @@ class _MediaAppearanceTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 13),
         ),
-        subtitle: media.role != null
-            ? Text(
-                media.role!,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurfaceVariant,
+        subtitle: Row(
+          children: [
+            if (typeLabel != null) ...[
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(4),
                 ),
-              )
-            : null,
+                child: Text(
+                  typeLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
+                ),
+              ),
+              if (media.role != null) const SizedBox(width: 6),
+            ],
+            if (media.role != null)
+              Expanded(
+                child: Text(
+                  media.role!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
+        ),
         trailing: const Icon(Icons.chevron_right, size: 20),
         dense: true,
         visualDensity: VisualDensity.compact,
@@ -541,5 +567,15 @@ class _MediaAppearanceTile extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String? _formatMediaType(String? type) {
+    return switch (type) {
+      'ANIME' => 'Anime',
+      'MANGA' => 'Manga',
+      'NOVEL' => 'Novel',
+      'ONE_SHOT' => 'One Shot',
+      _ => null,
+    };
   }
 }

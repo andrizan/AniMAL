@@ -48,11 +48,15 @@ class AnimeRepository {
     }
   }
 
-  /// Get anime detail.
-  Future<AnimeDetail> getAnimeDetail(int animeId) async {
+  /// Get anime detail. Returns `null` if the anime doesn't exist (404).
+  Future<AnimeDetail?> getAnimeDetail(int animeId) async {
     try {
       return await _api.getAnimeDetail(animeId);
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        _logger?.i('Anime $animeId not found on MAL');
+        return null;
+      }
       _logger?.e('getAnimeDetail failed', error: e);
       throw _mapDioException(e);
     }
