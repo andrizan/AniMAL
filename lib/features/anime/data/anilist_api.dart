@@ -33,7 +33,7 @@ class AniListApi {
         '',
         data: {
           'query': query,
-          if (variables != null) 'variables': variables,
+          ?variables: variables,
         },
       );
 
@@ -61,7 +61,7 @@ class AniListApi {
   Future<List<AniListScheduleEntry>> getAiringScheduleForDay(
     String dayOfWeek,
   ) async {
-    final q = '''
+    const q = '''
       query {
         Page(page: 1, perPage: 50) {
           airingSchedules(
@@ -160,7 +160,7 @@ class AniListApi {
 
     _logger.d('AniList: fetching weekly schedule');
 
-    final q = '''
+    const q = '''
       query {
         Page(page: 1, perPage: 50) {
           airingSchedules(
@@ -742,7 +742,9 @@ class AniListCharacterDetail {
   final String? nativeName;
   final String? imageUrl;
   final String? description;
-  final int? birthYear, birthMonth, birthDay;
+  final int? birthYear;
+  final int? birthMonth;
+  final int? birthDay;
   final String? age;
   final String? gender;
   final List<AniListMediaAppearance> mediaAppearances;
@@ -774,8 +776,12 @@ class AniListStaffDetail {
   final String? imageUrl;
   final String? description;
   final String? gender;
-  final int? birthYear, birthMonth, birthDay;
-  final int? deathYear, deathMonth, deathDay;
+  final int? birthYear;
+  final int? birthMonth;
+  final int? birthDay;
+  final int? deathYear;
+  final int? deathMonth;
+  final int? deathDay;
   final int? age;
   final List<int>? yearsActive;
   final String? homeTown;
@@ -786,8 +792,8 @@ class AniListStaffDetail {
 class AniListMediaAppearance {
   const AniListMediaAppearance({
     required this.anilistId,
-    this.malId,
     required this.title,
+    this.malId,
     this.titleEnglish,
     this.imageUrl,
     this.type,
@@ -805,8 +811,9 @@ class AniListMediaAppearance {
 class AniListScheduleEntry {
   const AniListScheduleEntry({
     required this.anilistId,
-    this.malId,
     required this.title,
+    required this.airingAt,
+    this.malId,
     this.titleEnglish,
     this.titleNative,
     this.imageUrl,
@@ -817,7 +824,6 @@ class AniListScheduleEntry {
     this.genres = const [],
     this.format,
     this.description,
-    required this.airingAt,
     this.episode,
     this.timeUntilAiring,
   });

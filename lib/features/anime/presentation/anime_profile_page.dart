@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/core/theme/theme_provider.dart';
 import 'package:animal/features/anime/presentation/anime_profile_controller.dart';
 import 'package:animal/features/auth/presentation/auth_controller.dart';
@@ -263,7 +265,7 @@ class AnimeProfilePage extends ConsumerWidget {
                       : const Icon(Icons.chevron_right),
                   onTap: () {
                     if (authStatus != AuthStatus.authenticated) {
-                      context.pushNamed('login');
+                      unawaited(context.pushNamed('login'));
                     }
                   },
                 ),

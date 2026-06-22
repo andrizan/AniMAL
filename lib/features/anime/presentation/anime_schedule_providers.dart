@@ -21,6 +21,7 @@ final animeScheduleRepositoryProvider = Provider<AnimeScheduleRepository>((ref) 
 });
 
 /// Fetches merged seasonal schedule (MAL + AniList).
+// ignore: specify_nonobvious_property_types
 final mergedScheduleProvider =
     FutureProvider.family<List<AnimeWithSchedule>, ({int year, Season season})>(
         (ref, params) async {
@@ -32,6 +33,7 @@ final mergedScheduleProvider =
 });
 
 /// Fetches merged schedule for a specific day.
+// ignore: specify_nonobvious_property_types
 final dayScheduleProvider = FutureProvider.family<List<AnimeWithSchedule>,
     ({int year, Season season, String day})>((ref, params) async {
   final repo = ref.watch(animeScheduleRepositoryProvider);

@@ -3,8 +3,8 @@ import 'package:animal/features/anime/data/anilist_api.dart';
 import 'package:animal/features/anime/data/mal_anime_api.dart';
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/season.dart';
-import 'package:animal/features/anime/presentation/anime_providers.dart';
 import 'package:animal/features/anime/presentation/anilist_providers.dart';
+import 'package:animal/features/anime/presentation/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -12,14 +12,14 @@ import 'package:logger/logger.dart';
 class AiringEntry {
   const AiringEntry({
     required this.anilistId,
-    this.malId,
     required this.title,
-    this.titleEnglish,
-    this.titleNative,
-    this.imageUrl,
     required this.airingAt,
     required this.episode,
     required this.timeUntilAiring,
+    this.malId,
+    this.titleEnglish,
+    this.titleNative,
+    this.imageUrl,
     this.malScore,
     this.genres = const [],
     this.episodes,
@@ -56,12 +56,10 @@ class AiringEntry {
 /// Repository that merges AniList schedule with MAL scores.
 class AiringRepository {
   AiringRepository({
-    required MalAnimeApi malApi,
-    required AniListApi anilistApi,
+    required this._malApi,
+    required this._anilistApi,
     Logger? logger,
-  })  : _malApi = malApi,
-        _anilistApi = anilistApi,
-        _logger = logger ?? Logger();
+  }) : _logger = logger ?? Logger();
 
   final MalAnimeApi _malApi;
   final AniListApi _anilistApi;
@@ -140,7 +138,7 @@ class AiringRepository {
       _fetchAniListSchedule() async {
     try {
       return await _anilistApi.getWeeklyAiringSchedule();
-    } catch (e) {
+    } on Exception catch (e) {
       _logger.e('AniList schedule fetch failed', error: e);
       return {};
     }
@@ -160,7 +158,7 @@ class AiringRepository {
       );
 
       return {for (final a in animeList) a.id: a};
-    } catch (e) {
+    } on Exception catch (e) {
       _logger.w('MAL seasonal fetch failed', error: e);
       return {};
     }

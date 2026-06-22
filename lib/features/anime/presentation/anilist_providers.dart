@@ -16,6 +16,7 @@ final anilistWeeklyScheduleProvider =
 });
 
 /// Fetches characters + staff from AniList by MAL ID.
+// ignore: specify_nonobvious_property_types
 final anilistPeopleProvider =
     FutureProvider.family<AniListAnimePeople, int>((ref, malId) async {
   final api = ref.watch(anilistApiProvider);
@@ -24,6 +25,7 @@ final anilistPeopleProvider =
 
 /// Fetches character detail from AniList by character ID.
 /// Auto-disposes when no widgets are watching.
+// ignore: specify_nonobvious_property_types
 final anilistCharacterDetailProvider =
     FutureProvider.autoDispose.family<AniListCharacterDetail, int>(
         (ref, characterId) async {
@@ -33,6 +35,7 @@ final anilistCharacterDetailProvider =
 
 /// Fetches staff detail from AniList by staff ID.
 /// Auto-disposes when no widgets are watching.
+// ignore: specify_nonobvious_property_types
 final anilistStaffDetailProvider =
     FutureProvider.autoDispose.family<AniListStaffDetail, int>(
         (ref, staffId) async {
@@ -41,6 +44,7 @@ final anilistStaffDetailProvider =
 });
 
 /// Fetches next airing schedule for an anime by MAL ID.
+// ignore: specify_nonobvious_property_types
 final anilistNextAiringProvider =
     FutureProvider.family<AniListNextAiring?, int>((ref, malId) async {
   final api = ref.watch(anilistApiProvider);
@@ -48,6 +52,7 @@ final anilistNextAiringProvider =
 });
 
 /// Fetches external links for an anime by MAL ID.
+// ignore: specify_nonobvious_property_types
 final anilistExternalLinksProvider =
     FutureProvider.family<List<AniListExternalLink>, int>((ref, malId) async {
   final api = ref.watch(anilistApiProvider);
@@ -56,6 +61,7 @@ final anilistExternalLinksProvider =
 
 /// Fetches characters, staff, next airing, and external links in one call.
 /// Auto-disposes when no widgets are watching.
+// ignore: specify_nonobvious_property_types
 final anilistAnimeExtraProvider =
     FutureProvider.autoDispose.family<AniListAnimeExtra, int>(
         (ref, malId) async {

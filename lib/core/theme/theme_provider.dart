@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -13,7 +15,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 
   @override
   ThemeMode build() {
-    _loadTheme();
+    unawaited(_loadTheme());
     return ThemeMode.system;
   }
 
@@ -30,7 +32,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 
   void setThemeMode(ThemeMode mode) {
     state = mode;
-    _storage.write(key: _storageKey, value: mode.name);
+    unawaited(_storage.write(key: _storageKey, value: mode.name));
   }
 
   void toggle() {

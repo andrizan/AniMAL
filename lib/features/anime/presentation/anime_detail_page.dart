@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:animal/features/anime/data/anilist_api.dart';
 import 'package:animal/features/anime/domain/anime_detail.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
+import 'package:animal/features/anime/presentation/anilist_providers.dart';
 import 'package:animal/features/anime/presentation/anime_list_controller.dart';
 import 'package:animal/features/anime/presentation/anime_providers.dart';
-import 'package:animal/features/anime/presentation/anilist_providers.dart';
 import 'package:animal/features/anime/presentation/anime_search_controller.dart';
 import 'package:animal/features/anime/presentation/full_screen_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -521,7 +523,7 @@ class _MyListStatusCard extends ConsumerWidget {
                     onSubmitted: (value) {
                       final parsed = int.tryParse(value);
                       if (parsed != null && parsed >= 0) {
-                        _updateEpisodes(ref, parsed);
+                        unawaited(_updateEpisodes(ref, parsed));
                       }
                     },
                   ),
@@ -565,7 +567,7 @@ class _MyListStatusCard extends ConsumerWidget {
                     );
                   }),
                   onChanged: (value) {
-                    if (value != null) _updateScore(ref, value);
+                    if (value != null) unawaited(_updateScore(ref, value));
                   },
                 ),
               ],
@@ -576,18 +578,18 @@ class _MyListStatusCard extends ConsumerWidget {
     );
   }
 
-  void _updateEpisodes(WidgetRef ref, int newCount) {
+  Future<void> _updateEpisodes(WidgetRef ref, int newCount) async {
     final repo = ref.read(animeRepositoryProvider);
-    repo.updateAnimeListStatus(
+    await repo.updateAnimeListStatus(
       detail.id,
       numWatchedEpisodes: newCount,
     );
     onStatusChanged();
   }
 
-  void _updateScore(WidgetRef ref, int newScore) {
+  Future<void> _updateScore(WidgetRef ref, int newScore) async {
     final repo = ref.read(animeRepositoryProvider);
-    repo.updateAnimeListStatus(
+    await repo.updateAnimeListStatus(
       detail.id,
       score: newScore,
     );
@@ -596,7 +598,7 @@ class _MyListStatusCard extends ConsumerWidget {
 
   void _showStatusPicker(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(
@@ -634,7 +636,7 @@ class _MyListStatusCard extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   static IconData _statusIcon(WatchStatus status) {
@@ -919,7 +921,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
 
     return widget.asyncExtra.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (extra) {
         final nextAiring = extra.nextAiring;
         final links = extra.externalLinks;
@@ -1146,7 +1148,7 @@ class _LinkChip extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         final uri = Uri.parse(url);
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
+        await launchUrl(uri);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

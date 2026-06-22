@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/features/auth/presentation/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +23,7 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
   @override
   void initState() {
     super.initState();
-    _handleCallback();
+    unawaited(_handleCallback());
   }
 
   Future<void> _handleCallback() async {
@@ -48,7 +50,7 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
         );
         context.go('/');
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),

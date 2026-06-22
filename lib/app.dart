@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/core/router/app_router.dart';
 import 'package:animal/core/theme/theme_provider.dart';
 import 'package:app_links/app_links.dart';
@@ -19,7 +21,7 @@ class _AppState extends ConsumerState<App> {
   @override
   void initState() {
     super.initState();
-    _initDeepLinks();
+    unawaited(_initDeepLinks());
   }
 
   Future<void> _initDeepLinks() async {
@@ -45,8 +47,7 @@ class _AppState extends ConsumerState<App> {
         // Delay navigation until after build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            final router = ref.read(routerProvider);
-            router.go('/oauth/callback?code=$code');
+            ref.read(routerProvider).go('/oauth/callback?code=$code');
           }
         });
       }

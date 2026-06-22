@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
 import 'package:animal/features/anime/presentation/anime_list_controller.dart';
@@ -80,7 +82,7 @@ class AnimeListCard extends ConsumerWidget {
       final localDate = jstDate.toLocal();
       return '${localDate.hour.toString().padLeft(2, '0')}:'
           '${localDate.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
+    } on Exception {
       return jstTime;
     }
   }
@@ -109,7 +111,7 @@ class AnimeListCard extends ConsumerWidget {
     var selectedEps = currentEps;
     var selectedStatus = currentStatus;
 
-    showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
@@ -244,7 +246,7 @@ class AnimeListCard extends ConsumerWidget {
           },
         );
       },
-    );
+    ));
   }
 }
 
@@ -276,7 +278,7 @@ class _CoverImage extends StatelessWidget {
                 fit: BoxFit.cover,
               )
             else
-              Container(
+              ColoredBox(
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.movie,

@@ -3,7 +3,6 @@ import 'package:animal/features/anime/domain/broadcast.dart';
 import 'package:animal/features/anime/domain/season.dart';
 import 'package:animal/features/anime/presentation/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
 
 /// Parameters for [animeScheduleProvider].
 typedef ScheduleParams = ({int year, Season season});
@@ -12,8 +11,8 @@ typedef ScheduleParams = ({int year, Season season});
 ///
 /// Each [Anime] in the result carries its [Broadcast] info so the
 /// UI can group entries by day of the week.
-final FutureProviderFamily<List<Anime>, ScheduleParams>
-    animeScheduleProvider =
+// ignore: specify_nonobvious_property_types
+final animeScheduleProvider =
     FutureProvider.family<List<Anime>, ScheduleParams>(
         (ref, params) async {
   final repo = ref.watch(animeRepositoryProvider);

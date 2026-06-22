@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/core/providers.dart';
 import 'package:animal/features/auth/data/mal_auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +21,7 @@ class AuthController extends Notifier<AuthStatus> {
   @override
   AuthStatus build() {
     _repo = ref.watch(malAuthRepositoryProvider);
-    _checkAuthStatus();
+    unawaited(_checkAuthStatus());
     return AuthStatus.unknown;
   }
 

@@ -56,7 +56,7 @@ class AuthInterceptor extends Interceptor {
           handler.resolve(response);
           return;
         }
-      } catch (e) {
+      } on Exception catch (e) {
         _logger.e('AuthInterceptor: token refresh failed', error: e);
         _isRefreshing = false;
         // Clear tokens on refresh failure

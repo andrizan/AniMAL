@@ -9,9 +9,9 @@ part of 'anime_character.dart';
 _AnimeCharacter _$AnimeCharacterFromJson(Map<String, dynamic> json) =>
     _AnimeCharacter(
       id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
       firstName: json['first_name'] as String?,
       lastName: json['last_name'] as String?,
-      name: json['name'] as String,
       mainPicture: json['main_picture'] == null
           ? null
           : MainPicture.fromJson(json['main_picture'] as Map<String, dynamic>),
@@ -26,9 +26,9 @@ _AnimeCharacter _$AnimeCharacterFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$AnimeCharacterToJson(_AnimeCharacter instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'name': instance.name,
       'first_name': instance.firstName,
       'last_name': instance.lastName,
-      'name': instance.name,
       'main_picture': instance.mainPicture,
       'role': instance.role,
       'voice_actors': instance.voiceActors,
@@ -36,9 +36,9 @@ Map<String, dynamic> _$AnimeCharacterToJson(_AnimeCharacter instance) =>
 
 _VoiceActor _$VoiceActorFromJson(Map<String, dynamic> json) => _VoiceActor(
   id: (json['id'] as num).toInt(),
+  name: json['name'] as String,
   firstName: json['first_name'] as String?,
   lastName: json['last_name'] as String?,
-  name: json['name'] as String,
   mainPicture: json['main_picture'] == null
       ? null
       : MainPicture.fromJson(json['main_picture'] as Map<String, dynamic>),
@@ -48,9 +48,9 @@ _VoiceActor _$VoiceActorFromJson(Map<String, dynamic> json) => _VoiceActor(
 Map<String, dynamic> _$VoiceActorToJson(_VoiceActor instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'name': instance.name,
       'first_name': instance.firstName,
       'last_name': instance.lastName,
-      'name': instance.name,
       'main_picture': instance.mainPicture,
       'language': instance.language,
     };

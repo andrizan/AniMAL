@@ -1,6 +1,6 @@
 import 'package:animal/features/anime/domain/anime.dart';
-import 'package:animal/features/anime/domain/broadcast.dart';
 import 'package:animal/features/anime/domain/anime_detail.dart';
+import 'package:animal/features/anime/domain/broadcast.dart';
 import 'package:animal/features/anime/presentation/anime_airing_providers.dart';
 import 'package:animal/features/anime/presentation/anime_card.dart';
 import 'package:flutter/material.dart';

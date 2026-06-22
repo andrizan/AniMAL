@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/features/anime/data/anilist_api.dart';
 import 'package:animal/features/anime/presentation/anilist_providers.dart';
 import 'package:animal/features/anime/presentation/full_screen_image.dart';
@@ -550,10 +552,10 @@ class _MediaAppearanceTile extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         onTap: () {
           if (media.malId != null) {
-            context.pushNamed(
+            unawaited(context.pushNamed(
               'animeDetail',
               pathParameters: {'id': '${media.malId}'},
-            );
+            ));
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

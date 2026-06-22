@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/features/auth/presentation/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,7 +75,7 @@ class LoginPage extends ConsumerWidget {
                         if (!launched && context.mounted) {
                           _showUrlDialog(context, url.toString());
                         }
-                      } catch (e) {
+                      } on Exception {
                         if (context.mounted) {
                           _showUrlDialog(context, url.toString());
                         }
@@ -111,7 +113,7 @@ class LoginPage extends ConsumerWidget {
   }
 
   void _showUrlDialog(BuildContext context, String url) {
-    showDialog<void>(
+    unawaited(showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Open URL'),
@@ -136,13 +138,13 @@ class LoginPage extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   void _showCodeInputDialog(BuildContext context, WidgetRef ref) {
     final codeController = TextEditingController();
 
-    showDialog<void>(
+    unawaited(showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Enter Authorization Code'),
@@ -174,7 +176,7 @@ class LoginPage extends ConsumerWidget {
                       ),
                     );
                   }
-                } catch (e) {
+                } on Exception catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Login failed: $e')),
@@ -187,6 +189,6 @@ class LoginPage extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

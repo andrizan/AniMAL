@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
 import 'package:animal/features/anime/presentation/anime_airing_providers.dart';
@@ -15,8 +17,8 @@ import 'package:go_router/go_router.dart';
 /// Supports edit modal via 3-dot button or long press.
 class AnimeCard extends ConsumerWidget {
   const AnimeCard({
-    super.key,
     required this.anime,
+    super.key,
     this.trailing,
     this.nextAiring,
   });
@@ -219,8 +221,8 @@ class AnimeCard extends ConsumerWidget {
                                 color: theme.colorScheme.onSurfaceVariant),
                             const SizedBox(width: 2),
                             Text(
-                              _convertJstToLocal(
-                                  anime.broadcast!.startTime!)!,
+                              _convertJstToLocal(anime.broadcast?.startTime) ??
+                                  '',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontSize: 11,
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -233,9 +235,8 @@ class AnimeCard extends ConsumerWidget {
                               episode: nextAiring!.episode,
                               countdown: nextAiring!.countdown ?? '',
                               isUrgent: nextAiring!.isUrgent,
-                            )
-                          else if (trailing != null)
-                            trailing!,
+                            ),
+                          ?trailing,
                         ],
                       ),
                     ],
@@ -261,7 +262,7 @@ class AnimeCard extends ConsumerWidget {
       final localDate = jstDate.toLocal();
       return '${localDate.hour.toString().padLeft(2, '0')}:'
           '${localDate.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
+    } on Exception {
       return jstTime;
     }
   }
@@ -296,11 +297,11 @@ class AnimeCard extends ConsumerWidget {
     final currentEps = anime.myListStatus?.numEpisodesWatched ?? 0;
     final totalEps = anime.numEpisodes;
 
-    int selectedScore = currentScore;
-    int selectedEps = currentEps;
-    WatchStatus selectedStatus = currentStatus;
+    var selectedScore = currentScore;
+    var selectedEps = currentEps;
+    var selectedStatus = currentStatus;
 
-    showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
@@ -439,7 +440,7 @@ class AnimeCard extends ConsumerWidget {
           },
         );
       },
-    );
+    ));
   }
 }
 
@@ -469,19 +470,20 @@ class _CoverImage extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             // Image
-            anime.mainPicture?.medium != null
-                ? CachedNetworkImage(
-                    imageUrl: anime.mainPicture!.medium!,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Icon(
-                      Icons.movie,
-                      size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+            if (anime.mainPicture?.medium != null)
+              CachedNetworkImage(
+                imageUrl: anime.mainPicture!.medium!,
+                fit: BoxFit.cover,
+              )
+            else
+              ColoredBox(
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Icon(
+                  Icons.movie,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             // Status badge (top-left)
             if (statusLabel != null)
               Positioned(

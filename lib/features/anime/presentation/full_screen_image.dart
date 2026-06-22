@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -12,7 +14,7 @@ class FullScreenImageViewer extends StatelessWidget {
   final String? heroTag;
 
   static void show(BuildContext context, {required String imageUrl, String? heroTag}) {
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: false,
         barrierDismissible: true,
@@ -25,7 +27,7 @@ class FullScreenImageViewer extends StatelessWidget {
           return FadeTransition(opacity: animation, child: child);
         },
       ),
-    );
+    ));
   }
 
   @override

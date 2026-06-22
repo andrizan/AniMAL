@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AnimeCharacter {
 
- int get id;@JsonKey(name: 'first_name') String? get firstName;@JsonKey(name: 'last_name') String? get lastName; String get name;@JsonKey(name: 'main_picture') MainPicture? get mainPicture; String? get role;@JsonKey(name: 'voice_actors') List<VoiceActor> get voiceActors;
+ int get id; String get name;@JsonKey(name: 'first_name') String? get firstName;@JsonKey(name: 'last_name') String? get lastName;@JsonKey(name: 'main_picture') MainPicture? get mainPicture; String? get role;@JsonKey(name: 'voice_actors') List<VoiceActor> get voiceActors;
 /// Create a copy of AnimeCharacter
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AnimeCharacterCopyWith<AnimeCharacter> get copyWith => _$AnimeCharacterCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeCharacter&&(identical(other.id, id) || other.id == id)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.name, name) || other.name == name)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.role, role) || other.role == role)&&const DeepCollectionEquality().equals(other.voiceActors, voiceActors));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeCharacter&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.role, role) || other.role == role)&&const DeepCollectionEquality().equals(other.voiceActors, voiceActors));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,firstName,lastName,name,mainPicture,role,const DeepCollectionEquality().hash(voiceActors));
+int get hashCode => Object.hash(runtimeType,id,name,firstName,lastName,mainPicture,role,const DeepCollectionEquality().hash(voiceActors));
 
 @override
 String toString() {
-  return 'AnimeCharacter(id: $id, firstName: $firstName, lastName: $lastName, name: $name, mainPicture: $mainPicture, role: $role, voiceActors: $voiceActors)';
+  return 'AnimeCharacter(id: $id, name: $name, firstName: $firstName, lastName: $lastName, mainPicture: $mainPicture, role: $role, voiceActors: $voiceActors)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AnimeCharacterCopyWith<$Res>  {
   factory $AnimeCharacterCopyWith(AnimeCharacter value, $Res Function(AnimeCharacter) _then) = _$AnimeCharacterCopyWithImpl;
 @useResult
 $Res call({
- int id,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName, String name,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? role,@JsonKey(name: 'voice_actors') List<VoiceActor> voiceActors
+ int id, String name,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? role,@JsonKey(name: 'voice_actors') List<VoiceActor> voiceActors
 });
 
 
@@ -65,13 +65,13 @@ class _$AnimeCharacterCopyWithImpl<$Res>
 
 /// Create a copy of AnimeCharacter
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? firstName = freezed,Object? lastName = freezed,Object? name = null,Object? mainPicture = freezed,Object? role = freezed,Object? voiceActors = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? firstName = freezed,Object? lastName = freezed,Object? mainPicture = freezed,Object? role = freezed,Object? voiceActors = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
-as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
+as String?,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
 as MainPicture?,role: freezed == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String?,voiceActors: null == voiceActors ? _self.voiceActors : voiceActors // ignore: cast_nullable_to_non_nullable
 as List<VoiceActor>,
@@ -168,10 +168,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName,  String name, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? role, @JsonKey(name: 'voice_actors')  List<VoiceActor> voiceActors)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? role, @JsonKey(name: 'voice_actors')  List<VoiceActor> voiceActors)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AnimeCharacter() when $default != null:
-return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPicture,_that.role,_that.voiceActors);case _:
+return $default(_that.id,_that.name,_that.firstName,_that.lastName,_that.mainPicture,_that.role,_that.voiceActors);case _:
   return orElse();
 
 }
@@ -189,10 +189,10 @@ return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPic
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName,  String name, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? role, @JsonKey(name: 'voice_actors')  List<VoiceActor> voiceActors)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? role, @JsonKey(name: 'voice_actors')  List<VoiceActor> voiceActors)  $default,) {final _that = this;
 switch (_that) {
 case _AnimeCharacter():
-return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPicture,_that.role,_that.voiceActors);}
+return $default(_that.id,_that.name,_that.firstName,_that.lastName,_that.mainPicture,_that.role,_that.voiceActors);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -206,10 +206,10 @@ return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPic
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName,  String name, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? role, @JsonKey(name: 'voice_actors')  List<VoiceActor> voiceActors)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? role, @JsonKey(name: 'voice_actors')  List<VoiceActor> voiceActors)?  $default,) {final _that = this;
 switch (_that) {
 case _AnimeCharacter() when $default != null:
-return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPicture,_that.role,_that.voiceActors);case _:
+return $default(_that.id,_that.name,_that.firstName,_that.lastName,_that.mainPicture,_that.role,_that.voiceActors);case _:
   return null;
 
 }
@@ -221,13 +221,13 @@ return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPic
 @JsonSerializable()
 
 class _AnimeCharacter implements AnimeCharacter {
-  const _AnimeCharacter({required this.id, @JsonKey(name: 'first_name') this.firstName, @JsonKey(name: 'last_name') this.lastName, required this.name, @JsonKey(name: 'main_picture') this.mainPicture, this.role, @JsonKey(name: 'voice_actors') final  List<VoiceActor> voiceActors = const []}): _voiceActors = voiceActors;
+  const _AnimeCharacter({required this.id, required this.name, @JsonKey(name: 'first_name') this.firstName, @JsonKey(name: 'last_name') this.lastName, @JsonKey(name: 'main_picture') this.mainPicture, this.role, @JsonKey(name: 'voice_actors') final  List<VoiceActor> voiceActors = const []}): _voiceActors = voiceActors;
   factory _AnimeCharacter.fromJson(Map<String, dynamic> json) => _$AnimeCharacterFromJson(json);
 
 @override final  int id;
+@override final  String name;
 @override@JsonKey(name: 'first_name') final  String? firstName;
 @override@JsonKey(name: 'last_name') final  String? lastName;
-@override final  String name;
 @override@JsonKey(name: 'main_picture') final  MainPicture? mainPicture;
 @override final  String? role;
  final  List<VoiceActor> _voiceActors;
@@ -251,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeCharacter&&(identical(other.id, id) || other.id == id)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.name, name) || other.name == name)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.role, role) || other.role == role)&&const DeepCollectionEquality().equals(other._voiceActors, _voiceActors));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeCharacter&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.role, role) || other.role == role)&&const DeepCollectionEquality().equals(other._voiceActors, _voiceActors));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,firstName,lastName,name,mainPicture,role,const DeepCollectionEquality().hash(_voiceActors));
+int get hashCode => Object.hash(runtimeType,id,name,firstName,lastName,mainPicture,role,const DeepCollectionEquality().hash(_voiceActors));
 
 @override
 String toString() {
-  return 'AnimeCharacter(id: $id, firstName: $firstName, lastName: $lastName, name: $name, mainPicture: $mainPicture, role: $role, voiceActors: $voiceActors)';
+  return 'AnimeCharacter(id: $id, name: $name, firstName: $firstName, lastName: $lastName, mainPicture: $mainPicture, role: $role, voiceActors: $voiceActors)';
 }
 
 
@@ -271,7 +271,7 @@ abstract mixin class _$AnimeCharacterCopyWith<$Res> implements $AnimeCharacterCo
   factory _$AnimeCharacterCopyWith(_AnimeCharacter value, $Res Function(_AnimeCharacter) _then) = __$AnimeCharacterCopyWithImpl;
 @override @useResult
 $Res call({
- int id,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName, String name,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? role,@JsonKey(name: 'voice_actors') List<VoiceActor> voiceActors
+ int id, String name,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? role,@JsonKey(name: 'voice_actors') List<VoiceActor> voiceActors
 });
 
 
@@ -288,13 +288,13 @@ class __$AnimeCharacterCopyWithImpl<$Res>
 
 /// Create a copy of AnimeCharacter
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? firstName = freezed,Object? lastName = freezed,Object? name = null,Object? mainPicture = freezed,Object? role = freezed,Object? voiceActors = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? firstName = freezed,Object? lastName = freezed,Object? mainPicture = freezed,Object? role = freezed,Object? voiceActors = null,}) {
   return _then(_AnimeCharacter(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
-as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
+as String?,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
 as MainPicture?,role: freezed == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String?,voiceActors: null == voiceActors ? _self._voiceActors : voiceActors // ignore: cast_nullable_to_non_nullable
 as List<VoiceActor>,
@@ -320,7 +320,7 @@ $MainPictureCopyWith<$Res>? get mainPicture {
 /// @nodoc
 mixin _$VoiceActor {
 
- int get id;@JsonKey(name: 'first_name') String? get firstName;@JsonKey(name: 'last_name') String? get lastName; String get name;@JsonKey(name: 'main_picture') MainPicture? get mainPicture; String? get language;
+ int get id; String get name;@JsonKey(name: 'first_name') String? get firstName;@JsonKey(name: 'last_name') String? get lastName;@JsonKey(name: 'main_picture') MainPicture? get mainPicture; String? get language;
 /// Create a copy of VoiceActor
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -333,16 +333,16 @@ $VoiceActorCopyWith<VoiceActor> get copyWith => _$VoiceActorCopyWithImpl<VoiceAc
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VoiceActor&&(identical(other.id, id) || other.id == id)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.name, name) || other.name == name)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.language, language) || other.language == language));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VoiceActor&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.language, language) || other.language == language));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,firstName,lastName,name,mainPicture,language);
+int get hashCode => Object.hash(runtimeType,id,name,firstName,lastName,mainPicture,language);
 
 @override
 String toString() {
-  return 'VoiceActor(id: $id, firstName: $firstName, lastName: $lastName, name: $name, mainPicture: $mainPicture, language: $language)';
+  return 'VoiceActor(id: $id, name: $name, firstName: $firstName, lastName: $lastName, mainPicture: $mainPicture, language: $language)';
 }
 
 
@@ -353,7 +353,7 @@ abstract mixin class $VoiceActorCopyWith<$Res>  {
   factory $VoiceActorCopyWith(VoiceActor value, $Res Function(VoiceActor) _then) = _$VoiceActorCopyWithImpl;
 @useResult
 $Res call({
- int id,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName, String name,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? language
+ int id, String name,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? language
 });
 
 
@@ -370,13 +370,13 @@ class _$VoiceActorCopyWithImpl<$Res>
 
 /// Create a copy of VoiceActor
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? firstName = freezed,Object? lastName = freezed,Object? name = null,Object? mainPicture = freezed,Object? language = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? firstName = freezed,Object? lastName = freezed,Object? mainPicture = freezed,Object? language = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
-as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
+as String?,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
 as MainPicture?,language: freezed == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -472,10 +472,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName,  String name, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? language)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? language)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VoiceActor() when $default != null:
-return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPicture,_that.language);case _:
+return $default(_that.id,_that.name,_that.firstName,_that.lastName,_that.mainPicture,_that.language);case _:
   return orElse();
 
 }
@@ -493,10 +493,10 @@ return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPic
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName,  String name, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? language)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? language)  $default,) {final _that = this;
 switch (_that) {
 case _VoiceActor():
-return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPicture,_that.language);}
+return $default(_that.id,_that.name,_that.firstName,_that.lastName,_that.mainPicture,_that.language);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -510,10 +510,10 @@ return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPic
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName,  String name, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? language)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name, @JsonKey(name: 'first_name')  String? firstName, @JsonKey(name: 'last_name')  String? lastName, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  String? language)?  $default,) {final _that = this;
 switch (_that) {
 case _VoiceActor() when $default != null:
-return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPicture,_that.language);case _:
+return $default(_that.id,_that.name,_that.firstName,_that.lastName,_that.mainPicture,_that.language);case _:
   return null;
 
 }
@@ -525,13 +525,13 @@ return $default(_that.id,_that.firstName,_that.lastName,_that.name,_that.mainPic
 @JsonSerializable()
 
 class _VoiceActor implements VoiceActor {
-  const _VoiceActor({required this.id, @JsonKey(name: 'first_name') this.firstName, @JsonKey(name: 'last_name') this.lastName, required this.name, @JsonKey(name: 'main_picture') this.mainPicture, this.language});
+  const _VoiceActor({required this.id, required this.name, @JsonKey(name: 'first_name') this.firstName, @JsonKey(name: 'last_name') this.lastName, @JsonKey(name: 'main_picture') this.mainPicture, this.language});
   factory _VoiceActor.fromJson(Map<String, dynamic> json) => _$VoiceActorFromJson(json);
 
 @override final  int id;
+@override final  String name;
 @override@JsonKey(name: 'first_name') final  String? firstName;
 @override@JsonKey(name: 'last_name') final  String? lastName;
-@override final  String name;
 @override@JsonKey(name: 'main_picture') final  MainPicture? mainPicture;
 @override final  String? language;
 
@@ -548,16 +548,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VoiceActor&&(identical(other.id, id) || other.id == id)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.name, name) || other.name == name)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.language, language) || other.language == language));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VoiceActor&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.language, language) || other.language == language));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,firstName,lastName,name,mainPicture,language);
+int get hashCode => Object.hash(runtimeType,id,name,firstName,lastName,mainPicture,language);
 
 @override
 String toString() {
-  return 'VoiceActor(id: $id, firstName: $firstName, lastName: $lastName, name: $name, mainPicture: $mainPicture, language: $language)';
+  return 'VoiceActor(id: $id, name: $name, firstName: $firstName, lastName: $lastName, mainPicture: $mainPicture, language: $language)';
 }
 
 
@@ -568,7 +568,7 @@ abstract mixin class _$VoiceActorCopyWith<$Res> implements $VoiceActorCopyWith<$
   factory _$VoiceActorCopyWith(_VoiceActor value, $Res Function(_VoiceActor) _then) = __$VoiceActorCopyWithImpl;
 @override @useResult
 $Res call({
- int id,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName, String name,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? language
+ int id, String name,@JsonKey(name: 'first_name') String? firstName,@JsonKey(name: 'last_name') String? lastName,@JsonKey(name: 'main_picture') MainPicture? mainPicture, String? language
 });
 
 
@@ -585,13 +585,13 @@ class __$VoiceActorCopyWithImpl<$Res>
 
 /// Create a copy of VoiceActor
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? firstName = freezed,Object? lastName = freezed,Object? name = null,Object? mainPicture = freezed,Object? language = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? firstName = freezed,Object? lastName = freezed,Object? mainPicture = freezed,Object? language = freezed,}) {
   return _then(_VoiceActor(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
-as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
+as String?,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
 as MainPicture?,language: freezed == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

@@ -84,14 +84,15 @@ class AnimeListTab extends ConsumerWidget {
         final airingMap = asyncAiringMap.when(
           data: (map) => map,
           loading: () => <int, AiringEntry>{},
-          error: (_, __) => <int, AiringEntry>{},
+          error: (_, _) => <int, AiringEntry>{},
         );
         final sorted = _sort(animeList, airingMap);
 
         return RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(userAnimeListProvider(status));
-            ref.invalidate(airingByMalIdProvider);
+            ref
+              ..invalidate(userAnimeListProvider(status))
+              ..invalidate(airingByMalIdProvider);
           },
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),

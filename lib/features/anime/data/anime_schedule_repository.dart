@@ -16,12 +16,10 @@ import 'package:logger/logger.dart';
 /// - Merged result: derived from cached data
 class AnimeScheduleRepository {
   AnimeScheduleRepository({
-    required MalAnimeApi malApi,
-    required AniListApi anilistApi,
+    required this._malApi,
+    required this._anilistApi,
     Logger? logger,
-  })  : _malApi = malApi,
-        _anilistApi = anilistApi,
-        _logger = logger ?? Logger();
+  }) : _logger = logger ?? Logger();
 
   final MalAnimeApi _malApi;
   final AniListApi _anilistApi;
@@ -147,11 +145,10 @@ class AnimeScheduleRepository {
       final anime = await _malApi.getSeasonalAnime(
         year: year,
         season: season,
-        limit: 100,
       );
       _malCache[key] = anime;
       return anime;
-    } catch (e) {
+    } on Exception catch (e) {
       _logger.e('MAL seasonal fetch failed', error: e);
       return _malCache[key] ?? [];
     }
@@ -173,7 +170,7 @@ class AnimeScheduleRepository {
       final schedule = scheduleMap.values.expand((list) => list).toList();
       _anilistCache[key] = schedule;
       return schedule;
-    } catch (e) {
+    } on Exception catch (e) {
       _logger.w('AniList schedule fetch failed, using MAL only',
           error: e);
       return _anilistCache[key] ?? [];
