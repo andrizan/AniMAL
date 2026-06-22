@@ -33,6 +33,16 @@ jobs:
           echo "MAL_CLIENT_SECRET=${{ secrets.MAL_CLIENT_SECRET }}" >> .env
           echo "MAL_REDIRECT_URI=${{ secrets.MAL_REDIRECT_URI }}" >> .env
 
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release-keystore.jks
+          cat <<EOF > android/key.properties
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=release-keystore.jks
+          EOF
+
       - run: flutter build apk --release
 
       - name: Rename APK
