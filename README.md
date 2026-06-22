@@ -85,8 +85,8 @@ lib/
 
 1. Clone the repo:
    ```bash
-   git clone <repo-url>
-   cd animal
+   git clone https://github.com/andrizan/AniMAL.git
+   cd AniMAL
    ```
 
 2. Install dependencies:
