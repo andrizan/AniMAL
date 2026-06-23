@@ -11,6 +11,7 @@ import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
+import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -215,34 +216,34 @@ class AnimeDetailPage extends ConsumerWidget {
                         runSpacing: 8,
                         children: [
                           if (detail.mean != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.star_rounded,
                               label: detail.mean!.toStringAsFixed(2),
                               color: AppColors.starColor,
                             ),
                           if (detail.rank != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.leaderboard,
                               label: '#${detail.rank}',
                             ),
                           if (detail.numEpisodes != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.movie_outlined,
                               label: '${detail.numEpisodes} eps',
                             ),
                           if (detail.mediaType != null)
-                            _InfoChip(
+                            InfoChip(
                               label: AnimeLabels.mediaTypeLabel(
                                 detail.mediaType!,
                               ),
                             ),
                           if (detail.status != null)
-                            _InfoChip(
+                            InfoChip(
                               label: AnimeLabels.statusLabel(detail.status!),
                               color: AnimeLabels.statusColor(detail.status!),
                             ),
                           if (detail.rating != null)
-                            _InfoChip(
+                            InfoChip(
                               label: AnimeLabels.ratingLabel(detail.rating!),
                               color: theme.colorScheme.error,
                             ),
@@ -844,49 +845,6 @@ class _ActionButtons extends ConsumerWidget {
         },
         icon: const Icon(Icons.delete_outline),
         label: const Text('Remove from List'),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// Info Chip
-// ═══════════════════════════════════════════════════════════════════
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label, this.icon, this.color});
-
-  final IconData? icon;
-  final String label;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color != null
-            ? color!.withValues(alpha: 0.15)
-            : theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
       ),
     );
   }

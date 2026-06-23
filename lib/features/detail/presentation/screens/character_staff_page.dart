@@ -6,6 +6,7 @@ import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
+import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -157,17 +158,17 @@ class CharacterProfilePage extends ConsumerWidget {
                         runSpacing: 8,
                         children: [
                           if (character.gender != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.person_outline,
                               label: character.gender!,
                             ),
                           if (character.age != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.cake_outlined,
                               label: 'Age: ${character.age}',
                             ),
                           if (character.birthMonth != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.calendar_today,
                               label: _formatBirthday(character),
                             ),
@@ -379,22 +380,22 @@ class StaffProfilePage extends ConsumerWidget {
                           if (staff.occupations != null &&
                               staff.occupations!.isNotEmpty)
                             for (final occ in staff.occupations!)
-                              _InfoChip(
+                              InfoChip(
                                 icon: Icons.work_outline,
                                 label: occ,
                               ),
                           if (staff.gender != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.person_outline,
                               label: staff.gender!,
                             ),
                           if (staff.age != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.cake_outlined,
                               label: 'Age: ${staff.age}',
                             ),
                           if (staff.homeTown != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.location_on_outlined,
                               label: staff.homeTown!,
                             ),
@@ -445,36 +446,6 @@ class StaffProfilePage extends ConsumerWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/// Info chip widget.
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label, this.icon});
-
-  final IconData? icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16),
-            const SizedBox(width: 4),
-          ],
-          Text(label, style: const TextStyle(fontSize: 13)),
-        ],
-      ),
     );
   }
 }

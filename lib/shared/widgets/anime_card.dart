@@ -323,6 +323,10 @@ class AnimeCard extends ConsumerWidget {
         context: context,
         isScrollControlled: true,
         builder: (ctx) {
+          final epsController = TextEditingController(
+            text: '$currentEps',
+          );
+
           return StatefulBuilder(
             builder: (ctx, setModalState) {
               final notifEnabled = ref
@@ -435,15 +439,16 @@ class AnimeCard extends ConsumerWidget {
                         IconButton(
                           icon: const Icon(Icons.remove_circle_outline),
                           onPressed: selectedEps > 0
-                              ? () => setModalState(() => selectedEps--)
+                              ? () {
+                                  setModalState(() => selectedEps--);
+                                  epsController.text = '${selectedEps - 1}';
+                                }
                               : null,
                         ),
                         SizedBox(
                           width: 70,
                           child: TextField(
-                            controller: TextEditingController(
-                              text: '$selectedEps',
-                            ),
+                            controller: epsController,
                             textAlign: TextAlign.center,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
@@ -471,7 +476,10 @@ class AnimeCard extends ConsumerWidget {
                           icon: const Icon(Icons.add_circle_outline),
                           onPressed:
                               (totalEps == null || selectedEps < totalEps)
-                              ? () => setModalState(() => selectedEps++)
+                              ? () {
+                                  setModalState(() => selectedEps++);
+                                  epsController.text = '${selectedEps + 1}';
+                                }
                               : null,
                         ),
                       ],

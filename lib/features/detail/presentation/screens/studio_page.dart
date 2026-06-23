@@ -2,6 +2,7 @@ import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -105,13 +106,13 @@ class StudioProfilePage extends ConsumerWidget {
                         runSpacing: 8,
                         children: [
                           if (studio.isAnimationStudio)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.movie,
                               label: 'Animation Studio',
                               color: theme.colorScheme.primary,
                             ),
                           if (studio.favourites != null)
-                            _InfoChip(
+                            InfoChip(
                               icon: Icons.favorite_border,
                               label: '${studio.favourites} favourites',
                             ),
@@ -157,44 +158,6 @@ class _AnimeWorksList extends ConsumerWidget {
       error: (_, __) => const SizedBox.shrink(),
       data: (animeList) => Column(
         children: animeList.map((anime) => AnimeCard(anime: anime)).toList(),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label, this.icon, this.color});
-
-  final IconData? icon;
-  final String label;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final effectiveColor = color ?? theme.colorScheme.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: effectiveColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16, color: effectiveColor),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: effectiveColor,
-            ),
-          ),
-        ],
       ),
     );
   }
