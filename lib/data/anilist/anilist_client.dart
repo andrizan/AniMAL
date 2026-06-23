@@ -68,9 +68,9 @@ class AniListClient {
     }
 
     _logger.d('AniList: fetching weekly schedule');
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final monday = now.subtract(Duration(days: now.weekday - 1));
-    final weekStart = DateTime(monday.year, monday.month, monday.day);
+    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
     final weekEnd = weekStart.add(const Duration(days: 7));
     final startSec = weekStart.millisecondsSinceEpoch ~/ 1000;
     final endSec = weekEnd.millisecondsSinceEpoch ~/ 1000;

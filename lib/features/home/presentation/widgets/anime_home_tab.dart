@@ -1,30 +1,10 @@
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
+import 'package:animal/shared/providers/anime_list_providers.dart'
+    show AiringFilter, ListSort;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-/// Sort options for the anime list.
-enum ListSort {
-  name('Name'),
-  score('Score'),
-  episodes('Episodes'),
-  airing('Airing');
-
-  const ListSort(this.label);
-  final String label;
-}
-
-/// Airing status filter.
-enum AiringFilter {
-  all('All'),
-  airing('Airing'),
-  finished('Finished'),
-  upcoming('Upcoming');
-
-  const AiringFilter(this.label);
-  final String label;
-}
 
 /// Home tab with tabbed anime lists and filter bar.
 class AnimeHomeTab extends ConsumerStatefulWidget {

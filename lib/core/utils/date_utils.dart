@@ -17,7 +17,14 @@ String? convertJstToLocal(String? jstTime) {
       minute,
     );
     final localDateTime = jstDateTime.toLocal();
-    final prefix = localDateTime.day > now.day ? 'Tomorrow ' : '';
+    final localDate = DateTime(
+      localDateTime.year,
+      localDateTime.month,
+      localDateTime.day,
+    );
+    final today = DateTime(now.year, now.month, now.day);
+    final dayDiff = localDate.difference(today).inDays;
+    final prefix = dayDiff > 0 ? 'Tomorrow ' : '';
     return '$prefix${localDateTime.hour.toString().padLeft(2, '0')}:'
         '${localDateTime.minute.toString().padLeft(2, '0')}';
   } on Exception {

@@ -1,4 +1,3 @@
-import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/features/seasonal/providers/seasonal_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
@@ -209,44 +208,6 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
   }
 }
 
-({Map<String, List<Anime>> grouped, List<Anime> noBroadcast}) _groupAnimeByDay(
-  List<Anime> animeList,
-) {
-  const days = <String>[
-    'monday',
-    'tuesday',
-    'wednesday',
-    'thursday',
-    'friday',
-    'saturday',
-    'sunday',
-  ];
-  final grouped = <String, List<Anime>>{};
-  for (final day in days) {
-    grouped[day] = [];
-  }
-  final noBroadcast = <Anime>[];
-
-  for (final anime in animeList) {
-    final day = anime.broadcast?.dayOfWeek;
-    if (day != null && grouped.containsKey(day)) {
-      grouped[day]!.add(anime);
-    } else {
-      noBroadcast.add(anime);
-    }
-  }
-
-  for (final entry in grouped.entries) {
-    entry.value.sort((a, b) {
-      final at = a.broadcast?.startTime ?? '';
-      final bt = b.broadcast?.startTime ?? '';
-      return at.compareTo(bt);
-    });
-  }
-
-  return (grouped: grouped, noBroadcast: noBroadcast);
-}
-
 /// Displays anime for a specific year/season grouped by broadcast day.
 class _SeasonAnimeList extends ConsumerWidget {
   const _SeasonAnimeList({
@@ -280,7 +241,7 @@ class _SeasonAnimeList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final params = (year: year, season: season);
-    final asyncAnime = ref.watch(animeScheduleProvider(params));
+    final asyncAnime = ref.watch(groupedSeasonalAnimeProvider(params));
     final theme = Theme.of(context);
 
     return asyncAnime.when(
@@ -303,7 +264,9 @@ class _SeasonAnimeList extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(animeScheduleProvider(params)),
+                onPressed: () => ref.invalidate(
+                  groupedSeasonalAnimeProvider(params),
+                ),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -311,8 +274,12 @@ class _SeasonAnimeList extends ConsumerWidget {
           ),
         ),
       ),
-      data: (animeList) {
-        if (animeList.isEmpty) {
+      data: (result) {
+        final grouped = result.grouped;
+        final noBroadcast = result.noBroadcast;
+        final hasAny =
+            grouped.values.any((l) => l.isNotEmpty) || noBroadcast.isNotEmpty;
+        if (!hasAny) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -334,11 +301,10 @@ class _SeasonAnimeList extends ConsumerWidget {
           );
         }
 
-        // Group by broadcast day
-        final (:grouped, :noBroadcast) = _groupAnimeByDay(animeList);
-
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
+          onRefresh: () async => ref.invalidate(
+            groupedSeasonalAnimeProvider(params),
+          ),
           child: CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 8)),

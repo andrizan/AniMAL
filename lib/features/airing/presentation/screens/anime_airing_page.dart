@@ -179,7 +179,7 @@ class _AiringCard extends StatelessWidget {
           : null,
       mean: entry.malScore,
       numEpisodes: entry.episodes,
-      status: entry.status,
+      status: _mapAniListStatus(entry.status),
       genres: entry.genres.map((g) => Genre(id: 0, name: g)).toList(),
       broadcast: airingTime != null ? Broadcast(startTime: airingTime) : null,
       alternativeTitles: AlternativeTitles(
@@ -216,6 +216,14 @@ class _AiringCard extends StatelessWidget {
     return '${local.hour.toString().padLeft(2, '0')}:'
         '${local.minute.toString().padLeft(2, '0')}';
   }
+
+  String? _mapAniListStatus(String? status) => switch (status) {
+    'RELEASING' => 'currently_airing',
+    'FINISHED' => 'finished_airing',
+    'NOT_YET_RELEASED' => 'not_yet_aired',
+    'CANCELLED' => 'finished_airing',
+    _ => status,
+  };
 }
 
 /// Countdown chip shown on airing cards.

@@ -22,6 +22,17 @@ String? authGuard(GoRouterState state, AuthStatus authStatus) {
 
 class AuthRefreshListenable extends ChangeNotifier {
   AuthRefreshListenable(Ref ref) {
-    ref.listen(authControllerProvider, (_, __) => notifyListeners());
+    _subscription = ref.listen(
+      authControllerProvider,
+      (previous, next) => notifyListeners(),
+    );
+  }
+
+  ProviderSubscription<AuthStatus>? _subscription;
+
+  @override
+  void dispose() {
+    _subscription?.close();
+    super.dispose();
   }
 }
