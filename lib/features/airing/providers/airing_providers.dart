@@ -1,10 +1,10 @@
 import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
-import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
+import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -13,12 +13,12 @@ export 'package:animal/shared/providers/airing_entry.dart';
 /// Repository that merges AniList schedule with MAL scores.
 class AiringRepository {
   AiringRepository({
-    required this._malApi,
+    required this._animeRepo,
     required this._anilistApi,
     Logger? logger,
   }) : _logger = logger ?? appLogger;
 
-  final MalApiClient _malApi;
+  final AnimeRepository _animeRepo;
   final AniListClient _anilistApi;
   final Logger _logger;
 
@@ -124,7 +124,7 @@ class AiringRepository {
       final year = now.year;
 
       _logger.d('Fetching MAL seasonal: $season $year');
-      final animeList = await _malApi.getSeasonalAnime(
+      final animeList = await _animeRepo.getSeasonalAnime(
         year: year,
         season: season,
         limit: 500,
@@ -142,7 +142,7 @@ class AiringRepository {
 /// Provider for [AiringRepository].
 final airingRepositoryProvider = Provider<AiringRepository>((ref) {
   return AiringRepository(
-    malApi: MalApiClient(ref.watch(dioProvider)),
+    animeRepo: ref.watch(animeRepositoryProvider),
     anilistApi: AniListClient(logger: ref.watch(loggerProvider)),
     logger: ref.watch(loggerProvider),
   );
