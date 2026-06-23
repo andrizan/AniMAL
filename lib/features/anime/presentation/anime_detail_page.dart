@@ -5,6 +5,7 @@ import 'package:animal/features/anime/domain/anime_detail.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
 import 'package:animal/features/anime/presentation/anilist_providers.dart';
 import 'package:animal/features/anime/presentation/anime_list_controller.dart';
+import 'package:animal/features/anime/presentation/anime_notification_provider.dart';
 import 'package:animal/features/anime/presentation/anime_providers.dart';
 import 'package:animal/features/anime/presentation/anime_search_controller.dart';
 import 'package:animal/features/anime/presentation/full_screen_image.dart';
@@ -108,6 +109,19 @@ class AnimeDetailPage extends ConsumerWidget {
                   ),
                 ),
                 actions: [
+                  if (asyncExtra.value?.nextAiring != null)
+                    Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Colors.black38,
+                        shape: BoxShape.circle,
+                      ),
+                      child: _NotificationBell(
+                        animeId: animeId,
+                        title: detail.title,
+                        nextAiring: asyncExtra.value!.nextAiring!,
+                      ),
+                    ),
                   Container(
                     margin: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
@@ -1383,6 +1397,66 @@ class _CircleAvatar extends StatelessWidget {
                 ),
               ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Notification Bell for airing anime
+// ═══════════════════════════════════════════════════════════════════
+
+class _NotificationBell extends ConsumerWidget {
+  const _NotificationBell({
+    required this.animeId,
+    required this.title,
+    required this.nextAiring,
+  });
+
+  final int animeId;
+  final String title;
+  final AniListNextAiring nextAiring;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(animeNotificationProvider).contains(animeId);
+
+    return IconButton(
+      icon: Icon(
+        enabled ? Icons.notifications_active : Icons.notifications_none,
+        color: enabled ? Colors.amber : Colors.white,
+      ),
+      onPressed: () async {
+        final success = await ref.read(animeNotificationProvider.notifier).toggle(
+              animeId: animeId,
+              title: title,
+              episode: nextAiring.episode,
+              airingAt: nextAiring.airingAt,
+            );
+
+        if (!context.mounted) return;
+
+        if (!success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Notification permission denied'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+
+        final nowEnabled = ref.read(animeNotificationProvider).contains(animeId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              nowEnabled
+                  ? 'Notification enabled for Episode ${nextAiring.episode}'
+                  : 'Notification disabled',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
     );
   }
 }

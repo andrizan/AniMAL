@@ -4,6 +4,7 @@ import 'package:animal/features/anime/domain/anime.dart';
 import 'package:animal/features/anime/domain/watch_status.dart';
 import 'package:animal/features/anime/presentation/anime_airing_providers.dart';
 import 'package:animal/features/anime/presentation/anime_list_controller.dart';
+import 'package:animal/features/anime/presentation/anime_notification_provider.dart';
 import 'package:animal/features/anime/presentation/anime_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ class AnimeCard extends ConsumerWidget {
     final statusColor = _statusColor(anime.status);
     final personalScore = anime.myListStatus?.score;
     final watchedEps = anime.myListStatus?.numEpisodesWatched;
+    final notifEnabled = ref.watch(animeNotificationProvider).contains(anime.id);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
@@ -230,6 +232,11 @@ class AnimeCard extends ConsumerWidget {
                             ),
                           ],
                           const Spacer(),
+                          if (notifEnabled) ...[
+                            Icon(Icons.notifications_active,
+                                size: 14, color: Colors.amber),
+                            const SizedBox(width: 6),
+                          ],
                           if (nextAiring != null)
                             _NextEpisodeBadge(
                               episode: nextAiring!.episode,
@@ -307,6 +314,8 @@ class AnimeCard extends ConsumerWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
+            final notifEnabled = ref.watch(animeNotificationProvider).contains(anime.id);
+
             return Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
               child: Column(
@@ -322,6 +331,55 @@ class AnimeCard extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 20),
+
+                  // Notification toggle (only for airing anime with nextAiring)
+                  if (nextAiring != null) ...[
+                    Text('Notification',
+                        style: Theme.of(ctx).textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          notifEnabled
+                              ? Icons.notifications_active
+                              : Icons.notifications_none,
+                          color: notifEnabled ? Colors.amber : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            notifEnabled
+                                ? 'Notification enabled for Ep ${nextAiring!.episode}'
+                                : 'Get notified before episode airs',
+                            style: Theme.of(ctx).textTheme.bodyMedium,
+                          ),
+                        ),
+                        Switch(
+                          value: notifEnabled,
+                          onChanged: (value) async {
+                            final success = await ref
+                                .read(animeNotificationProvider.notifier)
+                                .toggle(
+                                  animeId: anime.id,
+                                  title: anime.title,
+                                  episode: nextAiring!.episode,
+                                  airingAt: nextAiring!.airingAt,
+                                );
+                            if (!success && ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content:
+                                      Text('Notification permission denied'),
+                                ),
+                              );
+                            }
+                            setModalState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
 
                   // Status
                   Text('Status',
