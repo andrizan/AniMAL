@@ -30,28 +30,6 @@ abstract final class AniListQueries {
     }
   ''';
 
-  static const charactersAndStaff = r'''
-    query ($idMal: Int) {
-      Media(idMal: $idMal, type: ANIME) {
-        characters(sort: ROLE, perPage: 25) {
-          edges {
-            role
-            node { id name { full native } image { medium } }
-            voiceActors(language: JAPANESE) {
-              id name { full native } image { medium } language
-            }
-          }
-        }
-        staff(sort: RELEVANCE, perPage: 20) {
-          edges {
-            role
-            node { id name { full native } image { medium } }
-          }
-        }
-      }
-    }
-  ''';
-
   static const animeExtra = r'''
     query ($idMal: Int) {
       Media(idMal: $idMal, type: ANIME) {

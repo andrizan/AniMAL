@@ -152,6 +152,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - **Dark mode** by default (`ThemeMode.dark`).
 - Material 3 with indigo seed color.
 - Theme built in `core/theme/app_theme.dart` (not hardcoded in `app.dart`).
+- **Colors**: ALL colors MUST be defined in `lib/core/theme/app_colors.dart` — NEVER use raw `Colors.blue`, `Colors.green`, etc. Use `AppColors.*` static constants (e.g., `AppColors.listWatching`, `AppColors.statusAiring`). For theme-aware colors, extend `StatusColors` with both light and dark variants.
 
 ## Environment
 

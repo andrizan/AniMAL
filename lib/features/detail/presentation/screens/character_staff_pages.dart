@@ -480,7 +480,7 @@ class _WorksList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncAnime = malIds.isNotEmpty
-        ? ref.watch(animeListProvider(malIds))
+        ? ref.watch(animeListProvider(malIds.join(',')))
         : null;
 
     return Column(

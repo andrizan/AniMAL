@@ -217,13 +217,6 @@ class AniListClient {
     );
   }
 
-  Future<AniListAnimePeople> getCharactersAndStaff(int malId) async {
-    final data =
-        await _query(AniListQueries.charactersAndStaff, {'idMal': malId})
-            as Map<String, dynamic>;
-    return _parsePeople(data);
-  }
-
   Future<AniListNextAiring?> getNextAiringSchedule(int malId) async {
     final data =
         await _query(AniListQueries.nextAiring, {'idMal': malId})

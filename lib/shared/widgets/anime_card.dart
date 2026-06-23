@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
@@ -8,7 +9,6 @@ import 'package:animal/features/airing/providers/airing_providers.dart';
 import 'package:animal/features/home/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
-import 'package:animal/core/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

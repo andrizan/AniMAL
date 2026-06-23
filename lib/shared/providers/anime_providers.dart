@@ -256,8 +256,11 @@ final animeDetailProvider = FutureProvider.autoDispose
 });
 
 /// FutureProvider family for a batch of Anime by MAL IDs.
+/// Uses a comma-separated string key for stable provider identity.
 final animeListProvider = FutureProvider.autoDispose
-    .family<List<Anime>, List<int>>((ref, malIds) async {
+    .family<List<Anime>, String>((ref, key) async {
+  if (key.isEmpty) return [];
+  final malIds = key.split(',').map((s) => int.parse(s)).toList();
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getAnimeList(malIds);
 });

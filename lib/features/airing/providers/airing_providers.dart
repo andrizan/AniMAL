@@ -1,3 +1,4 @@
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
@@ -5,7 +6,6 @@ import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
 
 /// Merged entry combining AniList schedule + MAL anime data.

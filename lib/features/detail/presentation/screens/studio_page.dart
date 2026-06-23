@@ -144,7 +144,7 @@ class _AnimeWorksList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAnime = ref.watch(animeListProvider(malIds));
+    final asyncAnime = ref.watch(animeListProvider(malIds.join(',')));
 
     return asyncAnime.when(
       loading: () => const Center(
