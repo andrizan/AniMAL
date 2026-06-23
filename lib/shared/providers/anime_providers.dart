@@ -1,4 +1,5 @@
 import 'package:animal/core/providers.dart';
+import 'package:animal/data/local/memory_cache.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
@@ -10,21 +11,34 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
+final _cache = MemoryCache();
+
 /// Provider for [MalApiClient].
 final malAnimeApiProvider = Provider<MalApiClient>((ref) {
   return MalApiClient(ref.watch(dioProvider));
 });
 
-/// High-level repository that wraps [MalApiClient] with error handling.
+/// High-level repository that wraps [MalApiClient] with error handling and caching.
 class AnimeRepository {
   const AnimeRepository(this._api, [this._logger]);
 
   final MalApiClient _api;
   final Logger? _logger;
 
+  static const _ttlShort = Duration(minutes: 1);
+  static const _ttlUserList = Duration(minutes: 3);
+  static const _ttlMedium = Duration(minutes: 10);
+  static const _ttlLong = Duration(minutes: 15);
+
   Future<List<Anime>> searchAnime(String query, {int limit = 20}) async {
+    final key = 'search_${query}_$limit';
+    final cached = _cache.get<List<Anime>>(key);
+    if (cached != null) return cached;
+
     try {
-      return await _api.searchAnime(query, limit: limit);
+      final result = await _api.searchAnime(query, limit: limit);
+      _cache.put(key, result, ttl: _ttlShort);
+      return result;
     } on DioException catch (e) {
       _logger?.e('searchAnime failed', error: e);
       throw _mapDioException(e);
@@ -36,8 +50,14 @@ class AnimeRepository {
     required Season season,
     int limit = 100,
   }) async {
+    final key = 'seasonal_${year}_${season.value}_$limit';
+    final cached = _cache.get<List<Anime>>(key);
+    if (cached != null) return cached;
+
     try {
-      return await _api.getSeasonalAnime(year: year, season: season, limit: limit);
+      final result = await _api.getSeasonalAnime(year: year, season: season, limit: limit);
+      _cache.put(key, result, ttl: _ttlLong);
+      return result;
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         _logger?.i('Season $season $year not available yet');
@@ -49,8 +69,14 @@ class AnimeRepository {
   }
 
   Future<AnimeDetail?> getAnimeDetail(int animeId) async {
+    final key = 'detail_$animeId';
+    final cached = _cache.get<AnimeDetail>(key);
+    if (cached != null) return cached;
+
     try {
-      return await _api.getAnimeDetail(animeId);
+      final result = await _api.getAnimeDetail(animeId);
+      if (result != null) _cache.put(key, result, ttl: _ttlLong);
+      return result;
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         _logger?.i('Anime $animeId not found on MAL');
@@ -65,8 +91,14 @@ class AnimeRepository {
     String rankingType = 'all',
     int limit = 20,
   }) async {
+    final key = 'ranking_${rankingType}_$limit';
+    final cached = _cache.get<List<Anime>>(key);
+    if (cached != null) return cached;
+
     try {
-      return await _api.getAnimeRanking(rankingType: rankingType, limit: limit);
+      final result = await _api.getAnimeRanking(rankingType: rankingType, limit: limit);
+      _cache.put(key, result, ttl: _ttlMedium);
+      return result;
     } on DioException catch (e) {
       _logger?.e('getAnimeRanking failed', error: e);
       throw _mapDioException(e);
@@ -78,8 +110,14 @@ class AnimeRepository {
     int limit = 100,
     int offset = 0,
   }) async {
+    final key = 'userlist_${status.value}_$limit';
+    final cached = _cache.get<List<Anime>>(key);
+    if (cached != null) return cached;
+
     try {
-      return await _api.getUserAnimeList(status: status, limit: limit, offset: offset);
+      final result = await _api.getUserAnimeList(status: status, limit: limit, offset: offset);
+      _cache.put(key, result, ttl: _ttlUserList);
+      return result;
     } on DioException catch (e) {
       _logger?.e('getUserAnimeList failed', error: e);
       throw _mapDioException(e);
@@ -89,6 +127,7 @@ class AnimeRepository {
   Future<void> deleteAnimeFromList(int animeId) async {
     try {
       await _api.deleteAnimeFromList(animeId);
+      _invalidateUserListCache();
     } on DioException catch (e) {
       _logger?.e('deleteAnimeFromList failed', error: e);
       throw _mapDioException(e);
@@ -116,6 +155,7 @@ class AnimeRepository {
         rewatchValue: rewatchValue,
         comments: comments,
       );
+      _invalidateUserListCache();
     } on DioException catch (e) {
       _logger?.e('updateAnimeListStatus failed', error: e);
       throw _mapDioException(e);
@@ -123,12 +163,22 @@ class AnimeRepository {
   }
 
   Future<MalUser?> getUserInfo() async {
+    const key = 'userInfo';
+    final cached = _cache.get<MalUser>(key);
+    if (cached != null) return cached;
+
     try {
-      return await _api.getUserInfo();
+      final result = await _api.getUserInfo();
+      if (result != null) _cache.put(key, result, ttl: _ttlMedium);
+      return result;
     } on DioException catch (e) {
       _logger?.e('getUserInfo failed', error: e);
       throw _mapDioException(e);
     }
+  }
+
+  void _invalidateUserListCache() {
+    _cache.removeWhere((key) => key.startsWith('userlist_'));
   }
 
   ApiException _mapDioException(DioException e) {

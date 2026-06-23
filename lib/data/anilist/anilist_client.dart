@@ -2,9 +2,12 @@ import 'package:animal/core/config/env.dart';
 import 'package:animal/core/constants/anilist_queries.dart';
 import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/network/api_exception.dart';
+import 'package:animal/data/local/memory_cache.dart';
 import 'package:dio/dio.dart';
 import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
+
+final _anilistCache = MemoryCache();
 
 class AniListClient {
   AniListClient({Logger? logger})
@@ -211,6 +214,10 @@ class AniListClient {
   }
 
   Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) async {
+    final key = 'animeExtra_$malId';
+    final cached = _anilistCache.get<AniListAnimeExtra>(key);
+    if (cached != null) return cached;
+
     final data = await _query(AniListQueries.animeExtra, {'idMal': malId}) as Map<String, dynamic>;
     final media = data['Media'] as Map<String, dynamic>?;
     if (media == null) return const AniListAnimeExtra();
@@ -240,10 +247,16 @@ class AniListClient {
       );
     }).toList();
 
-    return AniListAnimeExtra(people: people, nextAiring: nextAiring, externalLinks: externalLinks);
+    final result = AniListAnimeExtra(people: people, nextAiring: nextAiring, externalLinks: externalLinks);
+    _anilistCache.put(key, result, ttl: const Duration(minutes: 15));
+    return result;
   }
 
   Future<AniListCharacterDetail> getCharacterDetail(int id) async {
+    final key = 'character_$id';
+    final cached = _anilistCache.get<AniListCharacterDetail>(key);
+    if (cached != null) return cached;
+
     final data = await _query(AniListQueries.characterDetail, {'id': id}) as Map<String, dynamic>;
     final c = data['Character'] as Map<String, dynamic>;
     final name = c['name'] as Map<String, dynamic>;
@@ -267,7 +280,7 @@ class AniListClient {
       );
     }).toList();
 
-    return AniListCharacterDetail(
+    final result = AniListCharacterDetail(
       id: c['id'] as int,
       name: name['full'] as String,
       nativeName: name['native'] as String?,
@@ -280,9 +293,15 @@ class AniListClient {
       gender: c['gender'] as String?,
       mediaAppearances: media,
     );
+    _anilistCache.put(key, result, ttl: const Duration(minutes: 30));
+    return result;
   }
 
   Future<AniListStaffDetail> getStaffDetail(int id) async {
+    final key = 'staff_$id';
+    final cached = _anilistCache.get<AniListStaffDetail>(key);
+    if (cached != null) return cached;
+
     final data = await _query(AniListQueries.staffDetail, {'id': id}) as Map<String, dynamic>;
     final s = data['Staff'] as Map<String, dynamic>;
     final name = s['name'] as Map<String, dynamic>;
@@ -307,7 +326,7 @@ class AniListClient {
       );
     }).toList();
 
-    return AniListStaffDetail(
+    final result = AniListStaffDetail(
       id: s['id'] as int,
       name: name['full'] as String,
       nativeName: name['native'] as String?,
@@ -326,6 +345,8 @@ class AniListClient {
       occupations: (s['primaryOccupations'] as List<dynamic>?)?.cast<String>(),
       mediaWorks: works,
     );
+    _anilistCache.put(key, result, ttl: const Duration(minutes: 30));
+    return result;
   }
 
   AniListAnimePeople _parsePeople(Map<String, dynamic> media) {
