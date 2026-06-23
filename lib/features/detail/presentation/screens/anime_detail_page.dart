@@ -412,17 +412,7 @@ class AnimeDetailPage extends ConsumerWidget {
                         const SizedBox(height: 20),
                       ],
 
-                      // ── Studios ──
-                      if (asyncExtra.value?.studios.isNotEmpty == true) ...[
-                        Text('Studios', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        ...asyncExtra.value!.studios.map(
-                          (studio) => _StudioCard(studio: studio),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Next Episode, External Links, Characters & Staff ──
+                      // ── Next Episode, External Links, Characters & Staff, Studios ──
                       _AniListExtraSection(
                         malId: animeId,
                         asyncExtra: asyncExtra,
@@ -1050,6 +1040,11 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Studios ──
+            if (extra.studios.isNotEmpty) ...[
+              _buildStudios(theme, extra.studios),
+            ],
+
             // ── Next Episode ──
             if (nextAiring != null) ...[
               _buildNextEpisode(theme, nextAiring),
@@ -1246,6 +1241,17 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
           const SizedBox(height: 8),
           ...people.staff.take(staffLimit).map((s) => _StaffTile(staff: s)),
         ],
+      ],
+    );
+  }
+
+  Widget _buildStudios(ThemeData theme, List<AniListStudio> studios) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Studios', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        ...studios.map((studio) => _StudioCard(studio: studio)),
       ],
     );
   }
@@ -1574,27 +1580,10 @@ class _StudioCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 3),
       child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: studio.imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: studio.imageUrl!,
-                    fit: BoxFit.contain,
-                    errorWidget: (_, __, ___) => Icon(
-                      Icons.business,
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                  )
-                : Icon(
-                    Icons.business,
-                    size: 20,
-                    color: theme.colorScheme.primary,
-                  ),
-          ),
+        leading: Icon(
+          Icons.business,
+          size: 20,
+          color: theme.colorScheme.primary,
         ),
         title: Text(
           studio.name,

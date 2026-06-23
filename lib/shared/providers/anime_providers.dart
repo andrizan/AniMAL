@@ -192,6 +192,28 @@ class AnimeRepository {
     _cache.removeWhere((key) => key.startsWith('userlist_'));
   }
 
+  Future<List<Anime>> getAnimeList(List<int> malIds) async {
+    final details = await Future.wait(
+      malIds.map((id) => getAnimeDetail(id).catchError((_) => null)),
+    );
+    return details.whereType<AnimeDetail>().map((d) => Anime(
+      id: d.id,
+      title: d.title,
+      mainPicture: d.mainPicture,
+      mean: d.mean,
+      rank: d.rank,
+      popularity: d.popularity,
+      numEpisodes: d.numEpisodes,
+      status: d.status,
+      rating: d.rating,
+      mediaType: d.mediaType,
+      broadcast: d.broadcast,
+      alternativeTitles: d.alternativeTitles,
+      genres: d.genres,
+      myListStatus: d.myListStatus,
+    )).toList();
+  }
+
   ApiException _mapDioException(DioException e) {
     return switch (e.type) {
       DioExceptionType.connectionTimeout ||
@@ -223,4 +245,11 @@ final animeDetailProvider = FutureProvider.autoDispose
     .family<AnimeDetail?, int>((ref, animeId) async {
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getAnimeDetail(animeId);
+});
+
+/// FutureProvider family for a batch of Anime by MAL IDs.
+final animeListProvider = FutureProvider.autoDispose
+    .family<List<Anime>, List<int>>((ref, malIds) async {
+  final repo = ref.watch(animeRepositoryProvider);
+  return repo.getAnimeList(malIds);
 });

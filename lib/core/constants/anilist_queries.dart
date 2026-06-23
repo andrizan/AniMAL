@@ -73,7 +73,7 @@ abstract final class AniListQueries {
         studios(isMain: true) {
           edges {
             isMain
-            node { id name isAnimationStudio siteUrl image { medium } }
+            node { id name isAnimationStudio siteUrl }
           }
         }
         nextAiringEpisode { airingAt episode timeUntilAiring }
@@ -126,7 +126,6 @@ abstract final class AniListQueries {
     query ($id: Int) {
       Studio(id: $id) {
         id name isAnimationStudio siteUrl favourites
-        image { large medium }
         media(sort: POPULARITY_DESC, perPage: 10) {
           edges {
             node { id idMal title { romaji english } coverImage { medium } type }

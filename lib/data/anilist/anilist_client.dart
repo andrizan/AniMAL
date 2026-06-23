@@ -469,13 +469,11 @@ class AniListClient {
     return edges.map((e) {
       final edge = e as Map<String, dynamic>;
       final node = edge['node'] as Map<String, dynamic>;
-      final image = node['image'] as Map<String, dynamic>?;
       return AniListStudio(
         id: node['id'] as int,
         name: node['name'] as String,
         isAnimationStudio: node['isAnimationStudio'] as bool? ?? false,
         siteUrl: node['siteUrl'] as String?,
-        imageUrl: image?['medium'] as String?,
         isMain: edge['isMain'] as bool? ?? false,
       );
     }).toList();
@@ -490,7 +488,6 @@ class AniListClient {
         await _query(AniListQueries.studioDetail, {'id': id})
             as Map<String, dynamic>;
     final s = data['Studio'] as Map<String, dynamic>;
-    final image = s['image'] as Map<String, dynamic>?;
 
     final mediaEdges =
         (s['media'] as Map<String, dynamic>)['edges'] as List<dynamic>;
@@ -515,7 +512,6 @@ class AniListClient {
       name: s['name'] as String,
       isAnimationStudio: s['isAnimationStudio'] as bool? ?? false,
       siteUrl: s['siteUrl'] as String?,
-      imageUrl: image?['large'] as String?,
       favourites: s['favourites'] as int?,
       mediaWorks: media,
     );
@@ -762,14 +758,12 @@ class AniListStudio {
     required this.name,
     this.isAnimationStudio = false,
     this.siteUrl,
-    this.imageUrl,
     this.isMain = false,
   });
   final int id;
   final String name;
   final bool isAnimationStudio;
   final String? siteUrl;
-  final String? imageUrl;
   final bool isMain;
 }
 
@@ -779,7 +773,6 @@ class AniListStudioDetail {
     required this.name,
     this.isAnimationStudio = false,
     this.siteUrl,
-    this.imageUrl,
     this.favourites,
     this.mediaWorks = const [],
   });
@@ -787,7 +780,6 @@ class AniListStudioDetail {
   final String name;
   final bool isAnimationStudio;
   final String? siteUrl;
-  final String? imageUrl;
   final int? favourites;
   final List<AniListMediaAppearance> mediaWorks;
 }
