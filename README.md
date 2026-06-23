@@ -37,7 +37,7 @@ feature/
 └── presentation/  Screens + widgets
 ```
 
-Features never import from each other. Shared code lives in `data/` (models, API clients), `core/` (infrastructure), and `shared/` (widgets).
+Shared code: `data/` (models, API clients), `core/` (infrastructure), `shared/` (widgets, providers).
 
 ## Project Structure
 
@@ -52,12 +52,12 @@ lib/
 │   ├── error/             Failure sealed class
 │   ├── logger/            Standardized appLogger (PrettyPrinter)
 │   ├── network/           Dio, auth interceptor, refresh interceptor
-│   ├── notifications/     Local notification service, timezone helper
-│   ├── router/            GoRouter, auth guard, refresh listenable
+│   ├── notification/      Local notification service
+│   ├── router/            GoRouter, auth guard, route guards
 │   ├── storage/           Secure token storage, shared preferences
-│   ├── theme/             App theme, colors, text styles
-│   ├── utils/             Date/timezone utils, anime labels, extensions
-│   └── providers.dart     Core providers (Dio, logger, tokens)
+│   ├── theme/             ColorScheme, ThemeExtension, text styles, theme builder
+│   ├── utils/             Date/timezone, anime labels, extensions
+│   └── providers.dart     Core providers (Dio, logger, tokens, notification)
 │
 ├── data/                  Shared data sources
 │   ├── mal/               MAL API client, OAuth2 PKCE service
@@ -65,14 +65,25 @@ lib/
 │   ├── local/             SharedPreferences cache service
 │   └── models/            @freezed DTOs (Anime, MalUser, Season, etc.)
 │
-├── shared/widgets/        Anime card, compact card, shimmer, error/empty states, score badge
+├── shared/
+│   ├── providers/         Shared Riverpod providers
+│   │   ├── anime_providers.dart
+│   │   ├── anilist_providers.dart
+│   │   └── anime_notification_providers.dart
+│   └── widgets/           Shared widgets
+│       ├── anime_card.dart
+│       ├── anime_card_compact.dart
+│       ├── loading_shimmer.dart
+│       ├── error_state.dart
+│       ├── empty_state.dart
+│       ├── score_badge.dart
+│       └── full_screen_image.dart
 │
 └── features/
     ├── home/              Trending, seasonal, user anime lists
     ├── airing/            Weekly schedule (AniList + MAL scores)
-    ├── calendar/          Seasonal calendar browser
+    ├── seasonal/          Seasonal calendar browser
     ├── profile/           User profile + stats
-    ├── notifications/     Episode airing notifications
     ├── auth/              MAL OAuth2 login
     ├── detail/            Anime detail + character/staff pages
     └── search/            Search + rankings

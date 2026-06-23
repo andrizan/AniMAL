@@ -10,3 +10,11 @@ abstract final class MalEndpoints {
   static String ranking() => '$anime/ranking';
   static String myListStatus(int id) => '$anime/$id/my_list_status';
 }
+
+abstract final class ApiConstants {
+  static const notificationLeadMinutes = 15;
+  static const cacheDurationMinutes = 15;
+  static const anilistPageLimit = 5;
+  static const anilistWeekPageLimit = 10;
+  static const maxSeasonalResults = 500;
+}

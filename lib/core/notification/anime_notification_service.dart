@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/logger/app_logger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
@@ -84,7 +85,10 @@ class AnimeNotificationService {
 
   Future<bool> scheduleAnimeNotification({required int animeId, required String title, required int episode, required DateTime airingAt}) async {
     if (!_permissionGranted) { final g = await requestPermission(); if (!g) return false; }
-    final scheduledDate = tz.TZDateTime.from(airingAt.subtract(const Duration(minutes: 15)), tz.local);
+    final scheduledDate = tz.TZDateTime.from(
+      airingAt.subtract(Duration(minutes: ApiConstants.notificationLeadMinutes)),
+      tz.local,
+    );
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return false;
     try {
       await _plugin.zonedSchedule(

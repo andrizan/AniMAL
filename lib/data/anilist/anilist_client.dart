@@ -1,5 +1,6 @@
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/constants/anilist_queries.dart';
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:dio/dio.dart';
 import 'package:animal/core/logger/app_logger.dart';
@@ -62,7 +63,7 @@ class AniListClient {
     var page = 1;
     var hasNextPage = true;
 
-    while (hasNextPage && page <= 5) {
+    while (hasNextPage && page <= ApiConstants.anilistPageLimit) {
       final data = await _query(AniListQueries.airingSchedule, {
         'startAt': startSec,
         'endAt': endSec,
@@ -98,7 +99,7 @@ class AniListClient {
     var page = 1;
     var hasNextPage = true;
 
-    while (hasNextPage && page <= 10) {
+    while (hasNextPage && page <= ApiConstants.anilistWeekPageLimit) {
       final data = await _query(AniListQueries.airingSchedule, {
         'startAt': startSec,
         'endAt': endSec,
