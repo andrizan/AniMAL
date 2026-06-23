@@ -107,7 +107,7 @@ class AnimeDetailPage extends ConsumerWidget {
                   ),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
+                  title: SelectableText(
                     detail.title,
                     style: const TextStyle(
                       fontSize: 16,
@@ -329,7 +329,7 @@ class AnimeDetailPage extends ConsumerWidget {
                         Text('Synopsis',
                             style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
-                        Text(
+                        SelectableText(
                           detail.synopsis!,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme
@@ -1213,10 +1213,9 @@ class _CharacterTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    SelectableText(
                       character.name,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -1248,10 +1247,9 @@ class _CharacterTile extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
+                          SelectableText(
                             va.name,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -1303,10 +1301,9 @@ class _StaffTile extends StatelessWidget {
           imageUrl: staff.imageUrl,
           fallbackIcon: Icons.work_outline,
         ),
-        title: Text(
+        title: SelectableText(
           staff.name,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,

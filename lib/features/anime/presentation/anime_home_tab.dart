@@ -2,6 +2,7 @@ import 'package:animal/features/anime/domain/watch_status.dart';
 import 'package:animal/features/anime/presentation/anime_list_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Sort options for the anime list.
 enum ListSort {
@@ -11,6 +12,17 @@ enum ListSort {
   airing('Airing');
 
   const ListSort(this.label);
+  final String label;
+}
+
+/// Airing status filter.
+enum AiringFilter {
+  all('All'),
+  airing('Airing'),
+  finished('Finished'),
+  upcoming('Upcoming');
+
+  const AiringFilter(this.label);
   final String label;
 }
 
@@ -28,6 +40,8 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
 
   ListSort _sortBy = ListSort.name;
   bool _ascending = true;
+  AiringFilter _airingFilter = AiringFilter.all;
+  bool _loaded = false;
 
   static const _tabs = [
     Tab(text: 'Watching'),
@@ -41,6 +55,38 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final sortIndex = prefs.getInt('list_sort') ?? 0;
+    final ascending = prefs.getBool('list_ascending') ?? true;
+    final filterIndex = prefs.getInt('airing_filter') ?? 0;
+    setState(() {
+      _sortBy = ListSort.values[sortIndex];
+      _ascending = ascending;
+      _airingFilter = AiringFilter.values[filterIndex];
+      _loaded = true;
+    });
+  }
+
+  Future<void> _saveSort(ListSort sort) async {
+    setState(() => _sortBy = sort);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('list_sort', sort.index);
+  }
+
+  Future<void> _saveAscending(bool ascending) async {
+    setState(() => _ascending = ascending);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('list_ascending', ascending);
+  }
+
+  Future<void> _saveAiringFilter(AiringFilter filter) async {
+    setState(() => _airingFilter = filter);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('airing_filter', filter.index);
   }
 
   @override
@@ -88,7 +134,7 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                         ))
                     .toList(),
                 onChanged: (value) {
-                  if (value != null) setState(() => _sortBy = value);
+                  if (value != null) _saveSort(value);
                 },
               ),
               const SizedBox(width: 4),
@@ -99,26 +145,44 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                   _ascending ? Icons.arrow_upward : Icons.arrow_downward,
                 ),
                 tooltip: _ascending ? 'Ascending' : 'Descending',
-                onPressed: () =>
-                    setState(() => _ascending = !_ascending),
+                onPressed: () => _saveAscending(!_ascending),
+              ),
+              const Spacer(),
+              // Airing status filter
+              DropdownButton<AiringFilter>(
+                value: _airingFilter,
+                underline: const SizedBox.shrink(),
+                style: theme.textTheme.bodySmall,
+                items: AiringFilter.values
+                    .map((f) => DropdownMenuItem(
+                          value: f,
+                          child: Text(f.label),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) _saveAiringFilter(value);
+                },
               ),
             ],
           ),
         ),
 
         // Tab content
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              AnimeListTab(status: WatchStatus.watching, sortBy: _sortBy, ascending: _ascending),
-              AnimeListTab(status: WatchStatus.planToWatch, sortBy: _sortBy, ascending: _ascending),
-              AnimeListTab(status: WatchStatus.onHold, sortBy: _sortBy, ascending: _ascending),
-              AnimeListTab(status: WatchStatus.completed, sortBy: _sortBy, ascending: _ascending),
-              AnimeListTab(status: WatchStatus.dropped, sortBy: _sortBy, ascending: _ascending),
-            ],
-          ),
-        ),
+        if (_loaded)
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                AnimeListTab(status: WatchStatus.watching, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
+                AnimeListTab(status: WatchStatus.planToWatch, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
+                AnimeListTab(status: WatchStatus.onHold, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
+                AnimeListTab(status: WatchStatus.completed, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
+                AnimeListTab(status: WatchStatus.dropped, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
+              ],
+            ),
+          )
+        else
+          const Expanded(child: Center(child: CircularProgressIndicator())),
       ],
     );
   }

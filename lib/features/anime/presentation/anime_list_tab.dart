@@ -10,16 +10,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Tab that displays the user's anime list for a given [WatchStatus].
 ///
 /// Supports sorting by [sortBy] and [ascending].
+/// Supports filtering by [airingFilter].
 class AnimeListTab extends ConsumerWidget {
   const AnimeListTab({
     required this.status, super.key,
     this.sortBy = ListSort.name,
     this.ascending = true,
+    this.airingFilter = AiringFilter.all,
   });
 
   final WatchStatus status;
   final ListSort sortBy;
   final bool ascending;
+  final AiringFilter airingFilter;
 
   List<Anime> _sort(List<Anime> list, Map<int, AiringEntry> airingMap) {
     final sorted = List<Anime>.from(list)
@@ -46,6 +49,18 @@ class AnimeListTab extends ConsumerWidget {
     return sorted;
   }
 
+  List<Anime> _filter(List<Anime> list) {
+    if (airingFilter == AiringFilter.all) return list;
+    return list.where((a) {
+      return switch (airingFilter) {
+        AiringFilter.airing => a.status == 'currently_airing',
+        AiringFilter.finished => a.status == 'finished_airing',
+        AiringFilter.upcoming => a.status == 'not_yet_aired',
+        _ => true,
+      };
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncAnime = ref.watch(userAnimeListProvider(status));
@@ -59,7 +74,8 @@ class AnimeListTab extends ConsumerWidget {
         onRetry: () => ref.invalidate(userAnimeListProvider(status)),
       ),
       data: (animeList) {
-        if (animeList.isEmpty) {
+        final filtered = _filter(animeList);
+        if (filtered.isEmpty) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -86,7 +102,7 @@ class AnimeListTab extends ConsumerWidget {
           loading: () => <int, AiringEntry>{},
           error: (_, _) => <int, AiringEntry>{},
         );
-        final sorted = _sort(animeList, airingMap);
+        final sorted = _sort(filtered, airingMap);
 
         return RefreshIndicator(
           onRefresh: () async {

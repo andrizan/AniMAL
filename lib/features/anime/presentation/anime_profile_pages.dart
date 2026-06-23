@@ -173,7 +173,7 @@ class CharacterProfilePage extends ConsumerWidget {
                         Text('About',
                             style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
-                        Text(
+                        SelectableText(
                           _cleanDescription(character.description!),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
@@ -398,7 +398,7 @@ class StaffProfilePage extends ConsumerWidget {
                         Text('About',
                             style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
-                        Text(
+                        SelectableText(
                           _cleanDescription(staff.description!),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
