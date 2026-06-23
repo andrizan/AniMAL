@@ -6,9 +6,9 @@ import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/data/local/memory_cache.dart';
 import 'package:animal/data/models/anilist/anilist_models.dart';
 import 'package:dio/dio.dart';
+import 'package:logger/logger.dart';
 
 export 'package:animal/data/models/anilist/anilist_models.dart';
-import 'package:logger/logger.dart';
 
 final _anilistCache = MemoryCache();
 
