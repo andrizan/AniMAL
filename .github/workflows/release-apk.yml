@@ -25,6 +25,13 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Update version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+          sed -i "s/^version: .*/version: ${VERSION}+${BUILD_NUMBER}/" pubspec.yaml
+          echo "Version set to ${VERSION}+${BUILD_NUMBER}"
+
       - run: flutter pub get
 
       - name: Create .env from secrets
