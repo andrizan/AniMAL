@@ -9,7 +9,8 @@ import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:animal/shared/widgets/app_cached_image.dart';
+import 'package:animal/shared/widgets/countdown_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -251,7 +252,7 @@ class AnimeCard extends ConsumerWidget {
                               ),
                               child: Text(
                                 AnimeLabels.ratingLabel(
-                                  anime.rating!,
+                                  anime.rating,
                                   compact: true,
                                 ),
                                 style: TextStyle(
@@ -281,20 +282,19 @@ class AnimeCard extends ConsumerWidget {
                           const Spacer(),
                           if (notifEnabled &&
                               anime.status != 'finished_airing') ...[
-                            Icon(
+                            const Icon(
                               Icons.notifications_active,
                               size: 14,
                               color: AppColors.starColor,
                             ),
                             const SizedBox(width: 6),
                           ],
-                          if (nextAiring != null)
-                            _NextEpisodeBadge(
-                              episode: nextAiring!.episode,
-                              countdown: nextAiring!.countdown ?? '',
-                              isUrgent: nextAiring!.isUrgent,
+                          if (nextAiring case final next?)
+                            CountdownBadge(
+                              airingAt: next.airingAt,
+                              episode: next.episode,
                             ),
-                          if (trailing != null) trailing!,
+                          if (trailing case final trailing?) trailing,
                         ],
                       ),
                     ],
@@ -540,7 +540,7 @@ class AnimeCard extends ConsumerWidget {
             },
           );
         },
-      ).whenComplete(() => epsController.dispose()),
+      ).whenComplete(epsController.dispose),
     );
   }
 
@@ -567,7 +567,6 @@ class _CoverImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(12),
@@ -579,20 +578,10 @@ class _CoverImage extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             // Image
-            if (anime.mainPicture?.medium != null)
-              CachedNetworkImage(
-                imageUrl: anime.mainPicture!.medium!,
-                fit: BoxFit.cover,
-              )
-            else
-              ColoredBox(
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Icon(
-                  Icons.movie,
-                  size: 20,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+            AppCachedImage(
+              imageUrl: anime.mainPicture?.medium ?? '',
+              fallbackSize: 20,
+            ),
             // Status badge (top-left)
             if (statusLabel != null)
               Positioned(
@@ -632,7 +621,7 @@ class _CoverImage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                   child: Text(
-                    AnimeLabels.mediaTypeLabel(anime.mediaType!, compact: true),
+                    AnimeLabels.mediaTypeLabel(anime.mediaType, compact: true),
                     style: const TextStyle(
                       color: AppColors.iconLight,
                       fontSize: 8,
@@ -643,60 +632,6 @@ class _CoverImage extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Next episode badge shown on anime cards.
-class _NextEpisodeBadge extends StatelessWidget {
-  const _NextEpisodeBadge({
-    required this.episode,
-    required this.countdown,
-    required this.isUrgent,
-  });
-
-  final int episode;
-  final String countdown;
-  final bool isUrgent;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: isUrgent
-            ? theme.colorScheme.errorContainer
-            : theme.colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.timer,
-            size: 12,
-            color: isUrgent
-                ? theme.colorScheme.onErrorContainer
-                : theme.colorScheme.onPrimaryContainer,
-          ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              'Ep $episode · $countdown',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: isUrgent
-                    ? theme.colorScheme.onErrorContainer
-                    : theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

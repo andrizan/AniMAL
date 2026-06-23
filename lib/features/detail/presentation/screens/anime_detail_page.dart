@@ -10,9 +10,10 @@ import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -168,18 +169,9 @@ class AnimeDetailPage extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        if (detail.mainPicture?.large != null)
-                          CachedNetworkImage(
-                            imageUrl: detail.mainPicture!.large!,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Container(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                            ),
-                          )
-                        else
-                          Container(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                          ),
+                        AppCachedImage(
+                          imageUrl: detail.mainPicture?.large ?? '',
+                        ),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -907,42 +899,13 @@ class _RelatedAnimeTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 3),
       child: ListTile(
-        leading: node.mainPicture?.medium != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: CachedNetworkImage(
-                  imageUrl: node.mainPicture!.medium!,
-                  width: 40,
-                  height: 56,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => Container(
-                    width: 40,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Icon(
-                      Icons.movie,
-                      size: 16,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              )
-            : Container(
-                width: 40,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Icon(
-                  Icons.movie,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+        leading: AppCachedImage(
+          imageUrl: node.mainPicture?.medium ?? '',
+          width: 40,
+          height: 56,
+          borderRadius: BorderRadius.circular(4),
+          fallbackSize: 16,
+        ),
         title: Text(
           node.title,
           maxLines: 1,
@@ -1439,33 +1402,16 @@ class _CircleAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(size / 2),
-      child: SizedBox(
+    return SizedBox(
+      width: size,
+      height: size,
+      child: AppCachedImage(
+        imageUrl: imageUrl ?? '',
         width: size,
         height: size,
-        child: imageUrl != null
-            ? CachedNetworkImage(
-                imageUrl: imageUrl!,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => ColoredBox(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    fallbackIcon,
-                    size: size * 0.45,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              )
-            : ColoredBox(
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Icon(
-                  fallbackIcon,
-                  size: size * 0.45,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+        borderRadius: BorderRadius.circular(size / 2),
+        fallbackIcon: fallbackIcon,
+        fallbackSize: size * 0.45,
       ),
     );
   }

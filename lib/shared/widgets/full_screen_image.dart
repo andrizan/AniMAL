@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:animal/core/theme/app_colors.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:flutter/material.dart';
 
 class FullScreenImageViewer extends StatelessWidget {
@@ -51,33 +51,29 @@ class FullScreenImageViewer extends StatelessWidget {
               child: heroTag != null
                   ? Hero(
                       tag: heroTag!,
-                      child: CachedNetworkImage(
+                      child: AppCachedImage(
                         imageUrl: imageUrl,
                         fit: BoxFit.contain,
-                        placeholder: (_, _) => const Center(
+                        fallbackIcon: Icons.broken_image,
+                        fallbackColor: AppColors.iconSubtle,
+                        fallbackSize: 48,
+                        loadingWidget: const Center(
                           child: CircularProgressIndicator(
                             color: AppColors.iconLight,
                           ),
                         ),
-                        errorWidget: (_, _, _) => const Icon(
-                          Icons.broken_image,
-                          color: AppColors.iconSubtle,
-                          size: 48,
-                        ),
                       ),
                     )
-                  : CachedNetworkImage(
+                  : AppCachedImage(
                       imageUrl: imageUrl,
                       fit: BoxFit.contain,
-                      placeholder: (_, _) => const Center(
+                      fallbackIcon: Icons.broken_image,
+                      fallbackColor: AppColors.iconSubtle,
+                      fallbackSize: 48,
+                      loadingWidget: const Center(
                         child: CircularProgressIndicator(
                           color: AppColors.iconLight,
                         ),
-                      ),
-                      errorWidget: (_, _, _) => const Icon(
-                        Icons.broken_image,
-                        color: AppColors.iconSubtle,
-                        size: 48,
                       ),
                     ),
             ),

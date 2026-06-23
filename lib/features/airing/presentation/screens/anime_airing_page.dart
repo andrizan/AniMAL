@@ -3,6 +3,7 @@ import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/features/airing/providers/airing_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/countdown_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -143,7 +144,10 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                       itemCount: animeForDay.length,
                       itemBuilder: (context, index) {
                         final entry = animeForDay[index];
-                        return _AiringCard(entry: entry);
+                        return _AiringCard(
+                          key: ValueKey(entry.anilistId),
+                          entry: entry,
+                        );
                       },
                     ),
                   );
@@ -158,20 +162,27 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
 }
 
 /// Airing card with countdown trailing widget.
-class _AiringCard extends StatelessWidget {
-  const _AiringCard({required this.entry});
+class _AiringCard extends StatefulWidget {
+  const _AiringCard({required this.entry, super.key});
 
   final AiringEntry entry;
 
   @override
-  Widget build(BuildContext context) {
-    final countdown = entry.countdown;
-    final isUrgent = entry.isUrgent;
-    final airingTime = _formatAiringTime(entry.airingAt);
+  State<_AiringCard> createState() => _AiringCardState();
+}
 
-    // Build a minimal Anime for the unified card
+class _AiringCardState extends State<_AiringCard> {
+  late final Anime _anime;
+  late final VoidCallback? _onTap;
+
+  @override
+  void initState() {
+    super.initState();
+    final entry = widget.entry;
+    final airingTime = _formatAiringTime(entry.airingAt);
     final malId = entry.malId;
-    final anime = Anime(
+
+    _anime = Anime(
       id: malId ?? entry.anilistId,
       title: entry.title,
       mainPicture: entry.imageUrl != null
@@ -189,25 +200,27 @@ class _AiringCard extends StatelessWidget {
       myListStatus: entry.myListStatus,
     );
 
+    _onTap = malId != null
+        ? null
+        : () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Details only available through MyAnimeList'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          };
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return AnimeCard(
-      anime: anime,
-      trailing: countdown != null
-          ? _CountdownChip(
-              countdown: countdown,
-              episode: entry.episode,
-              isUrgent: isUrgent,
-            )
-          : null,
-      onTap: malId != null
-          ? null
-          : () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Details only available through MyAnimeList'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
+      anime: _anime,
+      trailing: CountdownBadge(
+        airingAt: widget.entry.airingAt,
+        episode: widget.entry.episode,
+      ),
+      onTap: _onTap,
     );
   }
 
@@ -224,54 +237,4 @@ class _AiringCard extends StatelessWidget {
     'CANCELLED' => 'finished_airing',
     _ => status,
   };
-}
-
-/// Countdown chip shown on airing cards.
-class _CountdownChip extends StatelessWidget {
-  const _CountdownChip({
-    required this.countdown,
-    required this.episode,
-    required this.isUrgent,
-  });
-
-  final String countdown;
-  final int episode;
-  final bool isUrgent;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: isUrgent
-            ? theme.colorScheme.errorContainer
-            : theme.colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.timer,
-            size: 12,
-            color: isUrgent
-                ? theme.colorScheme.onErrorContainer
-                : theme.colorScheme.onPrimaryContainer,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'Ep $episode · $countdown',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: isUrgent
-                  ? theme.colorScheme.onErrorContainer
-                  : theme.colorScheme.onPrimaryContainer,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -5,9 +5,10 @@ import 'package:animal/data/models/anime.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,18 +101,9 @@ class CharacterProfilePage extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        if (character.imageUrl != null)
-                          CachedNetworkImage(
-                            imageUrl: character.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Container(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                            ),
-                          )
-                        else
-                          Container(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                          ),
+                        AppCachedImage(
+                          imageUrl: character.imageUrl ?? '',
+                        ),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -320,18 +312,9 @@ class StaffProfilePage extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        if (staff.imageUrl != null)
-                          CachedNetworkImage(
-                            imageUrl: staff.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Container(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                            ),
-                          )
-                        else
-                          Container(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                          ),
+                        AppCachedImage(
+                          imageUrl: staff.imageUrl ?? '',
+                        ),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(

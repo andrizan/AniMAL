@@ -2,7 +2,7 @@
 
 Comprehensive audit of the Flutter 3.44 / Dart 3.12 codebase against `AGENTS.md`.  
 **Date:** 2026-06-24  
-**`flutter analyze`:** 0 errors, 0 warnings, **60 info**  
+**`flutter analyze`:** 0 errors, 0 warnings, **46 info**  
 **`flutter test`:** all passed  
 **`dart format lib/`:** clean (0 changed)
 
@@ -11,14 +11,14 @@ Comprehensive audit of the Flutter 3.44 / Dart 3.12 codebase against `AGENTS.md`
 ## Executive Summary
 
 No critical security vulnerabilities, hardcoded secrets, or crash-inducing defects remain.  
-All **HIGH** and **MEDIUM** findings from the initial audit have been resolved. Only a handful of **LOW** maintenance items remain.
+All **HIGH**, **MEDIUM**, and **LOW** findings from the initial audit have been resolved.
 
 | Severity | Initial | Resolved | Remaining |
 |----------|---------|----------|-----------|
 | CRITICAL | 0 | 0 | 0 |
 | HIGH     | 4 | 4 | 0 |
 | MEDIUM   | 7 | 7 | 0 |
-| LOW      | 11 | 7 | 4 |
+| LOW      | 11 | 11 | 0 |
 | Dead code | 6 | 6 | 0 |
 
 ---
@@ -119,6 +119,35 @@ All **HIGH** and **MEDIUM** findings from the initial audit have been resolved. 
 - **File:** `lib/shared/providers/theme_providers.dart`
 - Theme preference is not sensitive data, so `SharedPreferences` is the appropriate store.
 
+#### L7. `MemoryCache` is now type-safe and self-cleaning
+
+- **File:** `lib/data/local/memory_cache.dart`
+- Added runtime type tag verification so a request with the wrong generic type returns a miss instead of throwing.
+- Added a periodic 30-second cleanup `Timer` that evicts expired entries to prevent unbounded growth.
+
+#### L10. `_AiringCard` memoizes the constructed `Anime`
+
+- **File:** `lib/features/airing/presentation/screens/anime_airing_page.dart`
+- Converted `_AiringCard` to `StatefulWidget` and moved the `Anime`/`MainPicture`/`AlternativeTitles`/`Broadcast` construction into `initState`.
+- Added a `ValueKey` in the `ListView.builder` so widget instances are stable across reordering.
+
+#### L11. Added a shared `AppCachedImage` widget
+
+- **File:** `lib/shared/widgets/app_cached_image.dart`
+- New widget wraps `CachedNetworkImage` with consistent loading/error fallbacks, optional clipping, and reusable sizing.
+- Replaced boilerplate `CachedNetworkImage` usages in:
+  - `lib/shared/widgets/anime_card.dart`
+  - `lib/features/detail/presentation/screens/anime_detail_page.dart`
+  - `lib/features/detail/presentation/screens/character_staff_page.dart`
+  - `lib/shared/widgets/full_screen_image.dart`
+
+#### L12. Countdown badges now tick live
+
+- **File:** `lib/shared/widgets/countdown_badge.dart`
+- New `CountdownBadge` widget uses a per-widget `Timer` to rebuild every minute.
+- Colors switch to red when the airing time is less than six hours away.
+- Integrated into `AnimeCard` and the Airing page.
+
 ### Dead Code Removed
 
 | Symbol / File | Location | Action |
@@ -143,41 +172,9 @@ All **HIGH** and **MEDIUM** findings from the initial audit have been resolved. 
 
 ### MEDIUM — None
 
-### LOW
+### LOW — None
 
-#### L7. `MemoryCache` has unsafe casts and unbounded growth
-
-**Location:** `lib/data/local/memory_cache.dart:6-14`
-
-`entry.value as T` can throw `TypeError` if the wrong generic type is requested. Expired entries are only evicted on access, so the cache can grow unbounded during long sessions.
-
-**Recommendation:** Add type tagging or use a safer cache implementation, and add periodic cleanup.
-
----
-
-#### L10. `_AiringCard` allocates many objects on every rebuild
-
-**Location:** `lib/features/airing/presentation/screens/anime_airing_page.dart:173-189`
-
-Every rebuild creates a new `Anime`, `MainPicture`, `AlternativeTitles`, `Broadcast`, and `List<Genre>`.
-
-**Recommendation:** Refactor `AnimeCard` to accept raw schedule data or memoize the constructed `Anime`.
-
----
-
-#### L11. Repeated `CachedNetworkImage` boilerplate
-
-Multiple screens duplicate placeholder/error widget patterns.
-
-**Recommendation:** Introduce a shared `AppCachedImage` widget.
-
----
-
-#### L12. Countdown badges are static
-
-The Airing and Home countdown values are computed once per provider fetch. They do not tick down while the user stays on the screen.
-
-**Recommendation:** Add a periodic `Timer`/`Stream` that rebuilds countdown chips every minute, or use a `TickerProvider`/`Timer` in the widget.
+All LOW findings have been resolved.
 
 ---
 
@@ -232,19 +229,19 @@ The Airing and Home countdown values are computed once per provider fetch. They 
 
 ## `flutter analyze` Summary
 
-**Current:** 60 info. 0 errors, 0 warnings.
+**Current:** 46 info. 0 errors, 0 warnings.
 
 Most common remaining info categories:
 
 | Lint | Frequency | Representative Files |
 |------|-----------|----------------------|
-| `avoid_redundant_argument_values` | ~9 | `anilist_client.dart`, `anime_providers.dart`, `anime_notification_service.dart` |
-| `unnecessary_null_checks` | ~8 | `anime_detail_page.dart`, `anime_card.dart`, `my_list_status.g.dart` |
-| `unnecessary_underscores` | ~8 | `anime_detail_page.dart`, `character_staff_page.dart`, `studio_page.dart` |
+| `avoid_redundant_argument_values` | ~7 | `anilist_client.dart`, `anime_providers.dart`, `anime_notification_service.dart` |
+| `unnecessary_null_checks` | ~5 | `anime_detail_page.dart`, `my_list_status.g.dart` |
 | `discarded_futures` | 6 | `app.dart`, `anime_notification_service.dart`, `anime_home_tab.dart` |
 | `specify_nonobvious_property_types` | 5 | `anilist_providers.dart`, `anime_providers.dart`, `my_list_status.g.dart` |
+| `unnecessary_underscores` | 2 | `character_staff_page.dart`, `studio_page.dart` |
 | `curly_braces_in_flow_control_structures` | 3 | `auth_interceptor.dart`, `anime_notification_service.dart`, `mal_api_client.dart` |
-| `prefer_const_constructors` | 3 | `anime_notification_service.dart`, `anime_card.dart` |
+| `prefer_const_constructors` | 3 | `anime_notification_service.dart` |
 | `unnecessary_lambdas` | 3 | `home_page.dart`, `anime_profile_page.dart`, `anime_providers.dart` |
 | `avoid_catches_without_on_clauses` | 2 | `auth_interceptor.dart`, `anime_providers.dart` |
 | `use_null_aware_elements` | 2 | `anilist_client.dart`, `anime_card.dart` |
@@ -253,8 +250,6 @@ Most common remaining info categories:
 
 ## Recommended Next Steps
 
-1. **Address the 60 lint infos** — many are quick wins (`discarded_futures`, `curly_braces`, `prefer_const_constructors`).
-2. **Improve `MemoryCache` safety** (L7).
-3. **Introduce a shared `AppCachedImage` widget** (L11).
-4. **Make countdowns tick live** (L12).
-5. **Add unit/widget tests** for providers and repositories.
+1. **Address the 46 remaining lint infos** — many are quick wins (`discarded_futures`, `curly_braces`, `prefer_const_constructors`).
+2. **Add unit/widget tests** for providers and repositories.
+3. Consider moving shared MAL/Airing repositories from `shared/providers/` into per-feature `data/` layers to satisfy the strict layer architecture.

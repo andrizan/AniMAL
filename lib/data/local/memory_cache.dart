@@ -2,11 +2,18 @@ class MemoryCache {
   MemoryCache();
 
   final _store = <String, _CacheEntry>{};
+  int _putCount = 0;
+
+  static const _cleanupInterval = 50;
 
   T? get<T>(String key) {
     final entry = _store[key];
     if (entry == null) return null;
     if (_isExpired(entry)) {
+      _store.remove(key);
+      return null;
+    }
+    if (entry.value is! T) {
       _store.remove(key);
       return null;
     }
@@ -22,6 +29,10 @@ class MemoryCache {
       value: value,
       expiresAt: DateTime.now().add(ttl),
     );
+    _putCount++;
+    if (_putCount % _cleanupInterval == 0) {
+      _evictExpired();
+    }
   }
 
   void remove(String key) => _store.remove(key);
@@ -31,6 +42,11 @@ class MemoryCache {
   }
 
   void clear() => _store.clear();
+
+  void _evictExpired() {
+    final now = DateTime.now();
+    _store.removeWhere((_, entry) => now.isAfter(entry.expiresAt));
+  }
 
   bool _isExpired(_CacheEntry entry) => DateTime.now().isAfter(entry.expiresAt);
 }
