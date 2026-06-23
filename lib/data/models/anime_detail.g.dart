@@ -48,11 +48,6 @@ _AnimeDetail _$AnimeDetailFromJson(Map<String, dynamic> json) => _AnimeDetail(
   startSeason: json['start_season'] == null
       ? null
       : StartSeason.fromJson(json['start_season'] as Map<String, dynamic>),
-  studios:
-      (json['studios'] as List<dynamic>?)
-          ?.map((e) => Studio.fromJson(e as Map<String, dynamic>))
-          .toList() ??
-      const [],
   averageEpisodeDuration: (json['average_episode_duration'] as num?)?.toInt(),
 );
 
@@ -79,7 +74,6 @@ Map<String, dynamic> _$AnimeDetailToJson(_AnimeDetail instance) =>
       'related_anime': instance.relatedAnime,
       'my_list_status': instance.myListStatus,
       'start_season': instance.startSeason,
-      'studios': instance.studios,
       'average_episode_duration': instance.averageEpisodeDuration,
     };
 
@@ -127,11 +121,3 @@ _StartSeason _$StartSeasonFromJson(Map<String, dynamic> json) => _StartSeason(
 
 Map<String, dynamic> _$StartSeasonToJson(_StartSeason instance) =>
     <String, dynamic>{'year': instance.year, 'season': instance.season};
-
-_Studio _$StudioFromJson(Map<String, dynamic> json) =>
-    _Studio(id: (json['id'] as num).toInt(), name: json['name'] as String);
-
-Map<String, dynamic> _$StudioToJson(_Studio instance) => <String, dynamic>{
-  'id': instance.id,
-  'name': instance.name,
-};

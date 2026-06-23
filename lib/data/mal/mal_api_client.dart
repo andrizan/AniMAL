@@ -18,7 +18,7 @@ class MalApiClient {
   static const _detailFields =
       '$_listFields,synopsis,start_date,end_date,media_type,source,'
       'num_scoring_users,genres,broadcast,related_anime,my_list_status,'
-      'start_season,studios,average_episode_duration';
+      'start_season,average_episode_duration';
 
   static const _userListFields = '$_listFields,broadcast,my_list_status';
 

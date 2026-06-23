@@ -24,3 +24,9 @@ final anilistAnimeExtraProvider = FutureProvider.autoDispose
       final api = ref.watch(anilistApiProvider);
       return api.getAnimeExtraInfo(malId);
     });
+
+final anilistStudioDetailProvider = FutureProvider.autoDispose
+    .family<AniListStudioDetail, int>((ref, studioId) async {
+      final api = ref.watch(anilistApiProvider);
+      return api.getStudioDetail(studioId);
+    });

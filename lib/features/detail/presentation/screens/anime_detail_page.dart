@@ -413,25 +413,11 @@ class AnimeDetailPage extends ConsumerWidget {
                       ],
 
                       // ── Studios ──
-                      if (detail.studios.isNotEmpty) ...[
+                      if (asyncExtra.value?.studios.isNotEmpty == true) ...[
                         Text('Studios', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.business,
-                              size: 18,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                detail.studios
-                                    .map((s) => s.name)
-                                    .join(', '),
-                              ),
-                            ),
-                          ],
+                        ...asyncExtra.value!.studios.map(
+                          (studio) => _StudioCard(studio: studio),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -1572,6 +1558,49 @@ class _NotificationBell extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _StudioCard extends StatelessWidget {
+  const _StudioCard({required this.studio});
+
+  final AniListStudio studio;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 3),
+      child: ListTile(
+        leading: Icon(
+          Icons.business,
+          size: 20,
+          color: theme.colorScheme.primary,
+        ),
+        title: Text(
+          studio.name,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        subtitle: studio.isAnimationStudio
+            ? Text(
+                'Animation Studio',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              )
+            : null,
+        trailing: const Icon(Icons.chevron_right, size: 20),
+        dense: true,
+        visualDensity: VisualDensity.compact,
+        onTap: () => context.pushNamed(
+          'studioProfile',
+          pathParameters: {'id': '${studio.id}'},
+        ),
+      ),
     );
   }
 }

@@ -70,6 +70,12 @@ abstract final class AniListQueries {
             node { id name { full native } image { medium } }
           }
         }
+        studios(isMain: true) {
+          edges {
+            isMain
+            node { id name isAnimationStudio siteUrl }
+          }
+        }
         nextAiringEpisode { airingAt episode timeUntilAiring }
         externalLinks { id url site type language icon }
       }
@@ -109,6 +115,19 @@ abstract final class AniListQueries {
         staffMedia(sort: POPULARITY_DESC, perPage: 10) {
           edges {
             staffRole
+            node { id idMal title { romaji english } coverImage { medium } type }
+          }
+        }
+      }
+    }
+  ''';
+
+  static const studioDetail = r'''
+    query ($id: Int) {
+      Studio(id: $id) {
+        id name isAnimationStudio siteUrl favourites
+        media(sort: POPULARITY_DESC, perPage: 10) {
+          edges {
             node { id idMal title { romaji english } coverImage { medium } type }
           }
         }

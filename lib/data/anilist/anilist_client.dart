@@ -303,6 +303,7 @@ class AniListClient {
       people: people,
       nextAiring: nextAiring,
       externalLinks: externalLinks,
+      studios: _parseStudios(media),
     );
     _anilistCache.put(key, result, ttl: const Duration(minutes: 15));
     return result;
@@ -459,6 +460,63 @@ class AniListClient {
     }).toList();
 
     return AniListAnimePeople(characters: characters, staff: staff);
+  }
+
+  List<AniListStudio> _parseStudios(Map<String, dynamic> media) {
+    final studiosData = media['studios'] as Map<String, dynamic>?;
+    if (studiosData == null) return [];
+    final edges = studiosData['edges'] as List<dynamic>? ?? [];
+    return edges.map((e) {
+      final edge = e as Map<String, dynamic>;
+      final node = edge['node'] as Map<String, dynamic>;
+      return AniListStudio(
+        id: node['id'] as int,
+        name: node['name'] as String,
+        isAnimationStudio: node['isAnimationStudio'] as bool? ?? false,
+        siteUrl: node['siteUrl'] as String?,
+        isMain: edge['isMain'] as bool? ?? false,
+      );
+    }).toList();
+  }
+
+  Future<AniListStudioDetail> getStudioDetail(int id) async {
+    final key = 'studio_$id';
+    final cached = _anilistCache.get<AniListStudioDetail>(key);
+    if (cached != null) return cached;
+
+    final data =
+        await _query(AniListQueries.studioDetail, {'id': id})
+            as Map<String, dynamic>;
+    final s = data['Studio'] as Map<String, dynamic>;
+
+    final mediaEdges =
+        (s['media'] as Map<String, dynamic>)['edges'] as List<dynamic>;
+    final media = mediaEdges.map((e) {
+      final edge = e as Map<String, dynamic>;
+      final node = edge['node'] as Map<String, dynamic>;
+      final title = node['title'] as Map<String, dynamic>;
+      final cover = node['coverImage'] as Map<String, dynamic>;
+      return AniListMediaAppearance(
+        anilistId: node['id'] as int,
+        malId: node['idMal'] as int?,
+        title: title['romaji'] as String,
+        titleEnglish: title['english'] as String?,
+        imageUrl: cover['medium'] as String?,
+        type: node['type'] as String?,
+        role: null,
+      );
+    }).toList();
+
+    final result = AniListStudioDetail(
+      id: s['id'] as int,
+      name: s['name'] as String,
+      isAnimationStudio: s['isAnimationStudio'] as bool? ?? false,
+      siteUrl: s['siteUrl'] as String?,
+      favourites: s['favourites'] as int?,
+      mediaWorks: media,
+    );
+    _anilistCache.put(key, result, ttl: const Duration(minutes: 30));
+    return result;
   }
 }
 
@@ -686,8 +744,42 @@ class AniListAnimeExtra {
     this.people = const AniListAnimePeople(),
     this.nextAiring,
     this.externalLinks = const [],
+    this.studios = const [],
   });
   final AniListAnimePeople people;
   final AniListNextAiring? nextAiring;
   final List<AniListExternalLink> externalLinks;
+  final List<AniListStudio> studios;
+}
+
+class AniListStudio {
+  const AniListStudio({
+    required this.id,
+    required this.name,
+    this.isAnimationStudio = false,
+    this.siteUrl,
+    this.isMain = false,
+  });
+  final int id;
+  final String name;
+  final bool isAnimationStudio;
+  final String? siteUrl;
+  final bool isMain;
+}
+
+class AniListStudioDetail {
+  const AniListStudioDetail({
+    required this.id,
+    required this.name,
+    this.isAnimationStudio = false,
+    this.siteUrl,
+    this.favourites,
+    this.mediaWorks = const [],
+  });
+  final int id;
+  final String name;
+  final bool isAnimationStudio;
+  final String? siteUrl;
+  final int? favourites;
+  final List<AniListMediaAppearance> mediaWorks;
 }
