@@ -170,8 +170,9 @@ class _AiringCard extends StatelessWidget {
     final airingTime = _formatAiringTime(entry.airingAt);
 
     // Build a minimal Anime for the unified card
+    final malId = entry.malId;
     final anime = Anime(
-      id: entry.malId ?? entry.anilistId,
+      id: malId ?? entry.anilistId,
       title: entry.title,
       mainPicture: entry.imageUrl != null
           ? MainPicture(medium: entry.imageUrl, large: entry.imageUrl)
@@ -197,6 +198,16 @@ class _AiringCard extends StatelessWidget {
               isUrgent: isUrgent,
             )
           : null,
+      onTap: malId != null
+          ? null
+          : () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Details only available through MyAnimeList'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
     );
   }
 

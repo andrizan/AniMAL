@@ -214,7 +214,14 @@ class AniListExternalLink {
   final String? language;
   final String? icon;
 
-  String get displaySite => site ?? Uri.parse(url).host;
+  String get displaySite {
+    if (site != null && site!.isNotEmpty) return site!;
+    try {
+      return Uri.parse(url).host;
+    } on FormatException {
+      return url;
+    }
+  }
 }
 
 class AniListAnimeExtra {

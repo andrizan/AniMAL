@@ -45,7 +45,7 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful!')),
         );
-        context.go('/');
+        context.go('/home');
       }
     } on Exception catch (e) {
       if (mounted) {

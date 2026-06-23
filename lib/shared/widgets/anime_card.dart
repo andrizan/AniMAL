@@ -48,9 +48,9 @@ class AnimeCard extends ConsumerWidget {
     final statusColor = AnimeLabels.statusColor(anime.status);
     final personalScore = anime.myListStatus?.score;
     final watchedEps = anime.myListStatus?.numEpisodesWatched;
-    final notifEnabled = ref
-        .watch(animeNotificationProvider)
-        .contains(anime.id);
+    final notifEnabled = ref.watch(
+      animeNotificationProvider.select((s) => s.contains(anime.id)),
+    );
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
@@ -327,7 +327,6 @@ class AnimeCard extends ConsumerWidget {
         context: context,
         isScrollControlled: true,
         builder: (ctx) {
-
           return StatefulBuilder(
             builder: (ctx, setModalState) {
               final notifEnabled = ref
@@ -442,7 +441,7 @@ class AnimeCard extends ConsumerWidget {
                           onPressed: selectedEps > 0
                               ? () {
                                   setModalState(() => selectedEps--);
-                                  epsController.text = '${selectedEps - 1}';
+                                  epsController.text = '$selectedEps';
                                 }
                               : null,
                         ),
@@ -479,7 +478,7 @@ class AnimeCard extends ConsumerWidget {
                               (totalEps == null || selectedEps < totalEps)
                               ? () {
                                   setModalState(() => selectedEps++);
-                                  epsController.text = '${selectedEps + 1}';
+                                  epsController.text = '$selectedEps';
                                 }
                               : null,
                         ),

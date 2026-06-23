@@ -1,1 +1,6 @@
-export 'package:animal/core/providers.dart' show AuthController, AuthStatus, authControllerProvider, malAuthRepositoryProvider;
+export 'package:animal/core/providers.dart'
+    show
+        AuthController,
+        AuthStatus,
+        authControllerProvider,
+        malAuthRepositoryProvider;

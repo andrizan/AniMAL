@@ -60,14 +60,6 @@ abstract final class AniListQueries {
     }
   ''';
 
-  static const nextAiring = r'''
-    query ($idMal: Int) {
-      Media(idMal: $idMal, type: ANIME) {
-        nextAiringEpisode { airingAt episode timeUntilAiring }
-      }
-    }
-  ''';
-
   static const characterDetail = r'''
     query ($id: Int) {
       Character(id: $id) {

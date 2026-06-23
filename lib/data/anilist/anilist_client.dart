@@ -59,8 +59,9 @@ class AniListClient {
   Future<Map<String, List<AniListScheduleEntry>>>
   getWeeklyAiringSchedule() async {
     const key = 'weeklyAiringSchedule';
-    final cached =
-        _anilistCache.get<Map<String, List<AniListScheduleEntry>>>(key);
+    final cached = _anilistCache.get<Map<String, List<AniListScheduleEntry>>>(
+      key,
+    );
     if (cached != null) {
       _logger.d('AniList weekly schedule cache hit');
       return cached;
@@ -418,4 +419,3 @@ class AniListClient {
     return result;
   }
 }
-

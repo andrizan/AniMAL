@@ -209,8 +209,9 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
   }
 }
 
-({Map<String, List<Anime>> grouped, List<Anime> noBroadcast})
-_groupAnimeByDay(List<Anime> animeList) {
+({Map<String, List<Anime>> grouped, List<Anime> noBroadcast}) _groupAnimeByDay(
+  List<Anime> animeList,
+) {
   const days = <String>[
     'monday',
     'tuesday',
