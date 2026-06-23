@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:animal/core/config/env.dart';
+import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
-import 'package:animal/features/auth/providers/auth_providers.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';

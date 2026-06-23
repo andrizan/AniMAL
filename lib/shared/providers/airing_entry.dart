@@ -1,4 +1,6 @@
 import 'package:animal/data/models/my_list_status.dart';
+import 'package:animal/features/airing/providers/airing_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Merged entry combining AniList schedule + MAL anime data.
 class AiringEntry {
@@ -48,3 +50,23 @@ class AiringEntry {
 
   bool get isUrgent => timeUntilAiring > 0 && timeUntilAiring < 21600;
 }
+
+/// Map of MAL ID to next AiringEntry for quick lookup.
+final airingByMalIdProvider = FutureProvider<Map<int, AiringEntry>>((
+  ref,
+) async {
+  final schedule = await ref.watch(weeklyAiringProvider.future);
+  final map = <int, AiringEntry>{};
+  for (final entries in schedule.values) {
+    for (final entry in entries) {
+      if (entry.malId != null && entry.timeUntilAiring > 0) {
+        final existing = map[entry.malId!];
+        if (existing == null ||
+            entry.timeUntilAiring < existing.timeUntilAiring) {
+          map[entry.malId!] = entry;
+        }
+      }
+    }
+  }
+  return map;
+});
