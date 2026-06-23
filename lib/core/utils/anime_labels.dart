@@ -70,4 +70,22 @@ class AnimeLabels {
     'picture_book' => 'Picture Book',
     _ => source ?? '',
   };
+
+  static String seasonLabel(String? season) => switch (season) {
+    'winter' => 'Winter',
+    'spring' => 'Spring',
+    'summer' => 'Summer',
+    'fall' => 'Fall',
+    _ => season ?? '',
+  };
+
+  static String durationLabel(int? seconds) {
+    if (seconds == null || seconds <= 0) return '';
+    final minutes = seconds ~/ 60;
+    if (minutes < 60) return '${minutes}m';
+    final hours = minutes ~/ 60;
+    final remaining = minutes % 60;
+    if (remaining == 0) return '${hours}h';
+    return '${hours}h ${remaining}m';
+  }
 }

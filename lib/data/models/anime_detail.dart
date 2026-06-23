@@ -31,6 +31,9 @@ sealed class AnimeDetail with _$AnimeDetail {
     @Default([])
     List<RelatedAnime> relatedAnime,
     @JsonKey(name: 'my_list_status') MyListStatus? myListStatus,
+    @JsonKey(name: 'start_season') StartSeason? startSeason,
+    @Default([]) List<Studio> studios,
+    @JsonKey(name: 'average_episode_duration') int? averageEpisodeDuration,
   }) = _AnimeDetail;
 
   factory AnimeDetail.fromJson(Map<String, dynamic> json) =>
@@ -69,4 +72,25 @@ sealed class AnimeNode with _$AnimeNode {
 
   factory AnimeNode.fromJson(Map<String, dynamic> json) =>
       _$AnimeNodeFromJson(json);
+}
+
+@freezed
+sealed class StartSeason with _$StartSeason {
+  const factory StartSeason({
+    required int year,
+    required String season,
+  }) = _StartSeason;
+
+  factory StartSeason.fromJson(Map<String, dynamic> json) =>
+      _$StartSeasonFromJson(json);
+}
+
+@freezed
+sealed class Studio with _$Studio {
+  const factory Studio({
+    required int id,
+    required String name,
+  }) = _Studio;
+
+  factory Studio.fromJson(Map<String, dynamic> json) => _$StudioFromJson(json);
 }

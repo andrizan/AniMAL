@@ -331,6 +331,111 @@ class AnimeDetailPage extends ConsumerWidget {
                         const SizedBox(height: 20),
                       ],
 
+                      // ── Airing Dates ──
+                      if (detail.startDate != null ||
+                          detail.endDate != null) ...[
+                        Text('Airing', style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 8),
+                        if (detail.startDate != null)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 18,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${detail.endDate != null ? 'Aired' : 'Airing'}: ${_formatDate(detail.startDate!)}'
+                                '${detail.endDate != null ? ' to ${_formatDate(detail.endDate!)}' : ''}',
+                              ),
+                            ],
+                          ),
+                        if (detail.endDate != null && detail.startDate == null)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 18,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Ended: ${_formatDate(detail.endDate!)}'),
+                            ],
+                          ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // ── Start Season ──
+                      if (detail.startSeason != null) ...[
+                        Text('Season', style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_month,
+                              size: 18,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${AnimeLabels.seasonLabel(detail.startSeason!.season)} ${detail.startSeason!.year}',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // ── Episode Duration ──
+                      if (detail.averageEpisodeDuration != null &&
+                          detail.averageEpisodeDuration! > 0) ...[
+                        Text(
+                          'Episode Duration',
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.timer_outlined,
+                              size: 18,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              AnimeLabels.durationLabel(
+                                detail.averageEpisodeDuration,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // ── Studios ──
+                      if (detail.studios.isNotEmpty) ...[
+                        Text('Studios', style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.business,
+                              size: 18,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                detail.studios
+                                    .map((s) => s.name)
+                                    .join(', '),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
                       // ── Next Episode, External Links, Characters & Staff ──
                       _AniListExtraSection(
                         malId: animeId,
@@ -414,6 +519,18 @@ class AnimeDetailPage extends ConsumerWidget {
   }
 
   String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
+
+  String _formatDate(String dateStr) {
+    final parts = dateStr.split('-');
+    if (parts.length != 3) return dateStr;
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final month = int.tryParse(parts[1]);
+    if (month == null || month < 1 || month > 12) return dateStr;
+    return '${months[month - 1]} ${int.tryParse(parts[2]) ?? ''}, ${parts[0]}';
+  }
 
   Future<void> _shareAnime(AnimeDetail detail) async {
     final url = Env.malAnimeUrl(animeId);
