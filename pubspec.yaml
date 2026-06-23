@@ -24,6 +24,7 @@ dependencies:
   logger: ^2.7.0
   oauth2: ^2.0.5
   package_info_plus: ^10.1.0
+  share_plus: ^13.1.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
 

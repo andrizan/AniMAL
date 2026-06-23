@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Detail page for a single anime.
@@ -106,6 +107,19 @@ class AnimeDetailPage extends ConsumerWidget {
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
+                actions: [
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Colors.black38,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.share, color: Colors.white),
+                      onPressed: () => _shareAnime(detail),
+                    ),
+                  ),
+                ],
                 flexibleSpace: FlexibleSpaceBar(
                   title: SelectableText(
                     detail.title,
@@ -422,6 +436,11 @@ class AnimeDetailPage extends ConsumerWidget {
         'picture_book' => 'Picture Book',
         _ => source,
       };
+
+  Future<void> _shareAnime(AnimeDetail detail) async {
+    final url = 'https://myanimelist.net/anime/$animeId';
+    await SharePlus.instance.share(ShareParams(text: '${detail.title}\n$url'));
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
