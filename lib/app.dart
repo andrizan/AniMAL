@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/router/app_router.dart';
 import 'package:animal/core/theme/app_theme.dart';
-import 'package:animal/core/theme/theme_provider.dart';
+import 'package:animal/shared/providers/theme_providers.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

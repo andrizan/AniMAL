@@ -1,9 +1,9 @@
 import 'package:animal/core/router/route_guards.dart';
-import 'package:animal/features/auth/presentation/auth_controller.dart';
+import 'package:animal/features/auth/providers/auth_providers.dart';
 import 'package:animal/features/auth/presentation/login_page.dart';
 import 'package:animal/features/auth/presentation/oauth_callback_page.dart';
 import 'package:animal/features/detail/presentation/screens/anime_detail_page.dart';
-import 'package:animal/features/detail/presentation/screens/character_staff_pages.dart';
+import 'package:animal/features/detail/presentation/screens/character_staff_page.dart';
 import 'package:animal/features/detail/presentation/screens/studio_page.dart';
 import 'package:animal/features/home/presentation/screens/home_page.dart';
 import 'package:animal/features/search/presentation/screens/anime_search_page.dart';
