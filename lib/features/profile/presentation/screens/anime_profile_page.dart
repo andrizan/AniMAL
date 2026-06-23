@@ -232,7 +232,7 @@ class AnimeProfilePage extends ConsumerWidget {
                         _StatRow(
                           label: 'Plan to Watch',
                           value: '${stats.numItemsPlanToWatch ?? 0}',
-                          color: Colors.purple,
+                          color: theme.colorScheme.secondary,
                         ),
                       ],
                     ),
@@ -371,7 +371,7 @@ Future<void> _checkForUpdate(BuildContext context) async {
     final dio = Dio();
     try {
       final response = await dio.get<Map<String, dynamic>>(
-        'https://api.github.com/repos/${Env.githubRepo}/releases/latest',
+        Env.githubReleasesUrl(Env.githubRepo),
       );
 
       final data = response.data ?? {};

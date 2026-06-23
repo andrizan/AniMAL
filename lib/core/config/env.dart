@@ -34,4 +34,11 @@ abstract final class Env {
 
   /// GitHub repository path for API calls.
   static const String githubRepo = 'andrizan/AniMAL';
+
+  /// MyAnimeList web URL for an anime.
+  static String malAnimeUrl(int id) => 'https://myanimelist.net/anime/$id';
+
+  /// GitHub releases API URL.
+  static String githubReleasesUrl(String repo) =>
+      'https://api.github.com/repos/$repo/releases/latest';
 }

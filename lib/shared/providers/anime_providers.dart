@@ -217,3 +217,10 @@ final animeRepositoryProvider = Provider<AnimeRepository>((ref) {
     ref.watch(loggerProvider),
   );
 });
+
+/// FutureProvider family for anime detail by ID.
+final animeDetailProvider = FutureProvider.autoDispose
+    .family<AnimeDetail?, int>((ref, animeId) async {
+  final repo = ref.watch(animeRepositoryProvider);
+  return repo.getAnimeDetail(animeId);
+});
