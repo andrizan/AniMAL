@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:animal/core/utils/github_check.dart';
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -368,77 +368,70 @@ Future<void> _checkForUpdate(BuildContext context) async {
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersion = packageInfo.version;
 
-    final dio = Dio();
-    try {
-      final response = await dio.get<Map<String, dynamic>>(
-        Env.githubReleasesUrl(Env.githubRepo),
+    final data = await fetchLatestRelease();
+    if (data == null || !context.mounted) return;
+
+    final tagName = (data['tag_name'] as String?) ?? '';
+    final latestVersion = tagName.replaceFirst('v', '');
+    final htmlUrl = (data['html_url'] as String?) ?? '';
+    final body = (data['body'] as String?) ?? '';
+
+    if (!context.mounted) return;
+
+    if (latestVersion == currentVersion) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Up to Date'),
+          content: Text(
+            'You are running the latest version (v$currentVersion).',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
-
-      final data = response.data ?? {};
-      final tagName = (data['tag_name'] as String?) ?? '';
-      final latestVersion = tagName.replaceFirst('v', '');
-      final htmlUrl = (data['html_url'] as String?) ?? '';
-      final body = (data['body'] as String?) ?? '';
-
-      if (!context.mounted) return;
-
-      if (latestVersion == currentVersion) {
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Up to Date'),
-            content: Text(
-              'You are running the latest version (v$currentVersion).',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } else {
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Update Available'),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('v$currentVersion → v$latestVersion'),
-                  if (body.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(body, style: Theme.of(ctx).textTheme.bodySmall),
-                  ],
+    } else {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Update Available'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('v$currentVersion → v$latestVersion'),
+                if (body.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(body, style: Theme.of(ctx).textTheme.bodySmall),
                 ],
-              ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Later'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  unawaited(
-                    launchUrl(
-                      Uri.parse(htmlUrl),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                  );
-                },
-                child: const Text('Download'),
-              ),
-            ],
           ),
-        );
-      }
-    } finally {
-      dio.close();
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Later'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                unawaited(
+                  launchUrl(
+                    Uri.parse(htmlUrl),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
+              },
+              child: const Text('Download'),
+            ),
+          ],
+        ),
+      );
     }
   } on Exception catch (e) {
     if (!context.mounted) return;
