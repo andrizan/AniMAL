@@ -16,7 +16,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     unawaited(_loadTheme());
-    return ThemeMode.system;
+    return ThemeMode.dark;
   }
 
   Future<void> _loadTheme() async {
@@ -24,8 +24,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
     if (saved != null) {
       state = switch (saved) {
         'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
+        _ => ThemeMode.dark,
       };
     }
   }

@@ -272,44 +272,21 @@ class AnimeProfilePage extends ConsumerWidget {
                 const Divider(height: 1),
                 ListTile(
                   leading: Icon(
-                    themeMode == ThemeMode.system
-                        ? Icons.brightness_auto
-                        : themeMode == ThemeMode.dark
-                            ? Icons.dark_mode
-                            : Icons.light_mode,
+                    themeMode == ThemeMode.dark
+                        ? Icons.dark_mode
+                        : Icons.light_mode,
                   ),
                   title: const Text('Theme'),
                   subtitle: Text(
-                    themeMode == ThemeMode.system
-                        ? 'System'
-                        : themeMode == ThemeMode.dark
-                            ? 'Dark'
-                            : 'Light',
+                    themeMode == ThemeMode.dark ? 'Dark' : 'Light',
                   ),
-                  trailing: DropdownButton<ThemeMode>(
-                    value: themeMode,
-                    underline: const SizedBox.shrink(),
+                  trailing: Switch(
+                    value: themeMode == ThemeMode.dark,
                     onChanged: (value) {
-                      if (value != null) {
-                        ref
-                            .read(themeModeProvider.notifier)
-                            .setThemeMode(value);
-                      }
+                      ref.read(themeModeProvider.notifier).setThemeMode(
+                            value ? ThemeMode.dark : ThemeMode.light,
+                          );
                     },
-                    items: const [
-                      DropdownMenuItem(
-                        value: ThemeMode.system,
-                        child: Text('System'),
-                      ),
-                      DropdownMenuItem(
-                        value: ThemeMode.light,
-                        child: Text('Light'),
-                      ),
-                      DropdownMenuItem(
-                        value: ThemeMode.dark,
-                        child: Text('Dark'),
-                      ),
-                    ],
                   ),
                 ),
                 const Divider(height: 1),
