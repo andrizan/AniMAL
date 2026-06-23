@@ -7,6 +7,7 @@ import 'package:animal/features/detail/presentation/screens/character_staff_page
 import 'package:animal/features/detail/presentation/screens/studio_page.dart';
 import 'package:animal/features/home/presentation/screens/home_page.dart';
 import 'package:animal/features/search/presentation/screens/anime_search_page.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -44,7 +45,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'animeDetail',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const HomePage();
+          if (id == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Invalid ID')),
+              body: const Center(child: Text('Invalid anime ID')),
+            );
+          }
           return AnimeDetailPage(animeId: id);
         },
       ),
@@ -53,7 +59,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'characterProfile',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const HomePage();
+          if (id == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Invalid ID')),
+              body: const Center(child: Text('Invalid character ID')),
+            );
+          }
           return CharacterProfilePage(characterId: id);
         },
       ),
@@ -62,7 +73,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'staffProfile',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const HomePage();
+          if (id == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Invalid ID')),
+              body: const Center(child: Text('Invalid staff ID')),
+            );
+          }
           return StaffProfilePage(staffId: id);
         },
       ),
@@ -71,7 +87,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'studioProfile',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const HomePage();
+          if (id == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Invalid ID')),
+              body: const Center(child: Text('Invalid studio ID')),
+            );
+          }
           return StudioProfilePage(studioId: id);
         },
       ),

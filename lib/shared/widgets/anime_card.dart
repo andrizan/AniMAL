@@ -5,7 +5,7 @@ import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
-import 'package:animal/features/airing/providers/airing_providers.dart';
+import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
