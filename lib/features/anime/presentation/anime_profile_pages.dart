@@ -69,7 +69,7 @@ class CharacterProfilePage extends ConsumerWidget {
                   ),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
+                  title: SelectableText(
                     character.name,
                     style: const TextStyle(
                       fontSize: 16,
@@ -135,7 +135,7 @@ class CharacterProfilePage extends ConsumerWidget {
                     children: [
                       // Native name
                       if (character.nativeName != null)
-                        Text(
+                        SelectableText(
                           character.nativeName!,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
@@ -287,7 +287,7 @@ class StaffProfilePage extends ConsumerWidget {
                   ),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
+                  title: SelectableText(
                     staff.name,
                     style: const TextStyle(
                       fontSize: 16,
@@ -353,7 +353,7 @@ class StaffProfilePage extends ConsumerWidget {
                     children: [
                       // Native name
                       if (staff.nativeName != null)
-                        Text(
+                        SelectableText(
                           staff.nativeName!,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
