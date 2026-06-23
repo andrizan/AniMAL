@@ -57,24 +57,29 @@ class AuthInterceptor extends Interceptor {
   Future<bool> _refreshToken() async {
     final refreshToken = await _tokenStorage.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) return false;
-    final response = await _dio.post<String>(
-      Env.malTokenUrl,
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-      data: {
-        'client_id': Env.malClientId,
-        'client_secret': Env.malClientSecret,
-        'grant_type': 'refresh_token',
-        'refresh_token': refreshToken,
-      },
-    );
-    final token = AuthToken.fromJson(
-      jsonDecode(response.data ?? '') as Map<String, dynamic>,
-    );
-    await _tokenStorage.saveTokens(
-      accessToken: token.accessToken,
-      refreshToken: token.refreshToken,
-    );
-    _logger.i('Token refreshed');
-    return true;
+    try {
+      final response = await _dio.post<String>(
+        Env.malTokenUrl,
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+        data: {
+          'client_id': Env.malClientId,
+          'client_secret': Env.malClientSecret,
+          'grant_type': 'refresh_token',
+          'refresh_token': refreshToken,
+        },
+      );
+      final token = AuthToken.fromJson(
+        jsonDecode(response.data ?? '') as Map<String, dynamic>,
+      );
+      await _tokenStorage.saveTokens(
+        accessToken: token.accessToken,
+        refreshToken: token.refreshToken,
+      );
+      _logger.i('Token refreshed');
+      return true;
+    } catch (e) {
+      _logger.e('Token refresh failed', error: e);
+      return false;
+    }
   }
 }

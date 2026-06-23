@@ -602,10 +602,9 @@ class _MyListStatusCard extends ConsumerWidget {
                 SizedBox(
                   width: 60,
                   height: 36,
-                  child: TextField(
-                    controller: TextEditingController(
-                      text: '$watched',
-                    ),
+                  child: TextFormField(
+                    key: ValueKey('episodes_$watched'),
+                    initialValue: '$watched',
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
                     style: theme.textTheme.bodyLarge?.copyWith(
@@ -623,7 +622,7 @@ class _MyListStatusCard extends ConsumerWidget {
                       suffixText: total != null ? '/$total' : null,
                       suffixStyle: theme.textTheme.bodySmall,
                     ),
-                    onSubmitted: (value) {
+                    onFieldSubmitted: (value) {
                       final parsed = int.tryParse(value);
                       if (parsed != null && parsed >= 0) {
                         unawaited(_updateEpisodes(ref, parsed));

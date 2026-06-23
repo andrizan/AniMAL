@@ -318,14 +318,15 @@ class AnimeCard extends ConsumerWidget {
     var selectedEps = currentEps;
     var selectedStatus = currentStatus;
 
+    final epsController = TextEditingController(
+      text: '$currentEps',
+    );
+
     unawaited(
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
         builder: (ctx) {
-          final epsController = TextEditingController(
-            text: '$currentEps',
-          );
 
           return StatefulBuilder(
             builder: (ctx, setModalState) {
@@ -540,7 +541,7 @@ class AnimeCard extends ConsumerWidget {
             },
           );
         },
-      ),
+      ).whenComplete(() => epsController.dispose()),
     );
   }
 

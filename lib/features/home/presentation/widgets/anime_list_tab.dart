@@ -7,6 +7,48 @@ import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+List<Anime> _sortAnimeList(
+  List<Anime> list,
+  Map<int, AiringEntry> airingMap,
+  ListSort sortBy,
+  bool ascending,
+) {
+  final sorted = List<Anime>.from(list)
+    ..sort((a, b) {
+      int cmp;
+      switch (sortBy) {
+        case ListSort.name:
+          cmp = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        case ListSort.score:
+          final aScore = a.mean ?? 0;
+          final bScore = b.mean ?? 0;
+          cmp = aScore.compareTo(bScore);
+        case ListSort.episodes:
+          final aEps = a.numEpisodes ?? 0;
+          final bEps = b.numEpisodes ?? 0;
+          cmp = aEps.compareTo(bEps);
+        case ListSort.airing:
+          final aTime = airingMap[a.id]?.timeUntilAiring ?? 999999999;
+          final bTime = airingMap[b.id]?.timeUntilAiring ?? 999999999;
+          cmp = aTime.compareTo(bTime);
+      }
+      return ascending ? cmp : -cmp;
+    });
+  return sorted;
+}
+
+List<Anime> _filterAnimeList(List<Anime> list, AiringFilter airingFilter) {
+  if (airingFilter == AiringFilter.all) return list;
+  return list.where((a) {
+    return switch (airingFilter) {
+      AiringFilter.airing => a.status == 'currently_airing',
+      AiringFilter.finished => a.status == 'finished_airing',
+      AiringFilter.upcoming => a.status == 'not_yet_aired',
+      _ => true,
+    };
+  }).toList();
+}
+
 /// Tab that displays the user's anime list for a given [WatchStatus].
 ///
 /// Supports sorting by [sortBy] and [ascending].
@@ -25,43 +67,6 @@ class AnimeListTab extends ConsumerWidget {
   final bool ascending;
   final AiringFilter airingFilter;
 
-  List<Anime> _sort(List<Anime> list, Map<int, AiringEntry> airingMap) {
-    final sorted = List<Anime>.from(list)
-      ..sort((a, b) {
-        int cmp;
-        switch (sortBy) {
-          case ListSort.name:
-            cmp = a.title.toLowerCase().compareTo(b.title.toLowerCase());
-          case ListSort.score:
-            final aScore = a.mean ?? 0;
-            final bScore = b.mean ?? 0;
-            cmp = aScore.compareTo(bScore);
-          case ListSort.episodes:
-            final aEps = a.numEpisodes ?? 0;
-            final bEps = b.numEpisodes ?? 0;
-            cmp = aEps.compareTo(bEps);
-          case ListSort.airing:
-            final aTime = airingMap[a.id]?.timeUntilAiring ?? 999999999;
-            final bTime = airingMap[b.id]?.timeUntilAiring ?? 999999999;
-            cmp = aTime.compareTo(bTime);
-        }
-        return ascending ? cmp : -cmp;
-      });
-    return sorted;
-  }
-
-  List<Anime> _filter(List<Anime> list) {
-    if (airingFilter == AiringFilter.all) return list;
-    return list.where((a) {
-      return switch (airingFilter) {
-        AiringFilter.airing => a.status == 'currently_airing',
-        AiringFilter.finished => a.status == 'finished_airing',
-        AiringFilter.upcoming => a.status == 'not_yet_aired',
-        _ => true,
-      };
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncAnime = ref.watch(userAnimeListProvider(status));
@@ -75,7 +80,7 @@ class AnimeListTab extends ConsumerWidget {
         onRetry: () => ref.invalidate(userAnimeListProvider(status)),
       ),
       data: (animeList) {
-        final filtered = _filter(animeList);
+        final filtered = _filterAnimeList(animeList, airingFilter);
         if (filtered.isEmpty) {
           return Center(
             child: Column(
@@ -103,7 +108,12 @@ class AnimeListTab extends ConsumerWidget {
           loading: () => <int, AiringEntry>{},
           error: (_, _) => <int, AiringEntry>{},
         );
-        final sorted = _sort(filtered, airingMap);
+        final sorted = _sortAnimeList(
+          filtered,
+          airingMap,
+          sortBy,
+          ascending,
+        );
 
         return RefreshIndicator(
           onRefresh: () async {

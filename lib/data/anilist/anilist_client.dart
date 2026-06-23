@@ -28,15 +28,6 @@ class AniListClient {
   final Dio _dio;
   final Logger _logger;
 
-  Map<String, List<AniListScheduleEntry>>? _cachedWeeklySchedule;
-  DateTime? _weeklyScheduleCacheTime;
-  static const _cacheDuration = Duration(minutes: 15);
-
-  bool get _isWeeklyCacheValid =>
-      _cachedWeeklySchedule != null &&
-      _weeklyScheduleCacheTime != null &&
-      DateTime.now().difference(_weeklyScheduleCacheTime!) < _cacheDuration;
-
   Future<dynamic> _query(
     String query, [
     Map<String, dynamic>? variables,
@@ -65,51 +56,14 @@ class AniListClient {
     }
   }
 
-  Future<List<AniListScheduleEntry>> getAiringScheduleForDay(
-    String dayOfWeek,
-  ) async {
-    final now = DateTime.now();
-    final targetWeekday = _weekdayNumber(dayOfWeek);
-    final diff = targetWeekday - now.weekday;
-    final targetDate = now.add(Duration(days: diff >= 0 ? diff : diff + 7));
-    final dayStart = DateTime(
-      targetDate.year,
-      targetDate.month,
-      targetDate.day,
-    );
-    final dayEnd = dayStart.add(const Duration(days: 1));
-    final startSec = dayStart.millisecondsSinceEpoch ~/ 1000;
-    final endSec = dayEnd.millisecondsSinceEpoch ~/ 1000;
-
-    final allEntries = <AniListScheduleEntry>[];
-    var page = 1;
-    var hasNextPage = true;
-
-    while (hasNextPage && page <= ApiConstants.anilistPageLimit) {
-      final data =
-          await _query(AniListQueries.airingSchedule, {
-                'startAt': startSec,
-                'endAt': endSec,
-                'page': page,
-              })
-              as Map<String, dynamic>;
-      final pageData = data['Page'] as Map<String, dynamic>;
-      final pageInfo = pageData['pageInfo'] as Map<String, dynamic>;
-      hasNextPage = pageInfo['hasNextPage'] as bool? ?? false;
-      final schedules = pageData['airingSchedules'] as List<dynamic>;
-      for (final s in schedules) {
-        allEntries.add(_parseScheduleEntry(s as Map<String, dynamic>));
-      }
-      page++;
-    }
-    return allEntries;
-  }
-
   Future<Map<String, List<AniListScheduleEntry>>>
   getWeeklyAiringSchedule() async {
-    if (_isWeeklyCacheValid) {
+    const key = 'weeklyAiringSchedule';
+    final cached =
+        _anilistCache.get<Map<String, List<AniListScheduleEntry>>>(key);
+    if (cached != null) {
       _logger.d('AniList weekly schedule cache hit');
-      return _cachedWeeklySchedule!;
+      return cached;
     }
 
     _logger.d('AniList: fetching weekly schedule');
@@ -159,8 +113,7 @@ class AniListClient {
       entry.value.sort((a, b) => a.airingAt.compareTo(b.airingAt));
     }
 
-    _cachedWeeklySchedule = grouped;
-    _weeklyScheduleCacheTime = DateTime.now();
+    _anilistCache.put(key, grouped, ttl: const Duration(minutes: 15));
     return grouped;
   }
 
@@ -174,19 +127,6 @@ class AniListClient {
       6 => 'saturday',
       7 => 'sunday',
       _ => 'monday',
-    };
-  }
-
-  int _weekdayNumber(String dayName) {
-    return switch (dayName) {
-      'monday' => 1,
-      'tuesday' => 2,
-      'wednesday' => 3,
-      'thursday' => 4,
-      'friday' => 5,
-      'saturday' => 6,
-      'sunday' => 7,
-      _ => 1,
     };
   }
 
@@ -218,43 +158,6 @@ class AniListClient {
       episode: schedule['episode'] as int?,
       timeUntilAiring: schedule['timeUntilAiring'] as int?,
     );
-  }
-
-  Future<AniListNextAiring?> getNextAiringSchedule(int malId) async {
-    final data =
-        await _query(AniListQueries.nextAiring, {'idMal': malId})
-            as Map<String, dynamic>;
-    final media = data['Media'] as Map<String, dynamic>?;
-    if (media == null) return null;
-    final next = media['nextAiringEpisode'] as Map<String, dynamic>?;
-    if (next == null) return null;
-    return AniListNextAiring(
-      airingAt: DateTime.fromMillisecondsSinceEpoch(
-        (next['airingAt'] as int) * 1000,
-      ),
-      episode: next['episode'] as int,
-      timeUntilAiring: next['timeUntilAiring'] as int,
-    );
-  }
-
-  Future<List<AniListExternalLink>> getExternalLinks(int malId) async {
-    final data =
-        await _query(AniListQueries.animeExtra, {'idMal': malId})
-            as Map<String, dynamic>;
-    final media = data['Media'] as Map<String, dynamic>?;
-    if (media == null) return [];
-    final links = media['externalLinks'] as List<dynamic>? ?? [];
-    return links.map((l) {
-      final link = l as Map<String, dynamic>;
-      return AniListExternalLink(
-        id: link['id'] as int,
-        url: link['url'] as String,
-        site: link['site'] as String?,
-        type: link['type'] as String?,
-        language: link['language'] as String?,
-        icon: link['icon'] as String?,
-      );
-    }).toList();
   }
 
   Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) async {

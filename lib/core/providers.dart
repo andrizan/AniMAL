@@ -31,11 +31,12 @@ final dioProvider = Provider<Dio>((ref) {
 });
 
 /// Notification service — initialized once in main.dart.
-final notificationServiceProvider = Provider<AnimeNotificationService>(
-  (ref) => throw UnimplementedError(
-    'Override this provider in main.dart with the initialized instance',
-  ),
-);
+final notificationServiceProvider =
+    Provider.autoDispose<AnimeNotificationService>(
+      (ref) => throw UnimplementedError(
+        'Override this provider in main.dart with the initialized instance',
+      ),
+    );
 
 /// Auth state – keeps track of whether the user is logged in.
 enum AuthStatus { unknown, authenticated, unauthenticated }

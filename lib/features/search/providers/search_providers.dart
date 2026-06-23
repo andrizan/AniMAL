@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:animal/data/models/anime.dart';
-import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,13 +34,3 @@ final animeRankingProvider = FutureProvider<List<Anime>>((ref) async {
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getAnimeRanking();
 });
-
-/// FutureProvider family for anime detail by ID.
-/// Returns `null` if the anime doesn't exist on MAL (404).
-/// Auto-disposes when no widgets are watching.
-// ignore: specify_nonobvious_property_types
-final animeDetailProvider = FutureProvider.autoDispose
-    .family<AnimeDetail?, int>((ref, animeId) async {
-      final repo = ref.watch(animeRepositoryProvider);
-      return repo.getAnimeDetail(animeId);
-    });

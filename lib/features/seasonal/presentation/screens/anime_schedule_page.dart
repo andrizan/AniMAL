@@ -209,6 +209,43 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
   }
 }
 
+({Map<String, List<Anime>> grouped, List<Anime> noBroadcast})
+_groupAnimeByDay(List<Anime> animeList) {
+  const days = <String>[
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ];
+  final grouped = <String, List<Anime>>{};
+  for (final day in days) {
+    grouped[day] = [];
+  }
+  final noBroadcast = <Anime>[];
+
+  for (final anime in animeList) {
+    final day = anime.broadcast?.dayOfWeek;
+    if (day != null && grouped.containsKey(day)) {
+      grouped[day]!.add(anime);
+    } else {
+      noBroadcast.add(anime);
+    }
+  }
+
+  for (final entry in grouped.entries) {
+    entry.value.sort((a, b) {
+      final at = a.broadcast?.startTime ?? '';
+      final bt = b.broadcast?.startTime ?? '';
+      return at.compareTo(bt);
+    });
+  }
+
+  return (grouped: grouped, noBroadcast: noBroadcast);
+}
+
 /// Displays anime for a specific year/season grouped by broadcast day.
 class _SeasonAnimeList extends ConsumerWidget {
   const _SeasonAnimeList({
@@ -297,29 +334,7 @@ class _SeasonAnimeList extends ConsumerWidget {
         }
 
         // Group by broadcast day
-        final grouped = <String, List<Anime>>{};
-        for (final day in _days) {
-          grouped[day] = [];
-        }
-        final noBroadcast = <Anime>[];
-
-        for (final anime in animeList) {
-          final day = anime.broadcast?.dayOfWeek;
-          if (day != null && grouped.containsKey(day)) {
-            grouped[day]!.add(anime);
-          } else {
-            noBroadcast.add(anime);
-          }
-        }
-
-        // Sort by time within each day
-        for (final entry in grouped.entries) {
-          entry.value.sort((a, b) {
-            final at = a.broadcast?.startTime ?? '';
-            final bt = b.broadcast?.startTime ?? '';
-            return at.compareTo(bt);
-          });
-        }
+        final (:grouped, :noBroadcast) = _groupAnimeByDay(animeList);
 
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
