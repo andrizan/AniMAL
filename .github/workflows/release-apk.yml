@@ -19,6 +19,16 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool/pub
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - uses: subosito/flutter-action@v2
         with:
@@ -47,8 +57,10 @@ jobs:
           EOF
 
       - name: Build APK
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.jvmargs=-Xmx4g"
         run: |
-          flutter build apk --release \
+          flutter build apk --release --no-pub \
             --dart-define=MAL_CLIENT_ID="${{ secrets.MAL_CLIENT_ID }}" \
             --dart-define=MAL_CLIENT_SECRET="${{ secrets.MAL_CLIENT_SECRET }}" \
             --dart-define=MAL_REDIRECT_URI="${{ secrets.MAL_REDIRECT_URI }}"
