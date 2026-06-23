@@ -17,6 +17,9 @@ abstract final class Env {
   /// MyAnimeList API base URL.
   static const String malBaseUrl = 'https://api.myanimelist.net/v2';
 
+  /// AniList GraphQL API base URL.
+  static const String anilistBaseUrl = 'https://graphql.anilist.co';
+
   /// MyAnimeList OAuth2 authorization endpoint.
   static const String malAuthUrl =
       'https://myanimelist.net/v1/oauth2/authorize';
@@ -27,4 +30,7 @@ abstract final class Env {
 
   /// GitHub repository URL.
   static const String githubRepoUrl = 'https://github.com/andrizan/AniMAL';
+
+  /// GitHub repository path for API calls.
+  static const String githubRepo = 'andrizan/AniMAL';
 }

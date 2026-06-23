@@ -2,7 +2,7 @@ import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/features/airing/presentation/providers/anime_airing_providers.dart';
-import 'package:animal/features/library/presentation/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

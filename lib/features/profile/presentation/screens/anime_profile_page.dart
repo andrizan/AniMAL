@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/theme_provider.dart';
-import 'package:animal/features/profile/presentation/providers/anime_profile_controller.dart';
+import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/features/auth/presentation/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
@@ -371,8 +371,6 @@ Future<void> _launchGitHub() async {
 }
 
 Future<void> _checkForUpdate(BuildContext context) async {
-  const repo = 'andrizan/AniMAL';
-
   try {
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersion = packageInfo.version;
@@ -380,7 +378,7 @@ Future<void> _checkForUpdate(BuildContext context) async {
     final dio = Dio();
     try {
       final response = await dio.get<Map<String, dynamic>>(
-        'https://api.github.com/repos/$repo/releases/latest',
+        'https://api.github.com/repos/${Env.githubRepo}/releases/latest',
       );
 
       final data = response.data ?? {};

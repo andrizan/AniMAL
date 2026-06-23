@@ -4,6 +4,7 @@ import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
 
 /// Merged entry combining AniList schedule + MAL anime data.
@@ -59,7 +60,7 @@ class AiringRepository {
     required this._malApi,
     required this._anilistApi,
     Logger? logger,
-  }) : _logger = logger ?? Logger();
+  }) : _logger = logger ?? appLogger;
 
   final MalApiClient _malApi;
   final AniListClient _anilistApi;

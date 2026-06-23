@@ -1,6 +1,7 @@
 import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/features/profile/domain/entities/user_profile_entity.dart';
 import 'package:animal/features/profile/domain/repositories/profile_repository.dart';
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
 
 final class ProfileRepositoryImpl implements ProfileRepository {
@@ -8,7 +9,7 @@ final class ProfileRepositoryImpl implements ProfileRepository {
     required MalApiClient malApi,
     Logger? logger,
   })  : _malApi = malApi,
-        _logger = logger ?? Logger();
+        _logger = logger ?? appLogger;
 
   final MalApiClient _malApi;
   final Logger _logger;

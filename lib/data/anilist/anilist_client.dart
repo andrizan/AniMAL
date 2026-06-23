@@ -1,13 +1,15 @@
+import 'package:animal/core/config/env.dart';
 import 'package:animal/core/constants/anilist_queries.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:dio/dio.dart';
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
 
 class AniListClient {
   AniListClient({Logger? logger})
-      : _logger = logger ?? Logger(),
+      : _logger = logger ?? appLogger,
         _dio = Dio(BaseOptions(
-          baseUrl: 'https://graphql.anilist.co',
+          baseUrl: Env.anilistBaseUrl,
           connectTimeout: const Duration(seconds: 15),
           receiveTimeout: const Duration(seconds: 15),
           contentType: 'application/json',

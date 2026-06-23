@@ -1,6 +1,6 @@
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
-import 'package:animal/features/library/presentation/providers/anime_providers.dart';
+import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// FutureProvider family for anime search.

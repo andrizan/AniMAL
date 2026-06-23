@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
-import 'package:animal/features/library/presentation/providers/anilist_providers.dart';
+import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';

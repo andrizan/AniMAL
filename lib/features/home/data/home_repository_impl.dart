@@ -4,6 +4,7 @@ import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/domain/entities/anime_entity.dart';
 import 'package:animal/features/home/domain/repositories/home_repository.dart';
 import 'package:dio/dio.dart';
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
 
 final class HomeRepositoryImpl implements HomeRepository {
@@ -11,7 +12,7 @@ final class HomeRepositoryImpl implements HomeRepository {
     required MalApiClient malApi,
     Logger? logger,
   })  : _malApi = malApi,
-        _logger = logger ?? Logger();
+        _logger = logger ?? appLogger;
 
   final MalApiClient _malApi;
   final Logger _logger;

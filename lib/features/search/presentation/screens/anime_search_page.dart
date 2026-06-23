@@ -1,6 +1,6 @@
 import 'package:animal/data/models/anime.dart';
-import 'package:animal/features/library/presentation/widgets/anime_card.dart';
-import 'package:animal/features/search/presentation/providers/anime_search_controller.dart';
+import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/features/search/presentation/providers/search_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -1,9 +1,9 @@
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/airing/presentation/providers/anime_airing_providers.dart';
-import 'package:animal/features/library/presentation/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/features/home/presentation/widgets/anime_home_tab.dart';
-import 'package:animal/features/home/presentation/providers/anime_list_controller.dart';
+import 'package:animal/features/home/presentation/providers/anime_list_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

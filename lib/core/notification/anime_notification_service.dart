@@ -1,12 +1,13 @@
 import 'dart:async';
 
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class AnimeNotificationService {
-  AnimeNotificationService({Logger? logger}) : _logger = logger ?? Logger();
+  AnimeNotificationService({Logger? logger}) : _logger = logger ?? appLogger;
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   final Logger _logger;
 
