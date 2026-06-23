@@ -13,15 +13,44 @@ Rules and conventions for contributing to this project.
   - `git restore` — same as above
 - If a git operation goes wrong, use `git stash` or `git checkout -b` instead.
 - Stage only intended files. Never commit secrets or keys.
-- **When moving/renaming files**, use plain `mv` (not `git mv`) unless the user asks to preserve git history. Plain `mv` is safer — if something fails, files stay in place.
+- **NEVER use `git mv`** — use the file tools (Write/Edit/Bash `mv`) instead. `git mv` stages immediately and risks unintended renames.
 
 ## Architecture
 
-- **Clean architecture**: domain / data / presentation layers.
+- **Feature-Based** with strict isolation: features never import from each other.
+- Each feature: `data/` → `domain/` → `providers/` → `presentation/`.
 - **State management**: `flutter_riverpod` only.
-- **Routing**: `go_router` with auth guard.
-- **Codegen**: `freezed` + `json_serializable`. Run `dart run build_runner build` after model changes.
+- **Routing**: `go_router` with auth guard in `core/router/route_guards.dart`.
+- **Codegen**: `freezed` + `json_serializable` for data layer DTOs only. Run `dart run build_runner build` after model changes.
 - **Analysis**: `very_good_analysis` — run `flutter analyze` before reporting done.
+
+### Layer contract
+
+| Layer | Location | What goes there |
+|-------|----------|-----------------|
+| **Shared DTOs** | `data/models/` | `@freezed` classes matching MAL/AniList API JSON |
+| **Shared API clients** | `data/mal/`, `data/anilist/` | Dio-based HTTP/GraphQL clients |
+| **Domain entities** | `features/*/domain/entities/` | **Plain Dart classes** (NOT freezed) |
+| **Abstract repos** | `features/*/domain/repositories/` | `abstract interface class` |
+| **Use cases** | `features/*/domain/usecases/` | Single-purpose classes, named `get_*.dart` |
+| **Repo impls** | `features/*/data/` | Implements abstract repo, maps DTO → entity |
+| **Providers** | `features/*/providers/` | `@riverpod` providers, file named `*_providers.dart` |
+| **Screens** | `features/*/presentation/screens/` | `*_page.dart` |
+| **Widgets** | `features/*/presentation/widgets/` or `shared/widgets/` | Feature-specific or shared widgets |
+| **Core infra** | `core/` | Logger, network, router, theme, storage, constants |
+
+### Feature isolation rule
+```dart
+// ALLOWED — feature imports from shared layers
+import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/mal/mal_api_client.dart';
+import 'package:animal/core/logger/app_logger.dart';
+
+// FORBIDDEN — feature imports from another feature
+import 'package:animal/features/home/...';  // NO
+```
+
+If two features need the same data, lift the provider to `core/providers.dart` or create shared providers.
 
 ## API Strategy
 
@@ -37,6 +66,12 @@ Rules and conventions for contributing to this project.
 - When merging, MAL data takes priority.
 - Cache API responses to avoid rate limits (15 min).
 
+## Logging
+
+- Use `appLogger` from `core/logger/app_logger.dart` (standardized `Logger` with PrettyPrinter).
+- Providers that need logging inject via `ref.watch(loggerProvider)`.
+- Do NOT create new `Logger()` instances — use the shared `appLogger`.
+
 ## UI / UX Rules
 
 ### Cards
@@ -45,7 +80,7 @@ Rules and conventions for contributing to this project.
 - **Image radius**: left side only (`topLeft` + `bottomLeft`).
 - **Edit modal** on all cards: via ⋮ button or long press.
 - Modal allows: change status, edit episodes (text input + +/-), change score (dropdown 0–10).
-- **Broadcast time**: convert JST → local OS time. Keep for countdown.
+- **Broadcast time**: convert JST → local OS time via `core/utils/date_utils.dart`.
 - **Score**: `anime.mean` from MAL (star icon, amber). Personal score from `myListStatus?.score` (star icon, primary color).
 
 ### Tabs
@@ -64,7 +99,7 @@ Rules and conventions for contributing to this project.
 ### Airing Page
 - Data from AniList schedule + MAL scores.
 - Grouped by day (Mon–Sun).
-- Countdown timer: `2d 5h`, `3h 20m`, `45m`.
+- Countdown timer: `2d 5h`, `3h 20m`, `45m` (via `core/utils/date_utils.dart`).
 - Urgent (< 6h): red color.
 - **No header info** above tabs.
 - Sort by airing time (earliest first).
@@ -86,31 +121,45 @@ Rules and conventions for contributing to this project.
 
 - **Primary**: Inter (400 body, 500 label, 600 title, 700 heading).
 - **Fallback**: Noto Sans JP.
-- Configured via `google_fonts` package.
+- Configured via `google_fonts` package in `core/theme/app_text_styles.dart`.
 
 ## Theme
 
 - **Dark mode** by default (`ThemeMode.dark`).
 - Material 3 with indigo seed color.
+- Theme built in `core/theme/app_theme.dart` (not hardcoded in `app.dart`).
 
 ## Environment
 
-- Credentials in `.env` file (gitignored).
-- Loaded via `flutter_dotenv` in `main.dart`.
-- `MAL_CLIENT_ID`, `MAL_CLIENT_SECRET`, `MAL_REDIRECT_URI`.
+- Credentials via `--dart-define` compile-time constants, NOT `flutter_dotenv`.
+- Loaded by `core/config/env.dart` using `String.fromEnvironment()`.
+- Variables: `MAL_CLIENT_ID`, `MAL_CLIENT_SECRET`, `MAL_REDIRECT_URI`.
+- `.env` file is gitignored (for local script convenience, NOT used by the app).
 
 ## File Naming
 
-- Pages: `*_page.dart`
-- Providers/controllers: `*_controller.dart` or `*_providers.dart`
-- Domain models: `*.dart` (freezed)
-- Shared widgets: `*.dart` (e.g. `anime_card.dart`)
+| Type | Pattern | Example |
+|------|---------|---------|
+| Pages/Screens | `*_page.dart` | `home_page.dart`, `login_page.dart` |
+| Providers | `*_providers.dart` | `home_providers.dart`, `airing_providers.dart` |
+| Data models (DTOs, freezed) | `*.dart` | `anime.dart`, `mal_user.dart` |
+| Domain entities (plain) | `*_entity.dart` | `anime_entity.dart`, `airing_entry.dart` |
+| Abstract repositories | `*_repository.dart` | `home_repository.dart` |
+| Repo implementations | `*_repository_impl.dart` | `home_repository_impl.dart` |
+| Use cases | `get_*.dart` | `get_trending_anime.dart` |
+| Shared widgets | `*.dart` | `anime_card.dart`, `loading_shimmer.dart` |
+| API clients | `*_client.dart` | `mal_api_client.dart`, `anilist_client.dart` |
 
 ## Don'ts
 
 - Don't remove broadcast time from cards (needed for countdown).
 - Don't add unnecessary info/headers above tab content.
 - Don't use AniList external links for character/staff (not supported by API).
+- **Don't import from other features** — use shared data layer or lift providers.
+- **Don't put freezed models in domain layer** — domain entities are plain Dart.
+- **Don't create new Logger()** — use `appLogger` from `core/logger/`.
+- **Don't hardcode API endpoints** — use `core/constants/mal_endpoints.dart`.
+- **Don't hardcode GraphQL queries** — use `core/constants/anilist_queries.dart`.
 - Don't add comments unless asked.
 - Don't use emojis unless asked.
 - Don't commit without explicit permission.

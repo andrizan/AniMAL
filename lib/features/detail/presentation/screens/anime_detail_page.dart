@@ -1,9 +1,10 @@
 import 'dart:async';
 
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
-import 'package:animal/features/library/data/data_sources/anilist_api.dart';
-import 'package:animal/features/library/data/models/anime_detail.dart';
-import 'package:animal/features/library/data/models/watch_status.dart';
+import 'package:animal/data/anilist/anilist_client.dart';
+import 'package:animal/data/models/anime_detail.dart';
+import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/library/presentation/providers/anilist_providers.dart';
 import 'package:animal/features/home/presentation/providers/anime_list_controller.dart';
 import 'package:animal/features/library/presentation/providers/anime_notification_providers.dart';
@@ -96,16 +97,16 @@ class AnimeDetailPage extends ConsumerWidget {
               SliverAppBar(
                 expandedHeight: 300,
                 pinned: true,
-                foregroundColor: Colors.white,
+                foregroundColor: theme.colorScheme.onSurfaceVariant,
                 backgroundColor: theme.colorScheme.surface,
                 leading: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: const BoxDecoration(
-                    color: Colors.black38,
+                    color: AppColors.overlayDarker,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.iconLight),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -114,7 +115,7 @@ class AnimeDetailPage extends ConsumerWidget {
                     Container(
                       margin: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(
-                        color: Colors.black38,
+                        color: AppColors.overlayDarker,
                         shape: BoxShape.circle,
                       ),
                       child: _NotificationBell(
@@ -126,11 +127,11 @@ class AnimeDetailPage extends ConsumerWidget {
                   Container(
                     margin: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Colors.black38,
+                      color: AppColors.overlayDarker,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.share, color: Colors.white),
+                      icon: const Icon(Icons.share, color: AppColors.iconLight),
                       onPressed: () => _shareAnime(detail),
                     ),
                   ),
@@ -141,9 +142,7 @@ class AnimeDetailPage extends ConsumerWidget {
                     maxLines: 2,
                     style: const TextStyle(
                       fontSize: 16,
-                      shadows: [
-                        Shadow(blurRadius: 8, color: Colors.black54),
-                      ],
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
@@ -179,12 +178,12 @@ class AnimeDetailPage extends ConsumerWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.transparent,
-                                Colors.transparent,
-                                theme.colorScheme.surface.withValues(alpha: 0.7),
+                              AppColors.transparent,
+                              AppColors.transparent,
+                                theme.colorScheme.surface.withValues(alpha: 0.6),
                                 theme.colorScheme.surface,
                               ],
-                              stops: const [0.0, 0.4, 0.75, 1.0],
+                              stops: const [0.0, 0.45, 0.8, 1.0],
                             ),
                           ),
                         ),
@@ -210,7 +209,7 @@ class AnimeDetailPage extends ConsumerWidget {
                             _InfoChip(
                               icon: Icons.star_rounded,
                               label: detail.mean!.toStringAsFixed(2),
-                              color: Colors.amber,
+                              color: AppColors.starColor,
                             ),
                           if (detail.rank != null)
                             _InfoChip(
@@ -235,7 +234,7 @@ class AnimeDetailPage extends ConsumerWidget {
                           if (detail.rating != null)
                             _InfoChip(
                               label: AnimeLabels.ratingLabel(detail.rating!),
-                              color: Colors.red,
+                              color: theme.colorScheme.error,
                             ),
                         ],
                       ),
@@ -529,7 +528,7 @@ class _MyListStatusCard extends ConsumerWidget {
             Row(
               children: [
                 const Icon(Icons.star_rounded,
-                    size: 20, color: Colors.amber),
+                    size: 20, color: AppColors.starColor),
                 const SizedBox(width: 8),
                 Text(
                   'Score',
@@ -1396,7 +1395,7 @@ class _NotificationBell extends ConsumerWidget {
     return IconButton(
       icon: Icon(
         enabled ? Icons.notifications_active : Icons.notifications_none,
-        color: enabled ? Colors.amber : Colors.white,
+        color: enabled ? AppColors.starColor : AppColors.iconLight,
       ),
       onPressed: () async {
         final success = await ref.read(animeNotificationProvider.notifier).toggle(

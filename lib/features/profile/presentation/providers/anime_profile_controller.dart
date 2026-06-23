@@ -1,4 +1,4 @@
-import 'package:animal/features/library/data/models/mal_user.dart';
+import 'package:animal/data/models/mal_user.dart';
 import 'package:animal/features/library/presentation/providers/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

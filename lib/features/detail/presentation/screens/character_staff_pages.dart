@@ -1,7 +1,8 @@
 import 'dart:async';
 
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
-import 'package:animal/features/library/data/data_sources/anilist_api.dart';
+import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/features/library/presentation/providers/anilist_providers.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -55,17 +56,17 @@ class CharacterProfilePage extends ConsumerWidget {
               SliverAppBar(
                 expandedHeight: 300,
                 pinned: true,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.iconLight,
                 backgroundColor: theme.colorScheme.surface,
                 leading: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: const BoxDecoration(
-                    color: Colors.black38,
+                    color: AppColors.overlayDarker,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back,
-                        color: Colors.white),
+                        color: AppColors.iconLight),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -74,9 +75,6 @@ class CharacterProfilePage extends ConsumerWidget {
                     character.name,
                     style: const TextStyle(
                       fontSize: 16,
-                      shadows: [
-                        Shadow(blurRadius: 8, color: Colors.black54),
-                      ],
                     ),
                   ),
                   titlePadding: const EdgeInsets.only(
@@ -115,8 +113,8 @@ class CharacterProfilePage extends ConsumerWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.transparent,
-                                Colors.transparent,
+                                AppColors.transparent,
+                                AppColors.transparent,
                                 theme.colorScheme.surface.withValues(alpha: 0.7),
                                 theme.colorScheme.surface,
                               ],
@@ -264,17 +262,17 @@ class StaffProfilePage extends ConsumerWidget {
               SliverAppBar(
                 expandedHeight: 300,
                 pinned: true,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.iconLight,
                 backgroundColor: theme.colorScheme.surface,
                 leading: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: const BoxDecoration(
-                    color: Colors.black38,
+                    color: AppColors.overlayDarker,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back,
-                        color: Colors.white),
+                        color: AppColors.iconLight),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -283,9 +281,6 @@ class StaffProfilePage extends ConsumerWidget {
                     staff.name,
                     style: const TextStyle(
                       fontSize: 16,
-                      shadows: [
-                        Shadow(blurRadius: 8, color: Colors.black54),
-                      ],
                     ),
                   ),
                   titlePadding: const EdgeInsets.only(
@@ -324,8 +319,8 @@ class StaffProfilePage extends ConsumerWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.transparent,
-                                Colors.transparent,
+                                AppColors.transparent,
+                                AppColors.transparent,
                                 theme.colorScheme.surface.withValues(alpha: 0.7),
                                 theme.colorScheme.surface,
                               ],

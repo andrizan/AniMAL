@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:animal/core/config/env.dart';
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/theme_provider.dart';
 import 'package:animal/features/profile/presentation/providers/anime_profile_controller.dart';
 import 'package:animal/features/auth/presentation/auth_controller.dart';
@@ -56,10 +57,10 @@ class AnimeProfilePage extends ConsumerWidget {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 32,
-                      backgroundColor: Colors.red,
-                      child: Icon(Icons.error, color: Colors.white),
+                      backgroundColor: theme.colorScheme.error,
+                      child: const Icon(Icons.error, color: AppColors.iconLight),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -126,7 +127,7 @@ class AnimeProfilePage extends ConsumerWidget {
                           Text(
                             'Connected to MyAnimeList',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.green,
+                              color: AppColors.statusAiring,
                             ),
                           ),
                           if (user.location != null) ...[
@@ -218,22 +219,22 @@ class AnimeProfilePage extends ConsumerWidget {
                         _StatRow(
                           label: 'Watching',
                           value: '${stats.numItemsWatching ?? 0}',
-                          color: Colors.green,
+                          color: AppColors.statusAiring,
                         ),
                         _StatRow(
                           label: 'Completed',
                           value: '${stats.numItemsCompleted ?? 0}',
-                          color: Colors.blue,
+                          color: AppColors.statusFinished,
                         ),
                         _StatRow(
                           label: 'On Hold',
                           value: '${stats.numItemsOnHold ?? 0}',
-                          color: Colors.orange,
+                          color: theme.colorScheme.tertiary,
                         ),
                         _StatRow(
                           label: 'Dropped',
                           value: '${stats.numItemsDropped ?? 0}',
-                          color: Colors.red,
+                          color: theme.colorScheme.error,
                         ),
                         _StatRow(
                           label: 'Plan to Watch',
@@ -269,7 +270,7 @@ class AnimeProfilePage extends ConsumerWidget {
                   ),
                   trailing: authStatus == AuthStatus.authenticated
                       ? const Icon(Icons.check_circle,
-                          color: Colors.green)
+                          color: AppColors.statusAiring)
                       : const Icon(Icons.chevron_right),
                   onTap: () {
                     if (authStatus != AuthStatus.authenticated) {

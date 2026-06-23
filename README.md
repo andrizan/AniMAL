@@ -10,9 +10,12 @@ Unofficial MyAnimeList client built with Flutter.
 | Routing | `go_router` |
 | HTTP | `dio` |
 | Codegen | `freezed` + `json_serializable` |
-| Storage | `flutter_secure_storage` |
+| Secure storage | `flutter_secure_storage` |
+| Preferences | `shared_preferences` |
 | Images | `cached_network_image` |
 | Fonts | `google_fonts` (Inter + Noto Sans JP) |
+| Notifications | `flutter_local_notifications` |
+| Timezone | `timezone` |
 | Env | `--dart-define` (compile-time) |
 
 ## APIs
@@ -22,31 +25,57 @@ Unofficial MyAnimeList client built with Flutter.
 | [MyAnimeList API v2](https://myanimelist.net/apiconfig) | User list, detail, search, ranking, seasonal, scores |
 | [AniList GraphQL](https://anilist.gitbook.io/anilist-apiv2-docs/) | Characters, staff, airing schedule |
 
+## Architecture
+
+**Feature-Based** with strict isolation. Each feature has four layers:
+
+```
+feature/
+├── data/          Repo implementations, maps DTO → entity
+├── domain/        Entities (plain Dart), abstract repos, use cases
+├── providers/     Riverpod providers
+└── presentation/  Screens + widgets
+```
+
+Features never import from each other. Shared code lives in `data/` (models, API clients), `core/` (infrastructure), and `shared/` (widgets).
+
 ## Project Structure
 
 ```
 lib/
-├── core/
-│   ├── config/         env.dart
-│   ├── extensions/     StringCapitalize
-│   ├── network/        dio_client, auth_interceptor, api_exception
-│   ├── notification/   AnimeNotificationService
-│   ├── router/         GoRouter + auth guard
-│   ├── storage/        flutter_secure_storage
-│   ├── theme/          ThemeMode.dark default
-│   └── utils/          anime_labels (labels, cleanAniListDescription)
+├── main.dart
+├── app.dart
 │
-├── shared/widgets/     full_screen_image
+├── core/
+│   ├── config/            Environment (String.fromEnvironment)
+│   ├── constants/         MAL endpoints, AniList GraphQL queries
+│   ├── error/             Failure sealed class
+│   ├── logger/            Standardized appLogger (PrettyPrinter)
+│   ├── network/           Dio, auth interceptor, refresh interceptor
+│   ├── notifications/     Local notification service, timezone helper
+│   ├── router/            GoRouter, auth guard, refresh listenable
+│   ├── storage/           Secure token storage, shared preferences
+│   ├── theme/             App theme, colors, text styles
+│   ├── utils/             Date/timezone utils, anime labels, extensions
+│   └── providers.dart     Core providers (Dio, logger, tokens)
+│
+├── data/                  Shared data sources
+│   ├── mal/               MAL API client, OAuth2 PKCE service
+│   ├── anilist/           AniList GraphQL client + models
+│   ├── local/             SharedPreferences cache service
+│   └── models/            @freezed DTOs (Anime, MalUser, Season, etc.)
+│
+├── shared/widgets/        Anime card, compact card, shimmer, error/empty states, score badge
 │
 └── features/
-    ├── auth/           Login, OAuth callback
-    ├── library/        Shared anime core: models, API clients, repository, anime_card
-    ├── detail/         Anime detail page + character/staff pages
-    ├── airing/         Weekly airing schedule
-    ├── seasonal/       Seasonal calendar browser
-    ├── search/         Search + rankings
-    ├── home/           My anime lists (tabs)
-    └── profile/        User profile + stats
+    ├── home/              Trending, seasonal, user anime lists
+    ├── airing/            Weekly schedule (AniList + MAL scores)
+    ├── calendar/          Seasonal calendar browser
+    ├── profile/           User profile + stats
+    ├── notifications/     Episode airing notifications
+    ├── auth/              MAL OAuth2 login
+    ├── detail/            Anime detail + character/staff pages
+    └── search/            Search + rankings
 ```
 
 ## Getting Started

@@ -1,10 +1,8 @@
 import 'package:animal/core/providers.dart';
-import 'package:animal/features/library/data/data_sources/anilist_api.dart';
-import 'package:animal/features/library/data/data_sources/mal_anime_api.dart';
-import 'package:animal/features/library/data/models/anime.dart';
-import 'package:animal/features/library/data/models/season.dart';
-import 'package:animal/features/library/presentation/providers/anilist_providers.dart';
-import 'package:animal/features/library/presentation/providers/anime_providers.dart';
+import 'package:animal/data/anilist/anilist_client.dart';
+import 'package:animal/data/mal/mal_api_client.dart';
+import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/season.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -24,6 +22,7 @@ class AiringEntry {
     this.genres = const [],
     this.episodes,
     this.format,
+    this.status,
   });
 
   final int anilistId;
@@ -39,6 +38,7 @@ class AiringEntry {
   final List<String> genres;
   final int? episodes;
   final String? format;
+  final String? status;
 
   String? get countdown {
     if (timeUntilAiring <= 0) return null;
@@ -61,8 +61,8 @@ class AiringRepository {
     Logger? logger,
   }) : _logger = logger ?? Logger();
 
-  final MalAnimeApi _malApi;
-  final AniListApi _anilistApi;
+  final MalApiClient _malApi;
+  final AniListClient _anilistApi;
   final Logger _logger;
 
   // Cache
@@ -127,6 +127,7 @@ class AiringRepository {
           genres: entry.genres,
           episodes: malAnime?.numEpisodes ?? entry.episodes,
           format: entry.format,
+          status: entry.status,
         );
       }).toList();
     }
@@ -185,8 +186,8 @@ class AiringRepository {
 /// Provider for [AiringRepository].
 final airingRepositoryProvider = Provider<AiringRepository>((ref) {
   return AiringRepository(
-    malApi: ref.watch(malAnimeApiProvider),
-    anilistApi: ref.watch(anilistApiProvider),
+    malApi: MalApiClient(ref.watch(dioProvider)),
+    anilistApi: AniListClient(logger: ref.watch(loggerProvider)),
     logger: ref.watch(loggerProvider),
   );
 });

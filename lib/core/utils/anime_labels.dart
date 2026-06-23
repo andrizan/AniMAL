@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 String cleanAniListDescription(String desc) {
@@ -23,10 +24,10 @@ class AnimeLabels {
       };
 
   static Color statusColor(String? status) => switch (status) {
-        'currently_airing' => Colors.green,
-        'finished_airing' => Colors.blue,
-        'not_yet_aired' => Colors.orange,
-        _ => Colors.grey,
+        'currently_airing' => AppColors.statusAiring,
+        'finished_airing' => AppColors.statusFinished,
+        'not_yet_aired' => AppColors.statusUpcoming,
+        _ => AppColors.statusDefault,
       };
 
   static String ratingLabel(String? rating, {bool compact = false}) =>

@@ -34,11 +34,7 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Create .env from secrets
-        run: |
-          echo "MAL_CLIENT_ID=${{ secrets.MAL_CLIENT_ID }}" >> .env
-          echo "MAL_CLIENT_SECRET=${{ secrets.MAL_CLIENT_SECRET }}" >> .env
-          echo "MAL_REDIRECT_URI=${{ secrets.MAL_REDIRECT_URI }}" >> .env
+      - run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Decode keystore
         run: |
@@ -50,7 +46,12 @@ jobs:
           storeFile=release-keystore.jks
           EOF
 
-      - run: flutter build apk --release
+      - name: Build APK
+        run: |
+          flutter build apk --release \
+            --dart-define=MAL_CLIENT_ID="${{ secrets.MAL_CLIENT_ID }}" \
+            --dart-define=MAL_CLIENT_SECRET="${{ secrets.MAL_CLIENT_SECRET }}" \
+            --dart-define=MAL_REDIRECT_URI="${{ secrets.MAL_REDIRECT_URI }}"
 
       - name: Rename APK
         run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/animal-${{ github.ref_name }}.apk

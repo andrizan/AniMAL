@@ -1,4 +1,4 @@
-import 'package:animal/features/library/data/models/watch_status.dart';
+import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

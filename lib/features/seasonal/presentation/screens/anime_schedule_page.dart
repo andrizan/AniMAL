@@ -1,5 +1,5 @@
-import 'package:animal/features/library/data/models/anime.dart';
-import 'package:animal/features/library/data/models/season.dart';
+import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/season.dart';
 import 'package:animal/features/library/presentation/widgets/anime_card.dart';
 import 'package:animal/features/seasonal/presentation/providers/anime_schedule_controller.dart';
 import 'package:flutter/material.dart';

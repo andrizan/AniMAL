@@ -1,6 +1,6 @@
-import 'package:animal/features/library/data/models/anime.dart';
-import 'package:animal/features/library/data/models/anime_detail.dart';
-import 'package:animal/features/library/data/models/broadcast.dart';
+import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/anime_detail.dart';
+import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/features/airing/presentation/providers/anime_airing_providers.dart';
 import 'package:animal/features/library/presentation/widgets/anime_card.dart';
 import 'package:flutter/material.dart';
@@ -174,6 +174,7 @@ class _AiringCard extends StatelessWidget {
           : null,
       mean: entry.malScore,
       numEpisodes: entry.episodes,
+      status: entry.status,
       genres: entry.genres.map((g) => Genre(id: 0, name: g)).toList(),
       broadcast: airingTime != null
           ? Broadcast(startTime: airingTime)

@@ -1,5 +1,5 @@
-import 'package:animal/features/library/data/models/anime.dart';
-import 'package:animal/features/library/data/models/watch_status.dart';
+import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/airing/presentation/providers/anime_airing_providers.dart';
 import 'package:animal/features/library/presentation/widgets/anime_card.dart';
 import 'package:animal/features/home/presentation/widgets/anime_home_tab.dart';

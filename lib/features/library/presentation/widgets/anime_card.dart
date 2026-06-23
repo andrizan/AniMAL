@@ -1,17 +1,18 @@
 import 'dart:async';
 
 import 'package:animal/core/utils/anime_labels.dart';
-import 'package:animal/features/library/data/models/anime.dart';
-import 'package:animal/features/library/data/models/watch_status.dart';
+import 'package:animal/core/utils/date_utils.dart';
+import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/airing/presentation/providers/anime_airing_providers.dart';
 import 'package:animal/features/home/presentation/providers/anime_list_controller.dart';
 import 'package:animal/features/library/presentation/providers/anime_notification_providers.dart';
 import 'package:animal/features/library/presentation/providers/anime_providers.dart';
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:timezone/timezone.dart' as tz;
 
 /// Unified anime card used across all pages.
 ///
@@ -150,10 +151,9 @@ class AnimeCard extends ConsumerWidget {
                       // Scores + episodes
                       Row(
                         children: [
-                          // Average score
                           if (anime.mean != null) ...[
                             const Icon(Icons.star_rounded,
-                                size: 14, color: Colors.amber),
+                                size: 14, color: AppColors.starColor),
                             const SizedBox(width: 2),
                             Text(
                               anime.mean!.toStringAsFixed(1),
@@ -163,7 +163,6 @@ class AnimeCard extends ConsumerWidget {
                               ),
                             ),
                           ],
-                          // Personal score
                           if (personalScore != null &&
                               personalScore > 0) ...[
                             const SizedBox(width: 10),
@@ -180,7 +179,6 @@ class AnimeCard extends ConsumerWidget {
                             ),
                           ],
                           const Spacer(),
-                          // Episodes
                           if (watchedEps != null && episodes != null)
                             Text(
                               '$watchedEps/$episodes ep',
@@ -198,7 +196,7 @@ class AnimeCard extends ConsumerWidget {
                         ],
                       ),
 
-                      // Bottom: rating + broadcast/trailing
+                      // Bottom: rating + broadcast (left) | badge (right)
                       Row(
                         children: [
                           if (anime.rating != null)
@@ -210,7 +208,8 @@ class AnimeCard extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(
-                                AnimeLabels.ratingLabel(anime.rating!, compact: true),
+                                AnimeLabels.ratingLabel(anime.rating!,
+                                    compact: true),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -225,7 +224,8 @@ class AnimeCard extends ConsumerWidget {
                                 color: theme.colorScheme.onSurfaceVariant),
                             const SizedBox(width: 2),
                             Text(
-                              _convertJstToLocal(anime.broadcast?.startTime) ??
+                              convertJstToLocal(
+                                      anime.broadcast?.startTime) ??
                                   '',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontSize: 11,
@@ -234,20 +234,18 @@ class AnimeCard extends ConsumerWidget {
                             ),
                           ],
                           const Spacer(),
-                          if (notifEnabled) ...[
+                          if (notifEnabled && anime.status != 'finished_airing') ...[
                             Icon(Icons.notifications_active,
-                                size: 14, color: Colors.amber),
+                                size: 14, color: AppColors.starColor),
                             const SizedBox(width: 6),
                           ],
                           if (nextAiring != null)
-                            Flexible(
-                              child: _NextEpisodeBadge(
-                                episode: nextAiring!.episode,
-                                countdown: nextAiring!.countdown ?? '',
-                                isUrgent: nextAiring!.isUrgent,
-                              ),
+                            _NextEpisodeBadge(
+                              episode: nextAiring!.episode,
+                              countdown: nextAiring!.countdown ?? '',
+                              isUrgent: nextAiring!.isUrgent,
                             ),
-                          ?trailing,
+                          if (trailing != null) trailing!,
                         ],
                       ),
                     ],
@@ -259,25 +257,6 @@ class AnimeCard extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String? _convertJstToLocal(String? jstTime) {
-    if (jstTime == null || jstTime.isEmpty) return null;
-    try {
-      final parts = jstTime.split(':');
-      final hour = int.parse(parts[0]);
-      final minute = int.parse(parts[1]);
-      final now = DateTime.now();
-      final jst = tz.getLocation('Asia/Tokyo');
-      final jstDateTime =
-          tz.TZDateTime(jst, now.year, now.month, now.day, hour, minute);
-      final localDateTime = jstDateTime.toLocal();
-      final prefix = localDateTime.day > now.day ? 'Tomorrow ' : '';
-      return '$prefix${localDateTime.hour.toString().padLeft(2, '0')}:'
-          '${localDateTime.minute.toString().padLeft(2, '0')}';
-    } on Exception {
-      return jstTime;
-    }
   }
 
   void _showUpdateModal(BuildContext context, WidgetRef ref) {
@@ -296,7 +275,15 @@ class AnimeCard extends ConsumerWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
-            final notifEnabled = ref.watch(animeNotificationProvider).contains(anime.id);
+    final notifEnabled = ref.watch(animeNotificationProvider).contains(anime.id);
+
+    if (notifEnabled && anime.status == 'finished_airing') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          ref.read(animeNotificationProvider.notifier).removeAnime(anime.id);
+        }
+      });
+    }
 
             return Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
@@ -325,7 +312,7 @@ class AnimeCard extends ConsumerWidget {
                           notifEnabled
                               ? Icons.notifications_active
                               : Icons.notifications_none,
-                          color: notifEnabled ? Colors.amber : null,
+                          color: notifEnabled ? AppColors.starColor : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -463,6 +450,11 @@ class AnimeCard extends ConsumerWidget {
                         for (final s in WatchStatus.values) {
                           ref.invalidate(userAnimeListProvider(s));
                         }
+                        if (selectedStatus != WatchStatus.watching) {
+                          ref
+                              .read(animeNotificationProvider.notifier)
+                              .removeAnime(anime.id);
+                        }
                         if (ctx.mounted) Navigator.pop(ctx);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -539,7 +531,7 @@ class _CoverImage extends StatelessWidget {
                   child: Text(
                     statusLabel!,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.iconLight,
                       fontSize: 8,
                       fontWeight: FontWeight.w700,
                     ),
@@ -555,13 +547,13 @@ class _CoverImage extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                   decoration: BoxDecoration(
-                    color: Colors.black54,
+                    color: AppColors.overlayDark,
                     borderRadius: BorderRadius.circular(2),
                   ),
                   child: Text(
                     AnimeLabels.mediaTypeLabel(anime.mediaType!, compact: true),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.iconLight,
                       fontSize: 8,
                       fontWeight: FontWeight.w600,
                     ),
@@ -610,14 +602,18 @@ class _NextEpisodeBadge extends StatelessWidget {
                 : theme.colorScheme.onPrimaryContainer,
           ),
           const SizedBox(width: 4),
-          Text(
-            'Ep $episode · $countdown',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: isUrgent
-                  ? theme.colorScheme.onErrorContainer
-                  : theme.colorScheme.onPrimaryContainer,
+          Flexible(
+            child: Text(
+              'Ep $episode · $countdown',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: isUrgent
+                    ? theme.colorScheme.onErrorContainer
+                    : theme.colorScheme.onPrimaryContainer,
+              ),
             ),
           ),
         ],

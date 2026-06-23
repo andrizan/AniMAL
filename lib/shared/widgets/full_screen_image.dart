@@ -1,24 +1,28 @@
 import 'dart:async';
 
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-/// Full-screen image viewer with zoom and swipe to dismiss.
 class FullScreenImageViewer extends StatelessWidget {
   const FullScreenImageViewer({
-    required this.imageUrl, super.key,
+    required this.imageUrl,
+    super.key,
     this.heroTag,
   });
 
   final String imageUrl;
   final String? heroTag;
 
-  static void show(BuildContext context, {required String imageUrl, String? heroTag}) {
+  static void show(BuildContext context, {
+    required String imageUrl,
+    String? heroTag,
+  }) {
     unawaited(Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: false,
         barrierDismissible: true,
-        barrierColor: Colors.black87,
+        barrierColor: AppColors.barrier,
         pageBuilder: (_, _, _) => FullScreenImageViewer(
           imageUrl: imageUrl,
           heroTag: heroTag,
@@ -33,11 +37,10 @@ class FullScreenImageViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Image with zoom
           InteractiveViewer(
             minScale: 0.5,
             maxScale: 4,
@@ -50,12 +53,12 @@ class FullScreenImageViewer extends StatelessWidget {
                         fit: BoxFit.contain,
                         placeholder: (_, _) => const Center(
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: AppColors.iconLight,
                           ),
                         ),
                         errorWidget: (_, _, _) => const Icon(
                           Icons.broken_image,
-                          color: Colors.white54,
+                          color: AppColors.iconSubtle,
                           size: 48,
                         ),
                       ),
@@ -65,29 +68,27 @@ class FullScreenImageViewer extends StatelessWidget {
                       fit: BoxFit.contain,
                       placeholder: (_, _) => const Center(
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.iconLight,
                         ),
                       ),
                       errorWidget: (_, _, _) => const Icon(
                         Icons.broken_image,
-                        color: Colors.white54,
+                        color: AppColors.iconSubtle,
                         size: 48,
                       ),
                     ),
             ),
           ),
-
-          // Close button
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             right: 16,
             child: Container(
               decoration: const BoxDecoration(
-                color: Colors.black54,
+                color: AppColors.overlayDark,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(Icons.close, color: AppColors.iconLight),
                 onPressed: () => Navigator.pop(context),
               ),
             ),

@@ -1,5 +1,5 @@
-import 'package:animal/features/library/data/models/anime.dart';
-import 'package:animal/features/library/data/models/watch_status.dart';
+import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/library/presentation/providers/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

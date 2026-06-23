@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class CountdownBadge extends StatelessWidget {
-  const CountdownBadge({required this.episode, required this.countdown, required this.isUrgent, super.key});
+  const CountdownBadge({
+    required this.episode,
+    required this.countdown,
+    required this.isUrgent,
+    super.key,
+  });
 
   final int episode;
   final String countdown;
@@ -10,19 +15,36 @@ class CountdownBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bg = isUrgent
+        ? theme.colorScheme.errorContainer
+        : theme.colorScheme.primaryContainer;
+    final fg = isUrgent
+        ? theme.colorScheme.onErrorContainer
+        : theme.colorScheme.onPrimaryContainer;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: isUrgent ? theme.colorScheme.errorContainer : theme.colorScheme.primaryContainer,
+        color: bg,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer, size: 12, color: isUrgent ? theme.colorScheme.onErrorContainer : theme.colorScheme.onPrimaryContainer),
+          Icon(Icons.timer, size: 12, color: fg),
           const SizedBox(width: 4),
-          Text('Ep $episode · $countdown', maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isUrgent ? theme.colorScheme.onErrorContainer : theme.colorScheme.onPrimaryContainer)),
+          Flexible(
+            child: Text(
+              'Ep $episode · $countdown',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
+            ),
+          ),
         ],
       ),
     );

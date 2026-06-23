@@ -1,9 +1,5 @@
-import 'package:animal/core/notification/anime_notification_service.dart';
+import 'package:animal/core/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final animeNotificationServiceProvider = Provider<AnimeNotificationService>(
-  (ref) => AnimeNotificationService(),
-);
 
 final notificationPermissionProvider =
     NotifierProvider<NotificationPermissionNotifier, bool>(
@@ -13,11 +9,11 @@ final notificationPermissionProvider =
 class NotificationPermissionNotifier extends Notifier<bool> {
   @override
   bool build() {
-    return ref.read(animeNotificationServiceProvider).permissionGranted;
+    return ref.read(notificationServiceProvider).permissionGranted;
   }
 
   Future<bool> request() async {
-    final service = ref.read(animeNotificationServiceProvider);
+    final service = ref.read(notificationServiceProvider);
     state = await service.requestPermission();
     return state;
   }
@@ -32,17 +28,23 @@ class AnimeNotificationNotifier extends Notifier<Set<int>> {
   @override
   Set<int> build() {
     return Set.unmodifiable(
-      ref.read(animeNotificationServiceProvider).notificationIds,
+      ref.read(notificationServiceProvider).notificationIds,
     );
   }
 
-  void _refreshFromService() {
+  void _refresh() {
     state = Set.unmodifiable(
-      ref.read(animeNotificationServiceProvider).notificationIds,
+      ref.read(notificationServiceProvider).notificationIds,
     );
   }
 
   bool isEnabled(int animeId) => state.contains(animeId);
+
+  void removeAnime(int animeId) {
+    if (!state.contains(animeId)) return;
+    ref.read(notificationServiceProvider).cancelNotification(animeId);
+    _refresh();
+  }
 
   Future<bool> toggle({
     required int animeId,
@@ -50,7 +52,7 @@ class AnimeNotificationNotifier extends Notifier<Set<int>> {
     required int episode,
     required DateTime airingAt,
   }) async {
-    final service = ref.read(animeNotificationServiceProvider);
+    final service = ref.read(notificationServiceProvider);
 
     if (!service.permissionGranted) {
       final granted = await ref
@@ -69,7 +71,7 @@ class AnimeNotificationNotifier extends Notifier<Set<int>> {
         airingAt: airingAt,
       );
     }
-    _refreshFromService();
+    _refresh();
     return true;
   }
 }
