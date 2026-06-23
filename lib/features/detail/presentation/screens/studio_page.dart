@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
+import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,64 +51,148 @@ class StudioProfilePage extends ConsumerWidget {
       ),
       data: (studio) {
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              studio.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Info chips
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (studio.isAnimationStudio)
-                    _InfoChip(
-                      icon: Icons.movie,
-                      label: 'Animation Studio',
-                      color: theme.colorScheme.primary,
+          body: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 250,
+                pinned: true,
+                foregroundColor: AppColors.iconLight,
+                backgroundColor: theme.colorScheme.surface,
+                leading: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: AppColors.overlayDarker,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.iconLight,
                     ),
-                  if (studio.favourites != null)
-                    _InfoChip(
-                      icon: Icons.favorite_border,
-                      label: '${studio.favourites} favourites',
-                    ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Site link
-              if (studio.siteUrl != null) ...[
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.language),
-                    title: const Text('Website'),
-                    subtitle: Text(
-                      Uri.parse(studio.siteUrl!).host,
-                      style: TextStyle(color: theme.colorScheme.primary),
-                    ),
-                    trailing: const Icon(Icons.open_in_new, size: 18),
-                    onTap: () {
-                      final uri = Uri.parse(studio.siteUrl!);
-                      unawaited(launchUrl(uri));
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                const SizedBox(height: 20),
-              ],
-
-              // Media works
-              if (studio.mediaWorks.isNotEmpty) ...[
-                Text('Works', style: theme.textTheme.titleSmall),
-                const SizedBox(height: 8),
-                ...studio.mediaWorks.map(
-                  (media) => _MediaWorkTile(media: media),
+                flexibleSpace: FlexibleSpaceBar(
+                  title: SelectableText(
+                    studio.name,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                  background: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () {
+                      if (studio.imageUrl != null) {
+                        FullScreenImageViewer.show(
+                          context,
+                          imageUrl: studio.imageUrl!,
+                          heroTag: 'studio',
+                        );
+                      }
+                    },
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (studio.imageUrl != null)
+                          CachedNetworkImage(
+                            imageUrl: studio.imageUrl!,
+                            fit: BoxFit.contain,
+                            errorWidget: (_, __, ___) => Container(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: const Icon(
+                                Icons.business,
+                                size: 64,
+                                color: AppColors.iconLight,
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: const Icon(
+                              Icons.business,
+                              size: 64,
+                              color: AppColors.iconLight,
+                            ),
+                          ),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                AppColors.transparent,
+                                AppColors.transparent,
+                                theme.colorScheme.surface
+                                    .withValues(alpha: 0.7),
+                                theme.colorScheme.surface,
+                              ],
+                              stops: const [0.0, 0.4, 0.75, 1.0],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-              const SizedBox(height: 32),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (studio.isAnimationStudio)
+                            _InfoChip(
+                              icon: Icons.movie,
+                              label: 'Animation Studio',
+                              color: theme.colorScheme.primary,
+                            ),
+                          if (studio.favourites != null)
+                            _InfoChip(
+                              icon: Icons.favorite_border,
+                              label: '${studio.favourites} favourites',
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      if (studio.siteUrl != null) ...[
+                        Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.language),
+                            title: const Text('Official Website'),
+                            subtitle: Text(
+                              Uri.parse(studio.siteUrl!).host,
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.open_in_new, size: 18),
+                            onTap: () {
+                              final uri = Uri.parse(studio.siteUrl!);
+                              unawaited(launchUrl(uri));
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      if (studio.mediaWorks.isNotEmpty) ...[
+                        Text('Works', style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 8),
+                        ...studio.mediaWorks.map(
+                          (media) => _MediaWorkTile(media: media),
+                        ),
+                      ],
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         );

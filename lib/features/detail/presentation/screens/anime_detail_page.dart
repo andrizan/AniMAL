@@ -1574,10 +1574,27 @@ class _StudioCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 3),
       child: ListTile(
-        leading: Icon(
-          Icons.business,
-          size: 20,
-          color: theme.colorScheme.primary,
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: studio.imageUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: studio.imageUrl!,
+                    fit: BoxFit.contain,
+                    errorWidget: (_, __, ___) => Icon(
+                      Icons.business,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
+                  )
+                : Icon(
+                    Icons.business,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+          ),
         ),
         title: Text(
           studio.name,
