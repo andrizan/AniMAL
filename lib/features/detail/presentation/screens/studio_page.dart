@@ -86,8 +86,9 @@ class StudioProfilePage extends ConsumerWidget {
                       child: Icon(
                         Icons.business,
                         size: 64,
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.3),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                     ),
                   ),

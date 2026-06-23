@@ -1,10 +1,10 @@
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/constants/anilist_queries.dart';
 import 'package:animal/core/constants/mal_endpoints.dart';
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/data/local/memory_cache.dart';
 import 'package:dio/dio.dart';
-import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
 
 final _anilistCache = MemoryCache();

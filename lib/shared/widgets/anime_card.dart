@@ -6,7 +6,7 @@ import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/airing/providers/airing_providers.dart';
-import 'package:animal/features/home/providers/anime_list_providers.dart';
+import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -56,13 +56,15 @@ class AnimeCard extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap ??
+        onTap:
+            onTap ??
             () => context.pushNamed(
               'animeDetail',
               pathParameters: {'id': '${anime.id}'},
             ),
-        onLongPress:
-            onTap != null ? null : () => _showUpdateModal(context, ref),
+        onLongPress: onTap != null
+            ? null
+            : () => _showUpdateModal(context, ref),
         child: SizedBox(
           height: 120,
           child: Row(

@@ -196,11 +196,15 @@ class CharacterProfilePage extends ConsumerWidget {
                         const SizedBox(height: 8),
                         _WorksList(
                           malIds: character.mediaAppearances
-                              .where((m) => m.malId != null && m.type == 'ANIME')
+                              .where(
+                                (m) => m.malId != null && m.type == 'ANIME',
+                              )
                               .map((m) => m.malId!)
                               .toList(),
                           otherMedia: character.mediaAppearances
-                              .where((m) => m.malId == null || m.type != 'ANIME')
+                              .where(
+                                (m) => m.malId == null || m.type != 'ANIME',
+                              )
                               .toList(),
                         ),
                         const SizedBox(height: 12),
@@ -419,11 +423,15 @@ class StaffProfilePage extends ConsumerWidget {
                         const SizedBox(height: 8),
                         _WorksList(
                           malIds: staff.mediaWorks
-                              .where((m) => m.malId != null && m.type == 'ANIME')
+                              .where(
+                                (m) => m.malId != null && m.type == 'ANIME',
+                              )
                               .map((m) => m.malId!)
                               .toList(),
                           otherMedia: staff.mediaWorks
-                              .where((m) => m.malId == null || m.type != 'ANIME')
+                              .where(
+                                (m) => m.malId == null || m.type != 'ANIME',
+                              )
                               .toList(),
                         ),
                         const SizedBox(height: 12),

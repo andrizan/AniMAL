@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:animal/core/config/env.dart';
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
 import 'package:animal/features/auth/data/models/auth_token.dart';
 import 'package:dio/dio.dart';
-import 'package:animal/core/logger/app_logger.dart';
 import 'package:logger/logger.dart';
 
 class MalAuthService {

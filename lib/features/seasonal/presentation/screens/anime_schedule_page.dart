@@ -1,7 +1,7 @@
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/season.dart';
-import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/features/seasonal/providers/seasonal_providers.dart';
+import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

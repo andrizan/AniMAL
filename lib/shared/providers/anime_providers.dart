@@ -1,3 +1,4 @@
+import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/local/memory_cache.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
@@ -6,7 +7,6 @@ import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/mal_user.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
-import 'package:animal/core/network/api_exception.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
@@ -198,22 +198,24 @@ class AnimeRepository {
       try {
         final detail = await getAnimeDetail(id);
         if (detail != null) {
-          results.add(Anime(
-            id: detail.id,
-            title: detail.title,
-            mainPicture: detail.mainPicture,
-            mean: detail.mean,
-            rank: detail.rank,
-            popularity: detail.popularity,
-            numEpisodes: detail.numEpisodes,
-            status: detail.status,
-            rating: detail.rating,
-            mediaType: detail.mediaType,
-            broadcast: detail.broadcast,
-            alternativeTitles: detail.alternativeTitles,
-            genres: detail.genres,
-            myListStatus: detail.myListStatus,
-          ));
+          results.add(
+            Anime(
+              id: detail.id,
+              title: detail.title,
+              mainPicture: detail.mainPicture,
+              mean: detail.mean,
+              rank: detail.rank,
+              popularity: detail.popularity,
+              numEpisodes: detail.numEpisodes,
+              status: detail.status,
+              rating: detail.rating,
+              mediaType: detail.mediaType,
+              broadcast: detail.broadcast,
+              alternativeTitles: detail.alternativeTitles,
+              genres: detail.genres,
+              myListStatus: detail.myListStatus,
+            ),
+          );
         }
       } catch (_) {
         // skip individual failures
@@ -251,16 +253,16 @@ final animeRepositoryProvider = Provider<AnimeRepository>((ref) {
 /// FutureProvider family for anime detail by ID.
 final animeDetailProvider = FutureProvider.autoDispose
     .family<AnimeDetail?, int>((ref, animeId) async {
-  final repo = ref.watch(animeRepositoryProvider);
-  return repo.getAnimeDetail(animeId);
-});
+      final repo = ref.watch(animeRepositoryProvider);
+      return repo.getAnimeDetail(animeId);
+    });
 
 /// FutureProvider family for a batch of Anime by MAL IDs.
 /// Uses a comma-separated string key for stable provider identity.
 final animeListProvider = FutureProvider.autoDispose
     .family<List<Anime>, String>((ref, key) async {
-  if (key.isEmpty) return [];
-  final malIds = key.split(',').map((s) => int.parse(s)).toList();
-  final repo = ref.watch(animeRepositoryProvider);
-  return repo.getAnimeList(malIds);
-});
+      if (key.isEmpty) return [];
+      final malIds = key.split(',').map((s) => int.parse(s)).toList();
+      final repo = ref.watch(animeRepositoryProvider);
+      return repo.getAnimeList(malIds);
+    });

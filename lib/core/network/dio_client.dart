@@ -1,4 +1,5 @@
 import 'package:animal/core/config/env.dart';
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/network/auth_interceptor.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
 import 'package:dio/dio.dart';
@@ -28,7 +29,7 @@ class DioClient {
       LogInterceptor(
         requestBody: true,
         responseBody: true,
-        logPrint: (o) => (logger ?? Logger()).d(o),
+        logPrint: (o) => (logger ?? appLogger).d(o),
       ),
     ]);
   }
