@@ -9,18 +9,16 @@ class DioClient {
   DioClient({
     required SecureTokenStorage tokenStorage,
     Logger? logger,
-  }) {
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: Env.malBaseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {
-          'X-MAL-CLIENT-ID': Env.malClientId,
-        },
-      ),
-    );
-
+  }) : _dio = Dio(
+          BaseOptions(
+            baseUrl: Env.malBaseUrl,
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
+            headers: {
+              'X-MAL-CLIENT-ID': Env.malClientId,
+            },
+          ),
+        ) {
     _dio.interceptors.addAll([
       AuthInterceptor(
         tokenStorage: tokenStorage,
@@ -35,7 +33,7 @@ class DioClient {
     ]);
   }
 
-  late final Dio _dio;
+  final Dio _dio;
 
   /// The underlying [Dio] instance.
   Dio get dio => _dio;

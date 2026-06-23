@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:animal/core/providers.dart';
-import 'package:animal/features/auth/data/mal_auth_repository.dart';
+import 'package:animal/features/auth/data/repositories/mal_auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Auth state – keeps track of whether the user is logged in.

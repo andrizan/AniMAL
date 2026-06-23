@@ -144,7 +144,7 @@ class LoginPage extends ConsumerWidget {
   void _showCodeInputDialog(BuildContext context, WidgetRef ref) {
     final codeController = TextEditingController();
 
-    unawaited(showDialog<void>(
+    final dialog = showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Enter Authorization Code'),
@@ -189,6 +189,7 @@ class LoginPage extends ConsumerWidget {
           ),
         ],
       ),
-    ));
+    );
+    unawaited(dialog.then((_) => codeController.dispose()));
   }
 }

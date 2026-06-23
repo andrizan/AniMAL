@@ -6,7 +6,14 @@ Rules and conventions for contributing to this project.
 
 - **NEVER commit without explicit permission** from the user.
 - Never push, amend, or force-push unless asked.
+- **NEVER run destructive git commands** unless explicitly asked:
+  - `git reset --hard` — destroys all uncommitted work
+  - `git clean -fd` — deletes all untracked files
+  - `git checkout --` — overwrites files without recovery
+  - `git restore` — same as above
+- If a git operation goes wrong, use `git stash` or `git checkout -b` instead.
 - Stage only intended files. Never commit secrets or keys.
+- **When moving/renaming files**, use plain `mv` (not `git mv`) unless the user asks to preserve git history. Plain `mv` is safer — if something fails, files stay in place.
 
 ## Architecture
 
