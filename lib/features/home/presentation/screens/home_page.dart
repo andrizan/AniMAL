@@ -1,23 +1,13 @@
-import 'package:animal/features/airing/presentation/screens/anime_airing_page.dart';
-import 'package:animal/features/home/presentation/widgets/anime_home_tab.dart';
-import 'package:animal/features/profile/presentation/screens/anime_profile_page.dart';
-import 'package:animal/features/seasonal/presentation/screens/anime_schedule_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Main home page with bottom navigation bar.
+/// Shell that hosts the bottom navigation bar with tab state preservation.
 ///
-/// Four tabs: Home, Calendar, Airing, Profile.
-class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key});
+/// Uses [StatefulShellRoute.indexedStack] to keep all tabs alive.
+class HomePage extends StatelessWidget {
+  const HomePage({required this.navigationShell, super.key});
 
-  @override
-  ConsumerState<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends ConsumerState<HomePage> {
-  int _currentIndex = 0;
+  final StatefulNavigationShell navigationShell;
 
   static const _destinations = <NavigationDestination>[
     NavigationDestination(
@@ -42,13 +32,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     ),
   ];
 
-  static const _tabs = <Widget>[
-    AnimeHomeTab(),
-    AnimeAiringPage(),
-    AnimeSchedulePage(),
-    AnimeProfilePage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,13 +44,10 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _tabs,
-      ),
+      body: navigationShell,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (i) => navigationShell.goBranch(i),
         destinations: _destinations,
       ),
     );

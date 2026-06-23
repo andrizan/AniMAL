@@ -1,4 +1,5 @@
 import 'package:animal/core/router/route_guards.dart';
+import 'package:animal/features/airing/presentation/screens/anime_airing_page.dart';
 import 'package:animal/features/auth/providers/auth_providers.dart';
 import 'package:animal/features/auth/presentation/login_page.dart';
 import 'package:animal/features/auth/presentation/oauth_callback_page.dart';
@@ -6,14 +7,16 @@ import 'package:animal/features/detail/presentation/screens/anime_detail_page.da
 import 'package:animal/features/detail/presentation/screens/character_staff_page.dart';
 import 'package:animal/features/detail/presentation/screens/studio_page.dart';
 import 'package:animal/features/home/presentation/screens/home_page.dart';
+import 'package:animal/features/home/presentation/widgets/anime_home_tab.dart';
+import 'package:animal/features/profile/presentation/screens/anime_profile_page.dart';
 import 'package:animal/features/search/presentation/screens/anime_search_page.dart';
+import 'package:animal/features/seasonal/presentation/screens/anime_schedule_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 abstract final class AppRoutes {
   static const String login = '/login';
-  static const String home = '/';
   static const String search = '/search';
   static const String animeDetail = '/anime/:id';
   static const String characterProfile = '/character/:id';
@@ -26,14 +29,51 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authStatus = ref.watch(authControllerProvider);
 
   return GoRouter(
-    initialLocation: AppRoutes.home,
+    initialLocation: '/home',
     refreshListenable: AuthRefreshListenable(ref),
     redirect: (context, state) => authGuard(state, authStatus),
     routes: [
-      GoRoute(
-        path: AppRoutes.home,
-        name: 'home',
-        builder: (context, state) => const HomePage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomePage(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                name: 'home',
+                builder: (context, state) => const AnimeHomeTab(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/airing',
+                name: 'airing',
+                builder: (context, state) => const AnimeAiringPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/calendar',
+                name: 'calendar',
+                builder: (context, state) => const AnimeSchedulePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                name: 'profile',
+                builder: (context, state) => const AnimeProfilePage(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.search,

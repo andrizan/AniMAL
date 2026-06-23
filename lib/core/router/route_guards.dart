@@ -14,7 +14,7 @@ String? authGuard(GoRouterState state, AuthStatus authStatus) {
   }
 
   if (isLoggedIn && isLoggingIn) {
-    return AppRoutes.home;
+    return '/home';
   }
 
   return null;
