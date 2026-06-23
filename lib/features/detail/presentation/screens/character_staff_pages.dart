@@ -1,14 +1,14 @@
-import 'dart:async';
-
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
+import 'package:animal/data/models/anime.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
+import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Profile page for an AniList character.
 class CharacterProfilePage extends ConsumerWidget {
@@ -194,11 +194,16 @@ class CharacterProfilePage extends ConsumerWidget {
                       if (character.mediaAppearances.isNotEmpty) ...[
                         Text('Appears In', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
-                        ...character.mediaAppearances.map(
-                          (media) => _MediaAppearanceTile(
-                            media: media,
-                          ),
+                        _WorksList(
+                          malIds: character.mediaAppearances
+                              .where((m) => m.malId != null && m.type == 'ANIME')
+                              .map((m) => m.malId!)
+                              .toList(),
+                          otherMedia: character.mediaAppearances
+                              .where((m) => m.malId == null || m.type != 'ANIME')
+                              .toList(),
                         ),
+                        const SizedBox(height: 12),
                       ],
                       const SizedBox(height: 32),
                     ],
@@ -412,11 +417,16 @@ class StaffProfilePage extends ConsumerWidget {
                       if (staff.mediaWorks.isNotEmpty) ...[
                         Text('Works', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
-                        ...staff.mediaWorks.map(
-                          (media) => _MediaAppearanceTile(
-                            media: media,
-                          ),
+                        _WorksList(
+                          malIds: staff.mediaWorks
+                              .where((m) => m.malId != null && m.type == 'ANIME')
+                              .map((m) => m.malId!)
+                              .toList(),
+                          otherMedia: staff.mediaWorks
+                              .where((m) => m.malId == null || m.type != 'ANIME')
+                              .toList(),
                         ),
+                        const SizedBox(height: 12),
                       ],
                       const SizedBox(height: 32),
                     ],
@@ -461,120 +471,55 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-/// Media appearance tile (anime/manga).
-class _MediaAppearanceTile extends StatelessWidget {
-  const _MediaAppearanceTile({required this.media});
+class _WorksList extends ConsumerWidget {
+  const _WorksList({required this.malIds, required this.otherMedia});
 
-  final AniListMediaAppearance media;
+  final List<int> malIds;
+  final List<AniListMediaAppearance> otherMedia;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final typeLabel = _formatMediaType(media.type);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncAnime = malIds.isNotEmpty
+        ? ref.watch(animeListProvider(malIds))
+        : null;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: SizedBox(
-            width: 40,
-            height: 56,
-            child: media.imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: media.imageUrl!,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => ColoredBox(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.movie,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  )
-                : ColoredBox(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Icon(
-                      Icons.movie,
-                      size: 16,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+    return Column(
+      children: [
+        if (asyncAnime != null)
+          asyncAnime.when(
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (animeList) => Column(
+              children: animeList
+                  .map((anime) => AnimeCard(anime: anime))
+                  .toList(),
+            ),
           ),
-        ),
-        title: Text(
-          media.titleEnglish ?? media.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13),
-        ),
-        subtitle: Row(
-          children: [
-            if (typeLabel != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(4),
+        for (final media in otherMedia)
+          AnimeCard(
+            anime: Anime(
+              id: media.malId ?? media.anilistId,
+              title: media.titleEnglish ?? media.title,
+              mainPicture: media.imageUrl != null
+                  ? MainPicture(medium: media.imageUrl)
+                  : null,
+              mediaType: media.type?.toLowerCase(),
+            ),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('This app does not support this media type'),
+                  duration: Duration(seconds: 2),
                 ),
-                child: Text(
-                  typeLabel,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: theme.colorScheme.onSecondaryContainer,
-                  ),
-                ),
-              ),
-              if (media.role != null) const SizedBox(width: 6),
-            ],
-            if (media.role != null)
-              Expanded(
-                child: Text(
-                  media.role!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        trailing: const Icon(Icons.chevron_right, size: 20),
-        dense: true,
-        visualDensity: VisualDensity.compact,
-        onTap: () {
-          if (media.malId != null) {
-            unawaited(
-              context.pushNamed(
-                'animeDetail',
-                pathParameters: {'id': '${media.malId}'},
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'No MAL link available for "${media.titleEnglish ?? media.title}"',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        },
-      ),
+              );
+            },
+          ),
+      ],
     );
-  }
-
-  String? _formatMediaType(String? type) {
-    return switch (type) {
-      'ANIME' => 'Anime',
-      'MANGA' => 'Manga',
-      'NOVEL' => 'Novel',
-      'ONE_SHOT' => 'One Shot',
-      _ => null,
-    };
   }
 }

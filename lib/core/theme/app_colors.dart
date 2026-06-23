@@ -8,6 +8,11 @@ class StatusColors extends ThemeExtension<StatusColors> {
     required this.finished,
     required this.upcoming,
     required this.star,
+    required this.listWatching,
+    required this.listCompleted,
+    required this.listOnHold,
+    required this.listDropped,
+    required this.listPlanToWatch,
     required this.overlayDark,
     required this.overlayDarker,
     required this.barrier,
@@ -17,6 +22,11 @@ class StatusColors extends ThemeExtension<StatusColors> {
   final Color finished;
   final Color upcoming;
   final Color star;
+  final Color listWatching;
+  final Color listCompleted;
+  final Color listOnHold;
+  final Color listDropped;
+  final Color listPlanToWatch;
   final Color overlayDark;
   final Color overlayDarker;
   final Color barrier;
@@ -27,6 +37,11 @@ class StatusColors extends ThemeExtension<StatusColors> {
     Color? finished,
     Color? upcoming,
     Color? star,
+    Color? listWatching,
+    Color? listCompleted,
+    Color? listOnHold,
+    Color? listDropped,
+    Color? listPlanToWatch,
     Color? overlayDark,
     Color? overlayDarker,
     Color? barrier,
@@ -36,6 +51,11 @@ class StatusColors extends ThemeExtension<StatusColors> {
       finished: finished ?? this.finished,
       upcoming: upcoming ?? this.upcoming,
       star: star ?? this.star,
+      listWatching: listWatching ?? this.listWatching,
+      listCompleted: listCompleted ?? this.listCompleted,
+      listOnHold: listOnHold ?? this.listOnHold,
+      listDropped: listDropped ?? this.listDropped,
+      listPlanToWatch: listPlanToWatch ?? this.listPlanToWatch,
       overlayDark: overlayDark ?? this.overlayDark,
       overlayDarker: overlayDarker ?? this.overlayDarker,
       barrier: barrier ?? this.barrier,
@@ -53,6 +73,11 @@ class StatusColors extends ThemeExtension<StatusColors> {
       finished: Color.lerp(finished, other.finished, t)!,
       upcoming: Color.lerp(upcoming, other.upcoming, t)!,
       star: Color.lerp(star, other.star, t)!,
+      listWatching: Color.lerp(listWatching, other.listWatching, t)!,
+      listCompleted: Color.lerp(listCompleted, other.listCompleted, t)!,
+      listOnHold: Color.lerp(listOnHold, other.listOnHold, t)!,
+      listDropped: Color.lerp(listDropped, other.listDropped, t)!,
+      listPlanToWatch: Color.lerp(listPlanToWatch, other.listPlanToWatch, t)!,
       overlayDark: Color.lerp(overlayDark, other.overlayDark, t)!,
       overlayDarker: Color.lerp(overlayDarker, other.overlayDarker, t)!,
       barrier: Color.lerp(barrier, other.barrier, t)!,
@@ -65,37 +90,55 @@ class StatusColors extends ThemeExtension<StatusColors> {
 abstract final class AppColors {
   // ── Theme Extensions ──
   static const lightStatus = StatusColors(
-    airing: Color(0xFF16A34A),
-    finished: Color(0xFF2563EB),
-    upcoming: Color(0xFFD97706),
-    star: Color(0xFFF59E0B),
-    overlayDark: Color(0x61000000),
-    overlayDarker: Color(0x8A000000),
-    barrier: Color(0xDD000000),
+    airing: Color(0xFF10B981), // Soft Emerald
+    finished: Color(0xFF3B82F6), // Soft Blue
+    upcoming: Color(0xFFF59E0B), // Soft Amber
+    star: Color(0xFFFBBF24), // Warm Gold
+    listWatching: Color(0xFF10B981), // Senada dengan Airing
+    listCompleted: Color(0xFF3B82F6), // Senada dengan Finished
+    listOnHold: Color(0xFFF59E0B), // Senada dengan Upcoming
+    listDropped: Color(0xFFEF4444), // Soft Red
+    listPlanToWatch: Color(0xFF64748B), // Slate 500
+    overlayDark: Color(0x660F172A), // 40% Slate Base (Bukan hitam pekat)
+    overlayDarker: Color(0x990F172A), // 60% Slate Base
+    barrier: Color(0xCC0F172A), // 80% Slate Base
   );
 
   static const darkStatus = StatusColors(
-    airing: Color(0xFF4ADE80),
-    finished: Color(0xFF60A5FA),
-    upcoming: Color(0xFFFBBF24),
+    airing: Color(0xFF34D399), // Emerald lebih cerah untuk kontras dark mode
+    finished: Color(0xFF60A5FA), // Blue lebih cerah
+    upcoming: Color(0xFFFBBF24), // Amber lebih cerah
     star: Color(0xFFFBBF24),
-    overlayDark: Color(0x61000000),
-    overlayDarker: Color(0x8A000000),
-    barrier: Color(0xDD000000),
+    listWatching: Color(0xFF34D399),
+    listCompleted: Color(0xFF60A5FA),
+    listOnHold: Color(0xFFFBBF24),
+    listDropped: Color(0xFFF87171), // Soft Red terang
+    listPlanToWatch: Color(0xFF94A3B8), // Slate 400
+    overlayDark: Color(0x660F172A),
+    overlayDarker: Color(0x990F172A),
+    barrier: Color(0xCC0F172A),
   );
 
   // ── Static fallbacks (untuk kode tanpa BuildContext) ──
-  static const starColor = Color(0xFFF59E0B);
-  static const statusAiring = Color(0xFF16A34A);
-  static const statusFinished = Color(0xFF2563EB);
-  static const statusUpcoming = Color(0xFFD97706);
-  static const statusDefault = Color(0xFF6B7280);
+  // Disamakan nilainya dengan lightStatus agar konsisten jika dipanggil statis
+  static const starColor = Color(0xFFFBBF24);
+  static const statusAiring = Color(0xFF10B981);
+  static const statusFinished = Color(0xFF3B82F6);
+  static const statusUpcoming = Color(0xFFF59E0B);
+  static const statusDefault = Color(0xFF64748B);
+
+  static const listWatching = Color(0xFF10B981);
+  static const listCompleted = Color(0xFF3B82F6);
+  static const listOnHold = Color(0xFFF59E0B);
+  static const listDropped = Color(0xFFEF4444);
+  static const listPlanToWatch = Color(0xFF64748B);
+
   static const transparent = Color(0x00000000);
-  static const overlayDark = Color(0x61000000);
-  static const overlayDarker = Color(0x8A000000);
-  static const barrier = Color(0xDD000000);
-  static const iconLight = Color(0xFFFFFFFF);
-  static const iconSubtle = Color(0x8AFFFFFF);
+  static const overlayDark = Color(0x660F172A);
+  static const overlayDarker = Color(0x990F172A);
+  static const barrier = Color(0xCC0F172A);
+  static const iconLight = Color(0xFFF8FAFC);
+  static const iconSubtle = Color(0x8AF8FAFC);
 
   // ── Light ColorScheme ──
   static const light = ColorScheme(
@@ -128,8 +171,8 @@ abstract final class AppColors {
     surfaceContainerHighest: Color(0xFFCBD5E1),
     outline: Color(0xFF94A3B8),
     outlineVariant: Color(0xFFCBD5E1),
-    shadow: Color(0xFF000000),
-    scrim: Color(0xFF000000),
+    shadow: Color(0xFF0F172A),
+    scrim: Color(0xFF0F172A),
     surfaceTint: Color(0xFF6366F1),
     inverseSurface: Color(0xFF1E293B),
     onInverseSurface: Color(0xFFF8FAFC),

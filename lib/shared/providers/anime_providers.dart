@@ -193,25 +193,33 @@ class AnimeRepository {
   }
 
   Future<List<Anime>> getAnimeList(List<int> malIds) async {
-    final details = await Future.wait(
-      malIds.map((id) => getAnimeDetail(id).catchError((_) => null)),
-    );
-    return details.whereType<AnimeDetail>().map((d) => Anime(
-      id: d.id,
-      title: d.title,
-      mainPicture: d.mainPicture,
-      mean: d.mean,
-      rank: d.rank,
-      popularity: d.popularity,
-      numEpisodes: d.numEpisodes,
-      status: d.status,
-      rating: d.rating,
-      mediaType: d.mediaType,
-      broadcast: d.broadcast,
-      alternativeTitles: d.alternativeTitles,
-      genres: d.genres,
-      myListStatus: d.myListStatus,
-    )).toList();
+    final results = <Anime>[];
+    for (final id in malIds) {
+      try {
+        final detail = await getAnimeDetail(id);
+        if (detail != null) {
+          results.add(Anime(
+            id: detail.id,
+            title: detail.title,
+            mainPicture: detail.mainPicture,
+            mean: detail.mean,
+            rank: detail.rank,
+            popularity: detail.popularity,
+            numEpisodes: detail.numEpisodes,
+            status: detail.status,
+            rating: detail.rating,
+            mediaType: detail.mediaType,
+            broadcast: detail.broadcast,
+            alternativeTitles: detail.alternativeTitles,
+            genres: detail.genres,
+            myListStatus: detail.myListStatus,
+          ));
+        }
+      } catch (_) {
+        // skip individual failures
+      }
+    }
+    return results;
   }
 
   ApiException _mapDioException(DioException e) {

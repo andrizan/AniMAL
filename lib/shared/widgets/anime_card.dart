@@ -25,6 +25,7 @@ class AnimeCard extends ConsumerWidget {
     super.key,
     this.trailing,
     this.nextAiring,
+    this.onTap,
   });
 
   final Anime anime;
@@ -34,6 +35,9 @@ class AnimeCard extends ConsumerWidget {
 
   /// Optional next airing info from AniList schedule.
   final AiringEntry? nextAiring;
+
+  /// Optional tap callback. When provided, replaces the default navigation.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,11 +56,13 @@ class AnimeCard extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.pushNamed(
-          'animeDetail',
-          pathParameters: {'id': '${anime.id}'},
-        ),
-        onLongPress: () => _showUpdateModal(context, ref),
+        onTap: onTap ??
+            () => context.pushNamed(
+              'animeDetail',
+              pathParameters: {'id': '${anime.id}'},
+            ),
+        onLongPress:
+            onTap != null ? null : () => _showUpdateModal(context, ref),
         child: SizedBox(
           height: 120,
           child: Row(
@@ -90,19 +96,44 @@ class AnimeCard extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.more_vert,
-                                size: 18,
-                                color: theme.colorScheme.onSurfaceVariant,
+                          if (anime.myListStatus != null)
+                            Container(
+                              margin: const EdgeInsets.only(right: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
                               ),
-                              padding: EdgeInsets.zero,
-                              onPressed: () => _showUpdateModal(context, ref),
+                              decoration: BoxDecoration(
+                                color: _listStatusColor(
+                                  anime.myListStatus!.status,
+                                ).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                anime.myListStatus!.status.label,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: _listStatusColor(
+                                    anime.myListStatus!.status,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                          if (onTap == null)
+                            SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.more_vert,
+                                  size: 18,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                padding: EdgeInsets.zero,
+                                onPressed: () => _showUpdateModal(context, ref),
+                              ),
+                            ),
                         ],
                       ),
 
@@ -502,6 +533,14 @@ class AnimeCard extends ConsumerWidget {
       ),
     );
   }
+
+  static Color _listStatusColor(WatchStatus status) => switch (status) {
+    WatchStatus.watching => AppColors.listWatching,
+    WatchStatus.completed => AppColors.listCompleted,
+    WatchStatus.onHold => AppColors.listOnHold,
+    WatchStatus.dropped => AppColors.listDropped,
+    WatchStatus.planToWatch => AppColors.listPlanToWatch,
+  };
 }
 
 /// Cover image with left-side rounded corners only.
