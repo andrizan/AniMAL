@@ -814,7 +814,7 @@ class _TitleRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
+            child: SelectableText(
               title,
               style: theme.textTheme.bodyMedium,
             ),
