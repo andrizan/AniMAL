@@ -2,6 +2,7 @@ import 'package:animal/core/providers.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:animal/core/logger/app_logger.dart';
@@ -24,6 +25,7 @@ class AiringEntry {
     this.episodes,
     this.format,
     this.status,
+    this.myListStatus,
   });
 
   final int anilistId;
@@ -40,6 +42,7 @@ class AiringEntry {
   final int? episodes;
   final String? format;
   final String? status;
+  final MyListStatus? myListStatus;
 
   String? get countdown {
     if (timeUntilAiring <= 0) return null;
@@ -127,6 +130,7 @@ class AiringRepository {
           episodes: malAnime?.numEpisodes ?? entry.episodes,
           format: entry.format,
           status: entry.status,
+          myListStatus: malAnime?.myListStatus,
         );
       }).toList();
     }

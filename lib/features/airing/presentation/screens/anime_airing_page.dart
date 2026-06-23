@@ -185,6 +185,7 @@ class _AiringCard extends StatelessWidget {
         en: entry.titleEnglish,
         ja: entry.titleNative,
       ),
+      myListStatus: entry.myListStatus,
     );
 
     return AnimeCard(

@@ -13,7 +13,7 @@ class MalApiClient {
 
   static const _listFields =
       'id,title,main_picture,mean,rank,popularity,num_episodes,status,'
-      'rating,media_type,alternative_titles,genres';
+      'rating,media_type,alternative_titles,genres,my_list_status';
 
   static const _detailFields =
       '$_listFields,synopsis,start_date,end_date,media_type,source,'
