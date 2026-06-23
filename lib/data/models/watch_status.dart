@@ -13,10 +13,10 @@ enum WatchStatus {
   final String value;
 
   String get label => switch (this) {
-        WatchStatus.watching => 'Watching',
-        WatchStatus.completed => 'Completed',
-        WatchStatus.onHold => 'On Hold',
-        WatchStatus.dropped => 'Dropped',
-        WatchStatus.planToWatch => 'Plan to Watch',
-      };
+    WatchStatus.watching => 'Watching',
+    WatchStatus.completed => 'Completed',
+    WatchStatus.onHold => 'On Hold',
+    WatchStatus.dropped => 'Dropped',
+    WatchStatus.planToWatch => 'Plan to Watch',
+  };
 }

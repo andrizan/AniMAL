@@ -23,6 +23,8 @@ Rules and conventions for contributing to this project.
 - **Routing**: `go_router` with auth guard in `core/router/route_guards.dart`.
 - **Codegen**: `freezed` + `json_serializable` for data layer DTOs only. Run `dart run build_runner build` after model changes.
 - **Analysis**: `very_good_analysis` — run `flutter analyze` before reporting done.
+- **Formatting**: run `dart format lib/` before commit to auto-format all Dart files.
+- **Import ordering**: Dart has no built-in import sorter. Follow the order: `dart:` → `package:` → relative, alphabetically within each group. Use `directives_ordering` lint to catch violations.
 
 ### Layer contract
 
@@ -65,6 +67,28 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - **AniList is supplementary** for schedule and people data.
 - When merging, MAL data takes priority.
 - Cache API responses to avoid rate limits (15 min).
+
+### Rate-Limit Protection
+
+- **MAL** allows ~60 req/min. **AniList** ~90 req/min. **Every API call MUST be cached** at the repository layer.
+- Use `MemoryCache` from `data/local/memory_cache.dart` for in-memory caching with TTL.
+- **Cache durations by data type:**
+
+| Data | TTL | Reason |
+|------|-----|--------|
+| User anime list | 3 min | Changes on user action; invalidated on edit/delete |
+| Search results | 1 min | Results change frequently; debounce 300ms at provider |
+| Rankings | 10 min | Stable within a session |
+| Seasonal anime | 15 min | Season data is static |
+| Anime detail | 15 min | Rarely changes |
+| MAL user info | 10 min | Rarely changes |
+| AniList extra info | 15 min | Characters/staff stable |
+| AniList character/staff | 30 min | Very stable data |
+| Airing schedule | 15 min | Already cached in AiringRepository |
+
+- **Invalidate user list cache** on `updateAnimeListStatus` / `deleteAnimeFromList`.
+- **Never make uncached API calls** in widget build methods — always go through a cached repository/provider.
+- **Avoid per-request methods** when a batched/cached alternative exists (e.g., use cached `getWeeklyAiringSchedule` instead of per-day queries).
 
 ## Logging
 

@@ -26,9 +26,10 @@ sealed class AnimeDetail with _$AnimeDetail {
     @JsonKey(name: 'num_scoring_users') int? numScoringUsers,
     @Default([]) List<Genre> genres,
     Broadcast? broadcast,
-    @JsonKey(name: 'alternative_titles')
-    AlternativeTitles? alternativeTitles,
-    @JsonKey(name: 'related_anime') @Default([]) List<RelatedAnime> relatedAnime,
+    @JsonKey(name: 'alternative_titles') AlternativeTitles? alternativeTitles,
+    @JsonKey(name: 'related_anime')
+    @Default([])
+    List<RelatedAnime> relatedAnime,
     @JsonKey(name: 'my_list_status') MyListStatus? myListStatus,
   }) = _AnimeDetail;
 

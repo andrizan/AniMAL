@@ -12,11 +12,11 @@ enum Season {
   final String value;
 
   String get label => switch (this) {
-        Season.winter => 'Winter',
-        Season.spring => 'Spring',
-        Season.summer => 'Summer',
-        Season.fall => 'Fall',
-      };
+    Season.winter => 'Winter',
+    Season.spring => 'Spring',
+    Season.summer => 'Summer',
+    Season.fall => 'Fall',
+  };
 
   static Season fromDate(DateTime date) {
     switch (date.month) {

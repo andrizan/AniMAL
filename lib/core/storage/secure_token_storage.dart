@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// and PKCE code verifier.
 class SecureTokenStorage {
   const SecureTokenStorage([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
@@ -22,12 +22,10 @@ class SecureTokenStorage {
   }
 
   /// Read the stored access token.
-  Future<String?> getAccessToken() =>
-      _storage.read(key: _accessTokenKey);
+  Future<String?> getAccessToken() => _storage.read(key: _accessTokenKey);
 
   /// Read the stored refresh token.
-  Future<String?> getRefreshToken() =>
-      _storage.read(key: _refreshTokenKey);
+  Future<String?> getRefreshToken() => _storage.read(key: _refreshTokenKey);
 
   /// Persist the PKCE code verifier.
   Future<void> saveCodeVerifier(String codeVerifier) async {
@@ -35,8 +33,7 @@ class SecureTokenStorage {
   }
 
   /// Read the stored PKCE code verifier.
-  Future<String?> getCodeVerifier() =>
-      _storage.read(key: _codeVerifierKey);
+  Future<String?> getCodeVerifier() => _storage.read(key: _codeVerifierKey);
 
   /// Clear the stored PKCE code verifier.
   Future<void> clearCodeVerifier() async {

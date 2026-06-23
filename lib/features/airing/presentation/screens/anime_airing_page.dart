@@ -71,8 +71,11 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
               const Text('Failed to load airing schedule'),
               const SizedBox(height: 16),
@@ -116,9 +119,11 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.tv_off,
-                              size: 48,
-                              color: theme.colorScheme.onSurfaceVariant),
+                          Icon(
+                            Icons.tv_off,
+                            size: 48,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'No anime on ${_dayLabels[_days.indexOf(day)]}',
@@ -132,8 +137,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                   }
 
                   return RefreshIndicator(
-                    onRefresh: () async =>
-                        ref.invalidate(weeklyAiringProvider),
+                    onRefresh: () async => ref.invalidate(weeklyAiringProvider),
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemCount: animeForDay.length,
@@ -176,9 +180,7 @@ class _AiringCard extends StatelessWidget {
       numEpisodes: entry.episodes,
       status: entry.status,
       genres: entry.genres.map((g) => Genre(id: 0, name: g)).toList(),
-      broadcast: airingTime != null
-          ? Broadcast(startTime: airingTime)
-          : null,
+      broadcast: airingTime != null ? Broadcast(startTime: airingTime) : null,
       alternativeTitles: AlternativeTitles(
         en: entry.titleEnglish,
         ja: entry.titleNative,

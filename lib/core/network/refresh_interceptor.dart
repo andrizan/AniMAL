@@ -11,9 +11,9 @@ class RefreshInterceptor extends Interceptor {
     required SecureTokenStorage tokenStorage,
     required Dio dio,
     Logger? logger,
-  })  : _tokenStorage = tokenStorage,
-        _dio = dio,
-        _logger = logger ?? Logger();
+  }) : _tokenStorage = tokenStorage,
+       _dio = dio,
+       _logger = logger ?? Logger();
 
   final SecureTokenStorage _tokenStorage;
   final Dio _dio;
@@ -21,7 +21,10 @@ class RefreshInterceptor extends Interceptor {
   Future<bool>? _refreshFuture;
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     if (err.response?.statusCode == 401) {
       _logger.w('RefreshInterceptor: 401 — attempting token refresh');
       _refreshFuture ??= _refreshToken();

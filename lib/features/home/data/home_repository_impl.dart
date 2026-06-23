@@ -11,8 +11,8 @@ final class HomeRepositoryImpl implements HomeRepository {
   HomeRepositoryImpl({
     required MalApiClient malApi,
     Logger? logger,
-  })  : _malApi = malApi,
-        _logger = logger ?? appLogger;
+  }) : _malApi = malApi,
+       _logger = logger ?? appLogger;
 
   final MalApiClient _malApi;
   final Logger _logger;

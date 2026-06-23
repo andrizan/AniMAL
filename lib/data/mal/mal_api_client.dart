@@ -30,7 +30,11 @@ class MalApiClient {
     );
     final data = _extractList(response.data, 'data') ?? [];
     return data
-        .map((e) => Anime.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>))
+        .map(
+          (e) => Anime.fromJson(
+            (e as Map<String, dynamic>)['node'] as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
@@ -42,11 +46,19 @@ class MalApiClient {
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       MalEndpoints.seasonal(year, season.value),
-      queryParameters: {'limit': limit, 'offset': offset, 'fields': _scheduleFields},
+      queryParameters: {
+        'limit': limit,
+        'offset': offset,
+        'fields': _scheduleFields,
+      },
     );
     final data = _extractList(response.data, 'data') ?? [];
     return data
-        .map((e) => Anime.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>))
+        .map(
+          (e) => Anime.fromJson(
+            (e as Map<String, dynamic>)['node'] as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
@@ -66,11 +78,19 @@ class MalApiClient {
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       MalEndpoints.ranking(),
-      queryParameters: {'ranking_type': rankingType, 'limit': limit, 'fields': _listFields},
+      queryParameters: {
+        'ranking_type': rankingType,
+        'limit': limit,
+        'fields': _listFields,
+      },
     );
     final data = _extractList(response.data, 'data') ?? [];
     return data
-        .map((e) => Anime.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>))
+        .map(
+          (e) => Anime.fromJson(
+            (e as Map<String, dynamic>)['node'] as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
@@ -90,7 +110,11 @@ class MalApiClient {
     );
     final data = _extractList(response.data, 'data') ?? [];
     return data
-        .map((e) => Anime.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>))
+        .map(
+          (e) => Anime.fromJson(
+            (e as Map<String, dynamic>)['node'] as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
@@ -110,7 +134,8 @@ class MalApiClient {
   }) async {
     final data = <String, dynamic>{};
     if (status != null) data['status'] = status.value;
-    if (numWatchedEpisodes != null) data['num_watched_episodes'] = numWatchedEpisodes;
+    if (numWatchedEpisodes != null)
+      data['num_watched_episodes'] = numWatchedEpisodes;
     if (score != null) data['score'] = score;
     if (isRewatching != null) data['is_rewatching'] = isRewatching;
     if (priority != null) data['priority'] = priority;

@@ -13,7 +13,11 @@ class MemoryCache {
     return entry.value as T;
   }
 
-  void put<T>(String key, T value, {Duration ttl = const Duration(minutes: 15)}) {
+  void put<T>(
+    String key,
+    T value, {
+    Duration ttl = const Duration(minutes: 15),
+  }) {
     _store[key] = _CacheEntry(
       value: value,
       expiresAt: DateTime.now().add(ttl),

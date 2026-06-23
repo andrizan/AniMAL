@@ -7,8 +7,13 @@ import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 
 class AuthInterceptor extends Interceptor {
-  AuthInterceptor({required SecureTokenStorage tokenStorage, required Dio dio, Logger? logger})
-      : _tokenStorage = tokenStorage, _dio = dio, _logger = logger ?? Logger();
+  AuthInterceptor({
+    required SecureTokenStorage tokenStorage,
+    required Dio dio,
+    Logger? logger,
+  }) : _tokenStorage = tokenStorage,
+       _dio = dio,
+       _logger = logger ?? Logger();
 
   final SecureTokenStorage _tokenStorage;
   final Dio _dio;
@@ -16,14 +21,21 @@ class AuthInterceptor extends Interceptor {
   Future<bool>? _refreshFuture;
 
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final token = await _tokenStorage.getAccessToken();
-    if (token != null && token.isNotEmpty) options.headers['Authorization'] = 'Bearer $token';
+    if (token != null && token.isNotEmpty)
+      options.headers['Authorization'] = 'Bearer $token';
     handler.next(options);
   }
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     if (err.response?.statusCode == 401) {
       _logger.w('AuthInterceptor: 401 — attempting token refresh');
       _refreshFuture ??= _refreshToken();
@@ -44,12 +56,23 @@ class AuthInterceptor extends Interceptor {
   Future<bool> _refreshToken() async {
     final refreshToken = await _tokenStorage.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) return false;
-    final response = await _dio.post<String>(Env.malTokenUrl,
+    final response = await _dio.post<String>(
+      Env.malTokenUrl,
       options: Options(contentType: Headers.formUrlEncodedContentType),
-      data: {'client_id': Env.malClientId, 'client_secret': Env.malClientSecret, 'grant_type': 'refresh_token', 'refresh_token': refreshToken},
+      data: {
+        'client_id': Env.malClientId,
+        'client_secret': Env.malClientSecret,
+        'grant_type': 'refresh_token',
+        'refresh_token': refreshToken,
+      },
     );
-    final token = AuthToken.fromJson(jsonDecode(response.data ?? '') as Map<String, dynamic>);
-    await _tokenStorage.saveTokens(accessToken: token.accessToken, refreshToken: token.refreshToken);
+    final token = AuthToken.fromJson(
+      jsonDecode(response.data ?? '') as Map<String, dynamic>,
+    );
+    await _tokenStorage.saveTokens(
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+    );
     _logger.i('Token refreshed');
     return true;
   }

@@ -8,7 +8,14 @@ String? convertJstToLocal(String? jstTime) {
     final minute = int.parse(parts[1]);
     final now = DateTime.now();
     final jst = tz.getLocation('Asia/Tokyo');
-    final jstDateTime = tz.TZDateTime(jst, now.year, now.month, now.day, hour, minute);
+    final jstDateTime = tz.TZDateTime(
+      jst,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     final localDateTime = jstDateTime.toLocal();
     final prefix = localDateTime.day > now.day ? 'Tomorrow ' : '';
     return '$prefix${localDateTime.hour.toString().padLeft(2, '0')}:'

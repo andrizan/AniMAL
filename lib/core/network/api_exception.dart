@@ -24,6 +24,5 @@ sealed class ApiException with _$ApiException implements Exception {
       UnauthorizedException;
 
   /// Unknown / unexpected error.
-  const factory ApiException.unknown({String? message}) =
-      UnknownApiException;
+  const factory ApiException.unknown({String? message}) = UnknownApiException;
 }

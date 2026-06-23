@@ -16,9 +16,7 @@ class ScoreBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = isPersonal
-        ? theme.colorScheme.primary
-        : AppColors.starColor;
+    final color = isPersonal ? theme.colorScheme.primary : AppColors.starColor;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

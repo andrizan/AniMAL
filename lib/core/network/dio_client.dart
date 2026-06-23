@@ -10,15 +10,15 @@ class DioClient {
     required SecureTokenStorage tokenStorage,
     Logger? logger,
   }) : _dio = Dio(
-          BaseOptions(
-            baseUrl: Env.malBaseUrl,
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 15),
-            headers: {
-              'X-MAL-CLIENT-ID': Env.malClientId,
-            },
-          ),
-        ) {
+         BaseOptions(
+           baseUrl: Env.malBaseUrl,
+           connectTimeout: const Duration(seconds: 15),
+           receiveTimeout: const Duration(seconds: 15),
+           headers: {
+             'X-MAL-CLIENT-ID': Env.malClientId,
+           },
+         ),
+       ) {
     _dio.interceptors.addAll([
       AuthInterceptor(
         tokenStorage: tokenStorage,

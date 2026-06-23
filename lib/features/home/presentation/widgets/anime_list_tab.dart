@@ -13,7 +13,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Supports filtering by [airingFilter].
 class AnimeListTab extends ConsumerWidget {
   const AnimeListTab({
-    required this.status, super.key,
+    required this.status,
+    super.key,
     this.sortBy = ListSort.name,
     this.ascending = true,
     this.airingFilter = AiringFilter.all,
@@ -26,26 +27,26 @@ class AnimeListTab extends ConsumerWidget {
 
   List<Anime> _sort(List<Anime> list, Map<int, AiringEntry> airingMap) {
     final sorted = List<Anime>.from(list)
-    ..sort((a, b) {
-      int cmp;
-      switch (sortBy) {
-        case ListSort.name:
-          cmp = a.title.toLowerCase().compareTo(b.title.toLowerCase());
-        case ListSort.score:
-          final aScore = a.mean ?? 0;
-          final bScore = b.mean ?? 0;
-          cmp = aScore.compareTo(bScore);
-        case ListSort.episodes:
-          final aEps = a.numEpisodes ?? 0;
-          final bEps = b.numEpisodes ?? 0;
-          cmp = aEps.compareTo(bEps);
-        case ListSort.airing:
-          final aTime = airingMap[a.id]?.timeUntilAiring ?? 999999999;
-          final bTime = airingMap[b.id]?.timeUntilAiring ?? 999999999;
-          cmp = aTime.compareTo(bTime);
-      }
-      return ascending ? cmp : -cmp;
-    });
+      ..sort((a, b) {
+        int cmp;
+        switch (sortBy) {
+          case ListSort.name:
+            cmp = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          case ListSort.score:
+            final aScore = a.mean ?? 0;
+            final bScore = b.mean ?? 0;
+            cmp = aScore.compareTo(bScore);
+          case ListSort.episodes:
+            final aEps = a.numEpisodes ?? 0;
+            final bEps = b.numEpisodes ?? 0;
+            cmp = aEps.compareTo(bEps);
+          case ListSort.airing:
+            final aTime = airingMap[a.id]?.timeUntilAiring ?? 999999999;
+            final bTime = airingMap[b.id]?.timeUntilAiring ?? 999999999;
+            cmp = aTime.compareTo(bTime);
+        }
+        return ascending ? cmp : -cmp;
+      });
     return sorted;
   }
 

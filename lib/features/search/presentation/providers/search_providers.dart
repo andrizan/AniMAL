@@ -9,8 +9,10 @@ Timer? _debounceTimer;
 
 /// Debounced FutureProvider family for anime search.
 // ignore: specify_nonobvious_property_types
-final animeSearchProvider =
-    FutureProvider.family<List<Anime>, String>((ref, query) async {
+final animeSearchProvider = FutureProvider.family<List<Anime>, String>((
+  ref,
+  query,
+) async {
   _debounceTimer?.cancel();
   if (query.trim().isEmpty) return [];
 
@@ -29,8 +31,7 @@ final animeSearchProvider =
 });
 
 /// FutureProvider for anime ranking.
-final animeRankingProvider =
-    FutureProvider<List<Anime>>((ref) async {
+final animeRankingProvider = FutureProvider<List<Anime>>((ref) async {
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getAnimeRanking();
 });
@@ -39,8 +40,8 @@ final animeRankingProvider =
 /// Returns `null` if the anime doesn't exist on MAL (404).
 /// Auto-disposes when no widgets are watching.
 // ignore: specify_nonobvious_property_types
-final animeDetailProvider =
-    FutureProvider.autoDispose.family<AnimeDetail?, int>((ref, animeId) async {
-  final repo = ref.watch(animeRepositoryProvider);
-  return repo.getAnimeDetail(animeId);
-});
+final animeDetailProvider = FutureProvider.autoDispose
+    .family<AnimeDetail?, int>((ref, animeId) async {
+      final repo = ref.watch(animeRepositoryProvider);
+      return repo.getAnimeDetail(animeId);
+    });

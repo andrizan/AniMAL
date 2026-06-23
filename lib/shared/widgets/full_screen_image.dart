@@ -14,24 +14,27 @@ class FullScreenImageViewer extends StatelessWidget {
   final String imageUrl;
   final String? heroTag;
 
-  static void show(BuildContext context, {
+  static void show(
+    BuildContext context, {
     required String imageUrl,
     String? heroTag,
   }) {
-    unawaited(Navigator.of(context).push(
-      PageRouteBuilder<void>(
-        opaque: false,
-        barrierDismissible: true,
-        barrierColor: AppColors.barrier,
-        pageBuilder: (_, _, _) => FullScreenImageViewer(
-          imageUrl: imageUrl,
-          heroTag: heroTag,
+    unawaited(
+      Navigator.of(context).push(
+        PageRouteBuilder<void>(
+          opaque: false,
+          barrierDismissible: true,
+          barrierColor: AppColors.barrier,
+          pageBuilder: (_, _, _) => FullScreenImageViewer(
+            imageUrl: imageUrl,
+            heroTag: heroTag,
+          ),
+          transitionsBuilder: (_, animation, _, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
         ),
-        transitionsBuilder: (_, animation, _, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
       ),
-    ));
+    );
   }
 
   @override

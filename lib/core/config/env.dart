@@ -6,7 +6,9 @@ abstract final class Env {
   static const String malClientId = String.fromEnvironment('MAL_CLIENT_ID');
 
   /// MyAnimeList API Client Secret (optional, for confidential clients).
-  static const String malClientSecret = String.fromEnvironment('MAL_CLIENT_SECRET');
+  static const String malClientSecret = String.fromEnvironment(
+    'MAL_CLIENT_SECRET',
+  );
 
   /// OAuth2 redirect URI registered in MyAnimeList.
   static const String malRedirectUri = String.fromEnvironment(
@@ -25,8 +27,7 @@ abstract final class Env {
       'https://myanimelist.net/v1/oauth2/authorize';
 
   /// MyAnimeList OAuth2 token endpoint.
-  static const String malTokenUrl =
-      'https://myanimelist.net/v1/oauth2/token';
+  static const String malTokenUrl = 'https://myanimelist.net/v1/oauth2/token';
 
   /// GitHub repository URL.
   static const String githubRepoUrl = 'https://github.com/andrizan/AniMAL';

@@ -62,11 +62,15 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     _prefs = prefs;
-    final sortIndex = (prefs.getInt('list_sort') ?? 0)
-        .clamp(0, ListSort.values.length - 1);
+    final sortIndex = (prefs.getInt('list_sort') ?? 0).clamp(
+      0,
+      ListSort.values.length - 1,
+    );
     final ascending = prefs.getBool('list_ascending') ?? true;
-    final filterIndex = (prefs.getInt('airing_filter') ?? 0)
-        .clamp(0, AiringFilter.values.length - 1);
+    final filterIndex = (prefs.getInt('airing_filter') ?? 0).clamp(
+      0,
+      AiringFilter.values.length - 1,
+    );
     setState(() {
       _sortBy = ListSort.values[sortIndex];
       _ascending = ascending;
@@ -129,10 +133,12 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                 underline: const SizedBox.shrink(),
                 style: theme.textTheme.bodySmall,
                 items: ListSort.values
-                    .map((s) => DropdownMenuItem(
-                          value: s,
-                          child: Text(s.label),
-                        ))
+                    .map(
+                      (s) => DropdownMenuItem(
+                        value: s,
+                        child: Text(s.label),
+                      ),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) _saveSort(value);
@@ -155,10 +161,12 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                 underline: const SizedBox.shrink(),
                 style: theme.textTheme.bodySmall,
                 items: AiringFilter.values
-                    .map((f) => DropdownMenuItem(
-                          value: f,
-                          child: Text(f.label),
-                        ))
+                    .map(
+                      (f) => DropdownMenuItem(
+                        value: f,
+                        child: Text(f.label),
+                      ),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) _saveAiringFilter(value);
@@ -174,11 +182,36 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
             child: TabBarView(
               controller: _tabController,
               children: [
-                AnimeListTab(status: WatchStatus.watching, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
-                AnimeListTab(status: WatchStatus.planToWatch, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
-                AnimeListTab(status: WatchStatus.onHold, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
-                AnimeListTab(status: WatchStatus.completed, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
-                AnimeListTab(status: WatchStatus.dropped, sortBy: _sortBy, ascending: _ascending, airingFilter: _airingFilter),
+                AnimeListTab(
+                  status: WatchStatus.watching,
+                  sortBy: _sortBy,
+                  ascending: _ascending,
+                  airingFilter: _airingFilter,
+                ),
+                AnimeListTab(
+                  status: WatchStatus.planToWatch,
+                  sortBy: _sortBy,
+                  ascending: _ascending,
+                  airingFilter: _airingFilter,
+                ),
+                AnimeListTab(
+                  status: WatchStatus.onHold,
+                  sortBy: _sortBy,
+                  ascending: _ascending,
+                  airingFilter: _airingFilter,
+                ),
+                AnimeListTab(
+                  status: WatchStatus.completed,
+                  sortBy: _sortBy,
+                  ascending: _ascending,
+                  airingFilter: _airingFilter,
+                ),
+                AnimeListTab(
+                  status: WatchStatus.dropped,
+                  sortBy: _sortBy,
+                  ascending: _ascending,
+                  airingFilter: _airingFilter,
+                ),
               ],
             ),
           )

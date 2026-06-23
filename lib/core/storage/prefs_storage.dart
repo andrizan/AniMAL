@@ -12,13 +12,11 @@ class PrefsStorage {
 
   int? getInt(String key) => _prefs.getInt(key);
 
-  Future<bool> setInt(String key, int value) =>
-      _prefs.setInt(key, value);
+  Future<bool> setInt(String key, int value) => _prefs.setInt(key, value);
 
   bool? getBool(String key) => _prefs.getBool(key);
 
-  Future<bool> setBool(String key, bool value) =>
-      _prefs.setBool(key, value);
+  Future<bool> setBool(String key, bool value) => _prefs.setBool(key, value);
 
   Future<bool> remove(String key) => _prefs.remove(key);
 

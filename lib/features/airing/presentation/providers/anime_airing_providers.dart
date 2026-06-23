@@ -109,9 +109,7 @@ class AiringRepository {
     var matchedCount = 0;
     for (final day in anilistSchedule.keys) {
       merged[day] = anilistSchedule[day]!.map((entry) {
-        final malAnime = entry.malId != null
-            ? malAnimeMap[entry.malId!]
-            : null;
+        final malAnime = entry.malId != null ? malAnimeMap[entry.malId!] : null;
         if (malAnime != null) matchedCount++;
 
         return AiringEntry(
@@ -152,7 +150,7 @@ class AiringRepository {
   }
 
   Future<Map<String, List<AniListScheduleEntry>>>
-      _fetchAniListSchedule() async {
+  _fetchAniListSchedule() async {
     try {
       return await _anilistApi.getWeeklyAiringSchedule();
     } on Exception catch (e) {
@@ -194,15 +192,17 @@ final airingRepositoryProvider = Provider<AiringRepository>((ref) {
 });
 
 /// Fetches weekly airing schedule (AniList schedule + MAL scores).
-final weeklyAiringProvider =
-    FutureProvider<Map<String, List<AiringEntry>>>((ref) async {
+final weeklyAiringProvider = FutureProvider<Map<String, List<AiringEntry>>>((
+  ref,
+) async {
   final repo = ref.watch(airingRepositoryProvider);
   return repo.getWeeklySchedule();
 });
 
 /// Map of MAL ID to next AiringEntry for quick lookup.
-final airingByMalIdProvider =
-    FutureProvider<Map<int, AiringEntry>>((ref) async {
+final airingByMalIdProvider = FutureProvider<Map<int, AiringEntry>>((
+  ref,
+) async {
   final schedule = await ref.watch(weeklyAiringProvider.future);
   final map = <int, AiringEntry>{};
   for (final entries in schedule.values) {

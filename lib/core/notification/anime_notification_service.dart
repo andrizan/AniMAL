@@ -9,7 +9,8 @@ import 'package:timezone/timezone.dart' as tz;
 
 class AnimeNotificationService {
   AnimeNotificationService({Logger? logger}) : _logger = logger ?? appLogger;
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   final Logger _logger;
 
   bool _permissionGranted = false;
@@ -24,17 +25,27 @@ class AnimeNotificationService {
   static const _prefsKey = 'anime_notification_ids';
 
   Future<void> initialize() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    const initSettings = InitializationSettings(android: androidSettings, iOS: darwinSettings, macOS: darwinSettings);
-    await _plugin.initialize(settings: initSettings, onDidReceiveNotificationResponse: (details) {
-      final animeId = details.id;
-      if (animeId != null && animeId > 0) _notificationTapController.add(animeId);
-    });
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: darwinSettings,
+      macOS: darwinSettings,
+    );
+    await _plugin.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: (details) {
+        final animeId = details.id;
+        if (animeId != null && animeId > 0)
+          _notificationTapController.add(animeId);
+      },
+    );
     await Future.wait([_initPermission(), _loadIds()]);
   }
 
@@ -54,23 +65,43 @@ class AnimeNotificationService {
 
   Future<void> _saveIds() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_prefsKey, _notificationIds.map((id) => id.toString()).toList());
+    await prefs.setStringList(
+      _prefsKey,
+      _notificationIds.map((id) => id.toString()).toList(),
+    );
   }
 
   Future<bool> requestPermission() async {
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (android != null) {
       final granted = await android.requestNotificationsPermission();
       return _permissionGranted = granted ?? true;
     }
-    final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (ios != null) {
-      final granted = await ios.requestPermissions(alert: true, badge: true, sound: true);
+      final granted = await ios.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
       return _permissionGranted = granted ?? false;
     }
-    final macos = _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>();
+    final macos = _plugin
+        .resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin
+        >();
     if (macos != null) {
-      final granted = await macos.requestPermissions(alert: true, badge: true, sound: true);
+      final granted = await macos.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
       return _permissionGranted = granted ?? false;
     }
     _logger.w('Notification: unknown platform, assuming permission granted');
@@ -78,26 +109,57 @@ class AnimeNotificationService {
   }
 
   Future<bool> checkPermission() async {
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (android != null) return _permissionGranted = (await android.areNotificationsEnabled()) ?? false;
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null)
+      return _permissionGranted =
+          (await android.areNotificationsEnabled()) ?? false;
     return _permissionGranted;
   }
 
-  Future<bool> scheduleAnimeNotification({required int animeId, required String title, required int episode, required DateTime airingAt}) async {
-    if (!_permissionGranted) { final g = await requestPermission(); if (!g) return false; }
+  Future<bool> scheduleAnimeNotification({
+    required int animeId,
+    required String title,
+    required int episode,
+    required DateTime airingAt,
+  }) async {
+    if (!_permissionGranted) {
+      final g = await requestPermission();
+      if (!g) return false;
+    }
     final scheduledDate = tz.TZDateTime.from(
-      airingAt.subtract(Duration(minutes: ApiConstants.notificationLeadMinutes)),
+      airingAt.subtract(
+        Duration(minutes: ApiConstants.notificationLeadMinutes),
+      ),
       tz.local,
     );
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return false;
     try {
       await _plugin.zonedSchedule(
-        id: animeId, title: 'Episode $episode Airing Soon', body: '$title - Episode $episode starts in 15 minutes!',
+        id: animeId,
+        title: 'Episode $episode Airing Soon',
+        body: '$title - Episode $episode starts in 15 minutes!',
         scheduledDate: scheduledDate,
         notificationDetails: NotificationDetails(
-          android: AndroidNotificationDetails('anime_airing', 'Anime Airing', channelDescription: 'Notifications for upcoming anime episodes', importance: Importance.high, priority: Priority.high),
-          iOS: const DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
-          macOS: const DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
+          android: AndroidNotificationDetails(
+            'anime_airing',
+            'Anime Airing',
+            channelDescription: 'Notifications for upcoming anime episodes',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+          macOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
@@ -111,12 +173,20 @@ class AnimeNotificationService {
   }
 
   Future<void> cancelNotification(int animeId) async {
-    try { await _plugin.cancel(id: animeId); } on Exception catch (e) { _logger.e('Failed to cancel: $animeId: $e'); }
+    try {
+      await _plugin.cancel(id: animeId);
+    } on Exception catch (e) {
+      _logger.e('Failed to cancel: $animeId: $e');
+    }
     _notificationIds.remove(animeId);
     await _saveIds();
   }
 
-  Future<void> cancelAllNotifications() async { await _plugin.cancelAll(); _notificationIds.clear(); await _saveIds(); }
+  Future<void> cancelAllNotifications() async {
+    await _plugin.cancelAll();
+    _notificationIds.clear();
+    await _saveIds();
+  }
 
   Future<void> cleanupStaleNotifications() async {
     try {
@@ -124,7 +194,9 @@ class AnimeNotificationService {
       final pendingIds = pending.map((n) => n.id).toSet();
       _notificationIds.removeWhere((id) => !pendingIds.contains(id));
       await _saveIds();
-    } on Exception catch (e) { _logger.w('Stale cleanup: $e'); }
+    } on Exception catch (e) {
+      _logger.w('Stale cleanup: $e');
+    }
   }
 
   Future<bool> isNotificationScheduled(int animeId) async {
@@ -132,5 +204,7 @@ class AnimeNotificationService {
     return pending.any((n) => n.id == animeId);
   }
 
-  void dispose() { _notificationTapController.close(); }
+  void dispose() {
+    _notificationTapController.close();
+  }
 }

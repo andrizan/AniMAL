@@ -9,7 +9,11 @@ class CacheService {
 
   static const _prefix = 'cache_';
 
-  Future<void> put<T>(String key, T value, {Duration ttl = const Duration(minutes: 15)}) async {
+  Future<void> put<T>(
+    String key,
+    T value, {
+    Duration ttl = const Duration(minutes: 15),
+  }) async {
     final entry = _CacheEntry(
       data: jsonEncode(value),
       expiresAt: DateTime.now().millisecondsSinceEpoch + ttl.inMilliseconds,
@@ -46,9 +50,7 @@ class CacheService {
         return null;
       }
       final list = jsonDecode(entry.data) as List<dynamic>;
-      return list
-          .map((e) => fromJson(e as Map<String, dynamic>))
-          .toList();
+      return list.map((e) => fromJson(e as Map<String, dynamic>)).toList();
     } on Exception {
       return null;
     }
@@ -72,7 +74,7 @@ class _CacheEntry {
   Map<String, dynamic> toJson() => {'data': data, 'expiresAt': expiresAt};
 
   factory _CacheEntry.fromJson(Map<String, dynamic> json) => _CacheEntry(
-        data: json['data'] as String,
-        expiresAt: json['expiresAt'] as int,
-      );
+    data: json['data'] as String,
+    expiresAt: json['expiresAt'] as int,
+  );
 }

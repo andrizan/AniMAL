@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final notificationPermissionProvider =
     NotifierProvider<NotificationPermissionNotifier, bool>(
-  NotificationPermissionNotifier.new,
-);
+      NotificationPermissionNotifier.new,
+    );
 
 class NotificationPermissionNotifier extends Notifier<bool> {
   @override
@@ -21,8 +21,8 @@ class NotificationPermissionNotifier extends Notifier<bool> {
 
 final animeNotificationProvider =
     NotifierProvider<AnimeNotificationNotifier, Set<int>>(
-  AnimeNotificationNotifier.new,
-);
+      AnimeNotificationNotifier.new,
+    );
 
 class AnimeNotificationNotifier extends Notifier<Set<int>> {
   @override

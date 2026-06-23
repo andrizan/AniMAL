@@ -20,8 +20,7 @@ sealed class Anime with _$Anime {
     String? rating,
     @JsonKey(name: 'media_type') String? mediaType,
     Broadcast? broadcast,
-    @JsonKey(name: 'alternative_titles')
-    AlternativeTitles? alternativeTitles,
+    @JsonKey(name: 'alternative_titles') AlternativeTitles? alternativeTitles,
     @Default([]) List<Genre> genres,
     @JsonKey(name: 'my_list_status') MyListStatus? myListStatus,
   }) = _Anime;

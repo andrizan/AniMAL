@@ -56,5 +56,6 @@ class AuthController extends Notifier<AuthStatus> {
 }
 
 /// Provider for [AuthController].
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthStatus>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthStatus>(
+  AuthController.new,
+);

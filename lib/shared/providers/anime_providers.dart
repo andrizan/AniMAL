@@ -55,7 +55,11 @@ class AnimeRepository {
     if (cached != null) return cached;
 
     try {
-      final result = await _api.getSeasonalAnime(year: year, season: season, limit: limit);
+      final result = await _api.getSeasonalAnime(
+        year: year,
+        season: season,
+        limit: limit,
+      );
       _cache.put(key, result, ttl: _ttlLong);
       return result;
     } on DioException catch (e) {
@@ -96,7 +100,10 @@ class AnimeRepository {
     if (cached != null) return cached;
 
     try {
-      final result = await _api.getAnimeRanking(rankingType: rankingType, limit: limit);
+      final result = await _api.getAnimeRanking(
+        rankingType: rankingType,
+        limit: limit,
+      );
       _cache.put(key, result, ttl: _ttlMedium);
       return result;
     } on DioException catch (e) {
@@ -115,7 +122,11 @@ class AnimeRepository {
     if (cached != null) return cached;
 
     try {
-      final result = await _api.getUserAnimeList(status: status, limit: limit, offset: offset);
+      final result = await _api.getUserAnimeList(
+        status: status,
+        limit: limit,
+        offset: offset,
+      );
       _cache.put(key, result, ttl: _ttlUserList);
       return result;
     } on DioException catch (e) {
@@ -186,15 +197,14 @@ class AnimeRepository {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
       DioExceptionType.receiveTimeout ||
-      DioExceptionType.connectionError =>
-        ApiException.network(message: e.message ?? 'Network error'),
-      _ when e.response?.statusCode == 401 =>
-        const ApiException.unauthorized(),
-      _ when e.response != null =>
-        ApiException.server(
-          statusCode: e.response!.statusCode!,
-          message: e.response?.statusMessage ?? 'Server error',
-        ),
+      DioExceptionType.connectionError => ApiException.network(
+        message: e.message ?? 'Network error',
+      ),
+      _ when e.response?.statusCode == 401 => const ApiException.unauthorized(),
+      _ when e.response != null => ApiException.server(
+        statusCode: e.response!.statusCode!,
+        message: e.response?.statusMessage ?? 'Server error',
+      ),
       _ => ApiException.unknown(message: e.message),
     };
   }

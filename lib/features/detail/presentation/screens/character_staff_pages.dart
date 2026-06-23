@@ -18,8 +18,7 @@ class CharacterProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncChar =
-        ref.watch(anilistCharacterDetailProvider(characterId));
+    final asyncChar = ref.watch(anilistCharacterDetailProvider(characterId));
     final theme = Theme.of(context);
 
     return asyncChar.when(
@@ -32,8 +31,11 @@ class CharacterProfilePage extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
               const Text('Failed to load character'),
               const SizedBox(height: 16),
@@ -65,8 +67,10 @@ class CharacterProfilePage extends ConsumerWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back,
-                        color: AppColors.iconLight),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.iconLight,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -115,7 +119,9 @@ class CharacterProfilePage extends ConsumerWidget {
                               colors: [
                                 AppColors.transparent,
                                 AppColors.transparent,
-                                theme.colorScheme.surface.withValues(alpha: 0.7),
+                                theme.colorScheme.surface.withValues(
+                                  alpha: 0.7,
+                                ),
                                 theme.colorScheme.surface,
                               ],
                               stops: const [0.0, 0.4, 0.75, 1.0],
@@ -172,8 +178,7 @@ class CharacterProfilePage extends ConsumerWidget {
                       // Description
                       if (character.description != null &&
                           character.description!.isNotEmpty) ...[
-                        Text('About',
-                            style: theme.textTheme.titleSmall),
+                        Text('About', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         SelectableText(
                           cleanAniListDescription(character.description!),
@@ -187,8 +192,7 @@ class CharacterProfilePage extends ConsumerWidget {
 
                       // Media appearances
                       if (character.mediaAppearances.isNotEmpty) ...[
-                        Text('Appears In',
-                            style: theme.textTheme.titleSmall),
+                        Text('Appears In', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         ...character.mediaAppearances.map(
                           (media) => _MediaAppearanceTile(
@@ -238,8 +242,11 @@ class StaffProfilePage extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
               const Text('Failed to load staff info'),
               const SizedBox(height: 16),
@@ -271,8 +278,10 @@ class StaffProfilePage extends ConsumerWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back,
-                        color: AppColors.iconLight),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.iconLight,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -321,7 +330,9 @@ class StaffProfilePage extends ConsumerWidget {
                               colors: [
                                 AppColors.transparent,
                                 AppColors.transparent,
-                                theme.colorScheme.surface.withValues(alpha: 0.7),
+                                theme.colorScheme.surface.withValues(
+                                  alpha: 0.7,
+                                ),
                                 theme.colorScheme.surface,
                               ],
                               stops: const [0.0, 0.4, 0.75, 1.0],
@@ -385,8 +396,7 @@ class StaffProfilePage extends ConsumerWidget {
                       // Description
                       if (staff.description != null &&
                           staff.description!.isNotEmpty) ...[
-                        Text('About',
-                            style: theme.textTheme.titleSmall),
+                        Text('About', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         SelectableText(
                           cleanAniListDescription(staff.description!),
@@ -400,8 +410,7 @@ class StaffProfilePage extends ConsumerWidget {
 
                       // Media works
                       if (staff.mediaWorks.isNotEmpty) ...[
-                        Text('Works',
-                            style: theme.textTheme.titleSmall),
+                        Text('Works', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         ...staff.mediaWorks.map(
                           (media) => _MediaAppearanceTile(
@@ -504,8 +513,7 @@ class _MediaAppearanceTile extends StatelessWidget {
           children: [
             if (typeLabel != null) ...[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(4),
@@ -539,10 +547,12 @@ class _MediaAppearanceTile extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         onTap: () {
           if (media.malId != null) {
-            unawaited(context.pushNamed(
-              'animeDetail',
-              pathParameters: {'id': '${media.malId}'},
-            ));
+            unawaited(
+              context.pushNamed(
+                'animeDetail',
+                pathParameters: {'id': '${media.malId}'},
+              ),
+            );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

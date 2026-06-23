@@ -24,11 +24,11 @@ class AnimeLabels {
       };
 
   static Color statusColor(String? status) => switch (status) {
-        'currently_airing' => AppColors.statusAiring,
-        'finished_airing' => AppColors.statusFinished,
-        'not_yet_aired' => AppColors.statusUpcoming,
-        _ => AppColors.statusDefault,
-      };
+    'currently_airing' => AppColors.statusAiring,
+    'finished_airing' => AppColors.statusFinished,
+    'not_yet_aired' => AppColors.statusUpcoming,
+    _ => AppColors.statusDefault,
+  };
 
   static String ratingLabel(String? rating, {bool compact = false}) =>
       switch (rating) {
@@ -53,21 +53,21 @@ class AnimeLabels {
       };
 
   static String sourceLabel(String? source) => switch (source) {
-        'original' => 'Original',
-        'manga' => 'Manga',
-        'light_novel' => 'Light Novel',
-        'visual_novel' => 'Visual Novel',
-        'video_game' => 'Video Game',
-        'other' => 'Other',
-        'novel' => 'Novel',
-        'doujinshi' => 'Doujinshi',
-        'anime' => 'Anime',
-        'web_manga' => 'Web Manga',
-        'web_novel' => 'Web Novel',
-        'game' => 'Game',
-        'comic' => 'Comic',
-        'multimedia_project' => 'Multimedia Project',
-        'picture_book' => 'Picture Book',
-        _ => source ?? '',
-      };
+    'original' => 'Original',
+    'manga' => 'Manga',
+    'light_novel' => 'Light Novel',
+    'visual_novel' => 'Visual Novel',
+    'video_game' => 'Video Game',
+    'other' => 'Other',
+    'novel' => 'Novel',
+    'doujinshi' => 'Doujinshi',
+    'anime' => 'Anime',
+    'web_manga' => 'Web Manga',
+    'web_novel' => 'Web Novel',
+    'game' => 'Game',
+    'comic' => 'Comic',
+    'multimedia_project' => 'Multimedia Project',
+    'picture_book' => 'Picture Book',
+    _ => source ?? '',
+  };
 }

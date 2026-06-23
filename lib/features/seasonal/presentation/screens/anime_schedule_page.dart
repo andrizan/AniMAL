@@ -12,8 +12,7 @@ class AnimeSchedulePage extends ConsumerStatefulWidget {
   const AnimeSchedulePage({super.key});
 
   @override
-  ConsumerState<AnimeSchedulePage> createState() =>
-      _AnimeSchedulePageState();
+  ConsumerState<AnimeSchedulePage> createState() => _AnimeSchedulePageState();
 }
 
 class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
@@ -146,7 +145,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
                   season: season,
                 );
               }),
-          _LaterAnimeList(year: _selectedYear),
+              _LaterAnimeList(year: _selectedYear),
             ],
           ),
         ),
@@ -254,8 +253,11 @@ class _SeasonAnimeList extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Failed to load ${season.label} $year',
@@ -263,8 +265,7 @@ class _SeasonAnimeList extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () =>
-                    ref.invalidate(animeScheduleProvider(params)),
+                onPressed: () => ref.invalidate(animeScheduleProvider(params)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -321,8 +322,7 @@ class _SeasonAnimeList extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(animeScheduleProvider(params)),
+          onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
           child: CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -388,14 +388,12 @@ class _LaterAnimeList extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline,
-                size: 48, color: theme.colorScheme.error),
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             const Text('Failed to load upcoming anime'),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () =>
-                  ref.invalidate(animeScheduleProvider(params)),
+              onPressed: () => ref.invalidate(animeScheduleProvider(params)),
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
             ),
@@ -426,8 +424,7 @@ class _LaterAnimeList extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(animeScheduleProvider(params)),
+          onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: animeList.length,

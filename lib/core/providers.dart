@@ -28,7 +28,8 @@ final dioProvider = Provider<Dio>((ref) {
 });
 
 /// Notification service — initialized once in main.dart.
-final notificationServiceProvider =
-    Provider<AnimeNotificationService>((ref) => throw UnimplementedError(
-          'Override this provider in main.dart with the initialized instance',
-        ));
+final notificationServiceProvider = Provider<AnimeNotificationService>(
+  (ref) => throw UnimplementedError(
+    'Override this provider in main.dart with the initialized instance',
+  ),
+);

@@ -150,5 +150,6 @@ class _ShimmerBlockState extends State<_ShimmerBlock>
     );
   }
 
-  double get _defaultHeight => widget.width != null && widget.width! < 100 ? 16 : 24;
+  double get _defaultHeight =>
+      widget.width != null && widget.width! < 100 ? 16 : 24;
 }

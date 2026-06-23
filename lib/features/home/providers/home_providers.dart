@@ -18,22 +18,21 @@ final currentSeasonProvider = Provider<Season>((ref) {
   return Season.fromDate(DateTime.now());
 });
 
-final trendingAnimeProvider =
-    FutureProvider<List<AnimeEntity>>((ref) async {
+final trendingAnimeProvider = FutureProvider<List<AnimeEntity>>((ref) async {
   final repo = ref.watch(homeRepositoryProvider);
   return repo.getAnimeRanking(limit: 20);
 });
 
 final seasonalAnimeProvider =
     FutureProvider.family<List<AnimeEntity>, ({int year, Season season})>(
-  (ref, params) async {
-    final repo = ref.watch(homeRepositoryProvider);
-    return repo.getSeasonalAnime(year: params.year, season: params.season);
-  },
-);
+      (ref, params) async {
+        final repo = ref.watch(homeRepositoryProvider);
+        return repo.getSeasonalAnime(year: params.year, season: params.season);
+      },
+    );
 
 final userAnimeListProvider =
     FutureProvider.family<List<AnimeEntity>, WatchStatus>((ref, status) async {
-  final repo = ref.watch(homeRepositoryProvider);
-  return repo.getUserAnimeList(status: status.value);
-});
+      final repo = ref.watch(homeRepositoryProvider);
+      return repo.getUserAnimeList(status: status.value);
+    });

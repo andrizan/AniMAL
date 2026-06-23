@@ -13,28 +13,27 @@ typedef ScheduleParams = ({int year, Season season});
 /// UI can group entries by day of the week.
 // ignore: specify_nonobvious_property_types
 final animeScheduleProvider =
-    FutureProvider.family<List<Anime>, ScheduleParams>(
-        (ref, params) async {
-  final repo = ref.watch(animeRepositoryProvider);
-  return repo.getSeasonalAnime(
-    year: params.year,
-    season: params.season,
-  );
-});
+    FutureProvider.family<List<Anime>, ScheduleParams>((ref, params) async {
+      final repo = ref.watch(animeRepositoryProvider);
+      return repo.getSeasonalAnime(
+        year: params.year,
+        season: params.season,
+      );
+    });
 
 /// The current season based on today's date.
 final Provider<({int year, Season season})> currentSeasonProvider =
     Provider<({int year, Season season})>((ref) {
-  final now = DateTime.now();
-  return (
-    year: Season.yearFromDate(now),
-    season: Season.fromDate(now),
-  );
-});
+      final now = DateTime.now();
+      return (
+        year: Season.yearFromDate(now),
+        season: Season.fromDate(now),
+      );
+    });
 
 /// Fetches the current season's anime schedule.
 final FutureProvider<List<Anime>> currentAnimeScheduleProvider =
     FutureProvider<List<Anime>>((ref) async {
-  final params = ref.watch(currentSeasonProvider);
-  return ref.watch(animeScheduleProvider(params).future);
-});
+      final params = ref.watch(currentSeasonProvider);
+      return ref.watch(animeScheduleProvider(params).future);
+    });

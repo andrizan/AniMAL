@@ -15,8 +15,7 @@ class OAuthCallbackPage extends ConsumerStatefulWidget {
   final String? code;
 
   @override
-  ConsumerState<OAuthCallbackPage> createState() =>
-      _OAuthCallbackPageState();
+  ConsumerState<OAuthCallbackPage> createState() => _OAuthCallbackPageState();
 }
 
 class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
@@ -40,9 +39,7 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
     }
 
     try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .exchangeCode(code);
+      await ref.read(authControllerProvider.notifier).exchangeCode(code);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

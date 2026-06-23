@@ -113,32 +113,34 @@ class LoginPage extends ConsumerWidget {
   }
 
   void _showUrlDialog(BuildContext context, String url) {
-    unawaited(showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Open URL'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Copy and open this URL in your browser:'),
-            const SizedBox(height: 12),
-            SelectableText(
-              url,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.primary,
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Open URL'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Copy and open this URL in your browser:'),
+              const SizedBox(height: 12),
+              SelectableText(
+                url,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
       ),
-    ));
+    );
   }
 
   void _showCodeInputDialog(BuildContext context, WidgetRef ref) {

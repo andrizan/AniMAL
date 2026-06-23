@@ -60,7 +60,10 @@ class AnimeProfilePage extends ConsumerWidget {
                     CircleAvatar(
                       radius: 32,
                       backgroundColor: theme.colorScheme.error,
-                      child: const Icon(Icons.error, color: AppColors.iconLight),
+                      child: const Icon(
+                        Icons.error,
+                        color: AppColors.iconLight,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -83,8 +86,7 @@ class AnimeProfilePage extends ConsumerWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.refresh),
-                      onPressed: () =>
-                          ref.invalidate(userInfoProvider),
+                      onPressed: () => ref.invalidate(userInfoProvider),
                     ),
                   ],
                 ),
@@ -93,76 +95,70 @@ class AnimeProfilePage extends ConsumerWidget {
             data: (user) {
               if (user == null) return const SizedBox.shrink();
               return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    // User avatar
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor:
-                          theme.colorScheme.primaryContainer,
-                      backgroundImage: user.picture != null
-                          ? CachedNetworkImageProvider(user.picture!)
-                          : null,
-                      child: user.picture == null
-                          ? Icon(
-                              Icons.person,
-                              size: 32,
-                              color:
-                                  theme.colorScheme.onPrimaryContainer,
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.name,
-                            style: theme.textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Connected to MyAnimeList',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.statusAiring,
-                            ),
-                          ),
-                          if (user.location != null) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  size: 14,
-                                  color: theme
-                                      .colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  user.location!,
-                                  style: theme.textTheme.bodySmall
-                                      ?.copyWith(
-                                    color: theme.colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ],
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      // User avatar
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundColor: theme.colorScheme.primaryContainer,
+                        backgroundImage: user.picture != null
+                            ? CachedNetworkImageProvider(user.picture!)
+                            : null,
+                        child: user.picture == null
+                            ? Icon(
+                                Icons.person,
+                                size: 32,
+                                color: theme.colorScheme.onPrimaryContainer,
+                              )
+                            : null,
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: () =>
-                          ref.invalidate(userInfoProvider),
-                    ),
-                  ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user.name,
+                              style: theme.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Connected to MyAnimeList',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.statusAiring,
+                              ),
+                            ),
+                            if (user.location != null) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 14,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    user.location!,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () => ref.invalidate(userInfoProvider),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               );
             },
           ),
@@ -197,15 +193,12 @@ class AnimeProfilePage extends ConsumerWidget {
                       children: [
                         _StatRow(
                           label: 'Days Watched',
-                          value: stats.numDaysWatched
-                                  ?.toStringAsFixed(1) ??
-                              '0',
+                          value:
+                              stats.numDaysWatched?.toStringAsFixed(1) ?? '0',
                         ),
                         _StatRow(
                           label: 'Mean Score',
-                          value: stats.meanScore
-                                  ?.toStringAsFixed(2) ??
-                              '-',
+                          value: stats.meanScore?.toStringAsFixed(2) ?? '-',
                         ),
                         _StatRow(
                           label: 'Total Anime',
@@ -238,8 +231,7 @@ class AnimeProfilePage extends ConsumerWidget {
                         ),
                         _StatRow(
                           label: 'Plan to Watch',
-                          value:
-                              '${stats.numItemsPlanToWatch ?? 0}',
+                          value: '${stats.numItemsPlanToWatch ?? 0}',
                           color: Colors.purple,
                         ),
                       ],
@@ -269,8 +261,10 @@ class AnimeProfilePage extends ConsumerWidget {
                         : 'Tap to login',
                   ),
                   trailing: authStatus == AuthStatus.authenticated
-                      ? const Icon(Icons.check_circle,
-                          color: AppColors.statusAiring)
+                      ? const Icon(
+                          Icons.check_circle,
+                          color: AppColors.statusAiring,
+                        )
                       : const Icon(Icons.chevron_right),
                   onTap: () {
                     if (authStatus != AuthStatus.authenticated) {
@@ -292,7 +286,9 @@ class AnimeProfilePage extends ConsumerWidget {
                   trailing: Switch(
                     value: themeMode == ThemeMode.dark,
                     onChanged: (value) {
-                      ref.read(themeModeProvider.notifier).setThemeMode(
+                      ref
+                          .read(themeModeProvider.notifier)
+                          .setThemeMode(
                             value ? ThemeMode.dark : ThemeMode.light,
                           );
                     },
@@ -310,8 +306,7 @@ class AnimeProfilePage extends ConsumerWidget {
                       context: context,
                       applicationName: 'AniMAL',
                       applicationVersion: 'v${packageInfo.version}',
-                      applicationLegalese:
-                          'Unofficial MyAnimeList client',
+                      applicationLegalese: 'Unofficial MyAnimeList client',
                     );
                   },
                 ),
@@ -340,9 +335,7 @@ class AnimeProfilePage extends ConsumerWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  await ref
-                      .read(authControllerProvider.notifier)
-                      .logout();
+                  await ref.read(authControllerProvider.notifier).logout();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Logged out')),
@@ -356,7 +349,7 @@ class AnimeProfilePage extends ConsumerWidget {
                   side: BorderSide(color: theme.colorScheme.error),
                 ),
               ),
-          ),
+            ),
         ],
       ),
     );
@@ -394,7 +387,9 @@ Future<void> _checkForUpdate(BuildContext context) async {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Up to Date'),
-            content: Text('You are running the latest version (v$currentVersion).'),
+            content: Text(
+              'You are running the latest version (v$currentVersion).',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
@@ -429,10 +424,12 @@ Future<void> _checkForUpdate(BuildContext context) async {
               FilledButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  unawaited(launchUrl(
-                    Uri.parse(htmlUrl),
-                    mode: LaunchMode.externalApplication,
-                  ));
+                  unawaited(
+                    launchUrl(
+                      Uri.parse(htmlUrl),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  );
                 },
                 child: const Text('Download'),
               ),

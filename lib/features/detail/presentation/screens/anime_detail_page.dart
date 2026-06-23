@@ -42,14 +42,16 @@ class AnimeDetailPage extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline,
-                    size: 48, color: theme.colorScheme.error),
+                Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: theme.colorScheme.error,
+                ),
                 const SizedBox(height: 16),
                 const Text('Failed to load anime detail'),
                 const SizedBox(height: 16),
                 FilledButton.icon(
-                  onPressed: () =>
-                      ref.invalidate(animeDetailProvider(animeId)),
+                  onPressed: () => ref.invalidate(animeDetailProvider(animeId)),
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                 ),
@@ -68,9 +70,11 @@ class AnimeDetailPage extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.search_off,
-                        size: 48,
-                        color: theme.colorScheme.onSurfaceVariant),
+                    Icon(
+                      Icons.search_off,
+                      size: 48,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                     const SizedBox(height: 16),
                     const Text('Anime not found'),
                     const SizedBox(height: 8),
@@ -106,7 +110,10 @@ class AnimeDetailPage extends ConsumerWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppColors.iconLight),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.iconLight,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -178,9 +185,11 @@ class AnimeDetailPage extends ConsumerWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                              AppColors.transparent,
-                              AppColors.transparent,
-                                theme.colorScheme.surface.withValues(alpha: 0.6),
+                                AppColors.transparent,
+                                AppColors.transparent,
+                                theme.colorScheme.surface.withValues(
+                                  alpha: 0.6,
+                                ),
                                 theme.colorScheme.surface,
                               ],
                               stops: const [0.0, 0.45, 0.8, 1.0],
@@ -223,8 +232,9 @@ class AnimeDetailPage extends ConsumerWidget {
                             ),
                           if (detail.mediaType != null)
                             _InfoChip(
-                              label:
-                                  AnimeLabels.mediaTypeLabel(detail.mediaType!),
+                              label: AnimeLabels.mediaTypeLabel(
+                                detail.mediaType!,
+                              ),
                             ),
                           if (detail.status != null)
                             _InfoChip(
@@ -242,8 +252,10 @@ class AnimeDetailPage extends ConsumerWidget {
 
                       // ── Alternative Titles ──
                       if (detail.alternativeTitles != null) ...[
-                        Text('Alternative Titles',
-                            style: theme.textTheme.titleSmall),
+                        Text(
+                          'Alternative Titles',
+                          style: theme.textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 8),
                         if (detail.alternativeTitles!.ja != null &&
                             detail.alternativeTitles!.ja!.isNotEmpty)
@@ -271,26 +283,28 @@ class AnimeDetailPage extends ConsumerWidget {
                       if (inList) ...[
                         _MyListStatusCard(
                           detail: detail,
-                          onStatusChanged: () =>
-                              _invalidateAll(ref, currentStatus: detail.myListStatus?.status),
+                          onStatusChanged: () => _invalidateAll(
+                            ref,
+                            currentStatus: detail.myListStatus?.status,
+                          ),
                         ),
                         const SizedBox(height: 20),
                       ],
 
                       // ── Genres ──
                       if (detail.genres.isNotEmpty) ...[
-                        Text('Genres',
-                            style: theme.textTheme.titleSmall),
+                        Text('Genres', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
                           runSpacing: 4,
                           children: detail.genres
-                              .map((g) => Chip(
-                                    label: Text(g.name),
-                                    visualDensity:
-                                        VisualDensity.compact,
-                                  ))
+                              .map(
+                                (g) => Chip(
+                                  label: Text(g.name),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              )
                               .toList(),
                         ),
                         const SizedBox(height: 20),
@@ -298,15 +312,15 @@ class AnimeDetailPage extends ConsumerWidget {
 
                       // ── Broadcast ──
                       if (detail.broadcast?.dayOfWeek != null) ...[
-                        Text('Broadcast',
-                            style: theme.textTheme.titleSmall),
+                        Text('Broadcast', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.access_time,
-                                size: 18,
-                                color: theme
-                                    .colorScheme.onSurfaceVariant),
+                            Icon(
+                              Icons.access_time,
+                              size: 18,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               '${_capitalize(detail.broadcast!.dayOfWeek!)}'
@@ -326,15 +340,15 @@ class AnimeDetailPage extends ConsumerWidget {
                       // ── Source ──
                       if (detail.source != null &&
                           detail.source!.isNotEmpty) ...[
-                        Text('Source',
-                            style: theme.textTheme.titleSmall),
+                        Text('Source', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.book_outlined,
-                                size: 18,
-                                color: theme
-                                    .colorScheme.onSurfaceVariant),
+                            Icon(
+                              Icons.book_outlined,
+                              size: 18,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 8),
                             Text(AnimeLabels.sourceLabel(detail.source!)),
                           ],
@@ -344,8 +358,10 @@ class AnimeDetailPage extends ConsumerWidget {
 
                       // ── Related Anime ──
                       if (detail.relatedAnime.isNotEmpty) ...[
-                        Text('Related Anime',
-                            style: theme.textTheme.titleSmall),
+                        Text(
+                          'Related Anime',
+                          style: theme.textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 8),
                         ...detail.relatedAnime.map(
                           (related) => _RelatedAnimeTile(
@@ -358,14 +374,12 @@ class AnimeDetailPage extends ConsumerWidget {
                       // ── Synopsis ──
                       if (detail.synopsis != null &&
                           detail.synopsis!.isNotEmpty) ...[
-                        Text('Synopsis',
-                            style: theme.textTheme.titleSmall),
+                        Text('Synopsis', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         SelectableText(
                           detail.synopsis!,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme
-                                .colorScheme.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),
@@ -399,8 +413,7 @@ class AnimeDetailPage extends ConsumerWidget {
     }
   }
 
-  String _capitalize(String s) =>
-      s[0].toUpperCase() + s.substring(1);
+  String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
 
   Future<void> _shareAnime(AnimeDetail detail) async {
     final url = 'https://myanimelist.net/anime/$animeId';
@@ -463,9 +476,11 @@ class _MyListStatusCard extends ConsumerWidget {
             // Episodes watched
             Row(
               children: [
-                Icon(Icons.movie_outlined,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.movie_outlined,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Episodes',
@@ -527,8 +542,11 @@ class _MyListStatusCard extends ConsumerWidget {
             // Score dropdown
             Row(
               children: [
-                const Icon(Icons.star_rounded,
-                    size: 20, color: AppColors.starColor),
+                const Icon(
+                  Icons.star_rounded,
+                  size: 20,
+                  color: AppColors.starColor,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Score',
@@ -582,45 +600,46 @@ class _MyListStatusCard extends ConsumerWidget {
 
   void _showStatusPicker(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    unawaited(showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Change Status',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Change Status',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            for (final s in WatchStatus.values)
-              ListTile(
-                leading: Icon(_statusIcon(s)),
-                title: Text(s.label),
-                trailing: s == detail.myListStatus!.status
-                    ? Icon(Icons.check,
-                        color: theme.colorScheme.primary)
-                    : null,
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final repo = ref.read(animeRepositoryProvider);
-                  await repo.updateAnimeListStatus(
-                    detail.id,
-                    status: s,
-                  );
-                  onStatusChanged();
-                },
-              ),
-            const SizedBox(height: 8),
-          ],
+              for (final s in WatchStatus.values)
+                ListTile(
+                  leading: Icon(_statusIcon(s)),
+                  title: Text(s.label),
+                  trailing: s == detail.myListStatus!.status
+                      ? Icon(Icons.check, color: theme.colorScheme.primary)
+                      : null,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final repo = ref.read(animeRepositoryProvider);
+                    await repo.updateAnimeListStatus(
+                      detail.id,
+                      status: s,
+                    );
+                    onStatusChanged();
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 
   static IconData _statusIcon(WatchStatus status) {
@@ -710,7 +729,8 @@ class _ActionButtons extends ConsumerWidget {
           if (confirmed == true && context.mounted) {
             final repo = ref.read(animeRepositoryProvider);
             await repo.deleteAnimeFromList(animeId);
-            final currentStatus = detail.myListStatus?.status ?? WatchStatus.watching;
+            final currentStatus =
+                detail.myListStatus?.status ?? WatchStatus.watching;
             _invalidateAll(ref, currentStatus: currentStatus);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -938,8 +958,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
             ],
 
             // ── Characters & Staff ──
-            if (people.characters.isNotEmpty ||
-                people.staff.isNotEmpty) ...[
+            if (people.characters.isNotEmpty || people.staff.isNotEmpty) ...[
               _buildCharactersAndStaff(theme, people),
               const SizedBox(height: 20),
             ],
@@ -1016,8 +1035,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
     );
   }
 
-  Widget _buildExternalLinks(
-      ThemeData theme, List<AniListExternalLink> links) {
+  Widget _buildExternalLinks(ThemeData theme, List<AniListExternalLink> links) {
     final official = links.where((l) => l.type == 'INFO').toList();
     final streaming = links.where((l) => l.type == 'STREAMING').toList();
     final social = links.where((l) => l.type == 'SOCIAL').toList();
@@ -1033,27 +1051,33 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              ...official.map((l) => _LinkChip(
-                    label: l.displaySite,
-                    url: l.url,
-                    icon: Icons.language,
-                    color: theme.colorScheme.primaryContainer,
-                    textColor: theme.colorScheme.onPrimaryContainer,
-                  )),
-              ...streaming.map((l) => _LinkChip(
-                    label: l.displaySite,
-                    url: l.url,
-                    icon: Icons.play_circle_outline,
-                    color: theme.colorScheme.tertiaryContainer,
-                    textColor: theme.colorScheme.onTertiaryContainer,
-                  )),
-              ...social.map((l) => _LinkChip(
-                    label: l.displaySite,
-                    url: l.url,
-                    icon: Icons.public,
-                    color: theme.colorScheme.secondaryContainer,
-                    textColor: theme.colorScheme.onSecondaryContainer,
-                  )),
+              ...official.map(
+                (l) => _LinkChip(
+                  label: l.displaySite,
+                  url: l.url,
+                  icon: Icons.language,
+                  color: theme.colorScheme.primaryContainer,
+                  textColor: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              ...streaming.map(
+                (l) => _LinkChip(
+                  label: l.displaySite,
+                  url: l.url,
+                  icon: Icons.play_circle_outline,
+                  color: theme.colorScheme.tertiaryContainer,
+                  textColor: theme.colorScheme.onTertiaryContainer,
+                ),
+              ),
+              ...social.map(
+                (l) => _LinkChip(
+                  label: l.displaySite,
+                  url: l.url,
+                  icon: Icons.public,
+                  color: theme.colorScheme.secondaryContainer,
+                  textColor: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
             ],
           ),
         ],
@@ -1061,12 +1085,11 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
     );
   }
 
-  Widget _buildCharactersAndStaff(
-      ThemeData theme, AniListAnimePeople people) {
-    final charLimit =
-        _showAllCharacters ? people.characters.length : _defaultLimit;
-    final staffLimit =
-        _showAllStaff ? people.staff.length : _defaultLimit;
+  Widget _buildCharactersAndStaff(ThemeData theme, AniListAnimePeople people) {
+    final charLimit = _showAllCharacters
+        ? people.characters.length
+        : _defaultLimit;
+    final staffLimit = _showAllStaff ? people.staff.length : _defaultLimit;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1075,8 +1098,10 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
         if (people.characters.isNotEmpty) ...[
           Row(
             children: [
-              Text('Characters & Voice Actors',
-                  style: theme.textTheme.titleSmall),
+              Text(
+                'Characters & Voice Actors',
+                style: theme.textTheme.titleSmall,
+              ),
               const Spacer(),
               if (people.characters.length > _defaultLimit)
                 TextButton(
@@ -1116,9 +1141,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
             ],
           ),
           const SizedBox(height: 8),
-          ...people.staff
-              .take(staffLimit)
-              .map((s) => _StaffTile(staff: s)),
+          ...people.staff.take(staffLimit).map((s) => _StaffTile(staff: s)),
         ],
       ],
     );
@@ -1257,8 +1280,7 @@ class _CharacterTile extends StatelessWidget {
                               va.language!,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: theme
-                                    .colorScheme.onSurfaceVariant,
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
                         ],
@@ -1398,7 +1420,9 @@ class _NotificationBell extends ConsumerWidget {
         color: enabled ? AppColors.starColor : AppColors.iconLight,
       ),
       onPressed: () async {
-        final success = await ref.read(animeNotificationProvider.notifier).toggle(
+        final success = await ref
+            .read(animeNotificationProvider.notifier)
+            .toggle(
               animeId: animeId,
               title: title,
               episode: nextAiring.episode,
@@ -1417,7 +1441,9 @@ class _NotificationBell extends ConsumerWidget {
           return;
         }
 
-        final nowEnabled = ref.read(animeNotificationProvider).contains(animeId);
+        final nowEnabled = ref
+            .read(animeNotificationProvider)
+            .contains(animeId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

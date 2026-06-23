@@ -13,9 +13,9 @@ class MalAuthService {
     required SecureTokenStorage tokenStorage,
     required Dio dio,
     Logger? logger,
-  })  : _tokenStorage = tokenStorage,
-        _dio = dio,
-        _logger = logger ?? appLogger;
+  }) : _tokenStorage = tokenStorage,
+       _dio = dio,
+       _logger = logger ?? appLogger;
 
   final SecureTokenStorage _tokenStorage;
   final Dio _dio;
@@ -26,8 +26,10 @@ class MalAuthService {
 
   String _generateCodeVerifier() {
     final random = Random.secure();
-    return List.generate(128, (_) => _charset[random.nextInt(_charset.length)])
-        .join();
+    return List.generate(
+      128,
+      (_) => _charset[random.nextInt(_charset.length)],
+    ).join();
   }
 
   String _generateCodeChallenge(String verifier) {
@@ -42,14 +44,16 @@ class MalAuthService {
 
     final codeChallenge = _generateCodeChallenge(codeVerifier);
 
-    return Uri.parse(Env.malAuthUrl).replace(queryParameters: {
-      'response_type': 'code',
-      'client_id': Env.malClientId,
-      'redirect_uri': Env.malRedirectUri,
-      'code_challenge': codeChallenge,
-      'code_challenge_method': 'plain',
-      'state': DateTime.now().millisecondsSinceEpoch.toString(),
-    });
+    return Uri.parse(Env.malAuthUrl).replace(
+      queryParameters: {
+        'response_type': 'code',
+        'client_id': Env.malClientId,
+        'redirect_uri': Env.malRedirectUri,
+        'code_challenge': codeChallenge,
+        'code_challenge_method': 'plain',
+        'state': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+    );
   }
 
   Future<void> exchangeCode(String code) async {
