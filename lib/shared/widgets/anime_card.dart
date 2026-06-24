@@ -317,6 +317,7 @@ class AnimeCard extends ConsumerWidget {
     var selectedScore = currentScore;
     var selectedEps = currentEps;
     var selectedStatus = currentStatus;
+    var saving = false;
 
     final epsController = TextEditingController(
       text: '$currentEps',
@@ -421,8 +422,9 @@ class AnimeCard extends ConsumerWidget {
                         return ChoiceChip(
                           label: Text(s.label),
                           selected: selectedStatus == s,
-                          onSelected: (_) =>
-                              setModalState(() => selectedStatus = s),
+                          onSelected: saving
+                              ? null
+                              : (_) => setModalState(() => selectedStatus = s),
                         );
                       }).toList(),
                     ),
@@ -438,12 +440,12 @@ class AnimeCard extends ConsumerWidget {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: selectedEps > 0
-                              ? () {
+                          onPressed: (saving || selectedEps <= 0)
+                              ? null
+                              : () {
                                   setModalState(() => selectedEps--);
                                   epsController.text = '$selectedEps';
-                                }
-                              : null,
+                                },
                         ),
                         SizedBox(
                           width: 70,
@@ -451,6 +453,7 @@ class AnimeCard extends ConsumerWidget {
                             controller: epsController,
                             textAlign: TextAlign.center,
                             keyboardType: TextInputType.number,
+                            enabled: !saving,
                             decoration: InputDecoration(
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(
@@ -475,12 +478,13 @@ class AnimeCard extends ConsumerWidget {
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline),
                           onPressed:
-                              (totalEps == null || selectedEps < totalEps)
-                              ? () {
+                              (saving ||
+                                  (totalEps != null && selectedEps >= totalEps))
+                              ? null
+                              : () {
                                   setModalState(() => selectedEps++);
                                   epsController.text = '$selectedEps';
-                                }
-                              : null,
+                                },
                         ),
                       ],
                     ),
@@ -498,9 +502,13 @@ class AnimeCard extends ConsumerWidget {
                           child: Text(i == 0 ? 'Not rated' : '$i'),
                         );
                       }),
-                      onChanged: (v) {
-                        if (v != null) setModalState(() => selectedScore = v);
-                      },
+                      onChanged: saving
+                          ? null
+                          : (v) {
+                              if (v != null) {
+                                setModalState(() => selectedScore = v);
+                              }
+                            },
                     ),
                     const SizedBox(height: 24),
 
@@ -508,30 +516,67 @@ class AnimeCard extends ConsumerWidget {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: () async {
-                          final repo = ref.read(animeRepositoryProvider);
-                          await repo.updateAnimeListStatus(
-                            anime.id,
-                            status: selectedStatus,
-                            numWatchedEpisodes: selectedEps,
-                            score: selectedScore,
-                          );
-                          for (final s in WatchStatus.values) {
-                            ref.invalidate(userAnimeListProvider(s));
-                          }
-                          if (selectedStatus != WatchStatus.watching) {
-                            ref
-                                .read(animeNotificationProvider.notifier)
-                                .removeAnime(anime.id);
-                          }
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('${anime.title} updated')),
-                            );
-                          }
-                        },
-                        child: const Text('Save'),
+                        onPressed: saving
+                            ? null
+                            : () async {
+                                setModalState(() => saving = true);
+                                try {
+                                  final repo = ref.read(
+                                    animeRepositoryProvider,
+                                  );
+                                  await repo.updateAnimeListStatus(
+                                    anime.id,
+                                    status: selectedStatus,
+                                    numWatchedEpisodes: selectedEps,
+                                    score: selectedScore,
+                                  );
+                                  ref.invalidate(
+                                    userAnimeListProvider(currentStatus),
+                                  );
+                                  if (selectedStatus != currentStatus) {
+                                    ref.invalidate(
+                                      userAnimeListProvider(selectedStatus),
+                                    );
+                                  }
+                                  if (selectedStatus != WatchStatus.watching) {
+                                    ref
+                                        .read(
+                                          animeNotificationProvider.notifier,
+                                        )
+                                        .removeAnime(anime.id);
+                                  }
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          '${anime.title} updated',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (ctx.mounted) {
+                                    setModalState(() => saving = false);
+                                    ScaffoldMessenger.of(ctx).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Failed to update: $e',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                        child: saving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Save'),
                       ),
                     ),
                   ],

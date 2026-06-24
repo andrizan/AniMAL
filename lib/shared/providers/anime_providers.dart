@@ -5,6 +5,7 @@ import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/mal_user.dart';
+import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:dio/dio.dart';
@@ -138,6 +139,7 @@ class AnimeRepository {
   Future<void> deleteAnimeFromList(int animeId) async {
     try {
       await _api.deleteAnimeFromList(animeId);
+      _cache.remove('detail_$animeId');
       _invalidateUserListCache();
     } on DioException catch (e) {
       _logger?.e('deleteAnimeFromList failed', error: e);
@@ -145,7 +147,7 @@ class AnimeRepository {
     }
   }
 
-  Future<void> updateAnimeListStatus(
+  Future<MyListStatus> updateAnimeListStatus(
     int animeId, {
     WatchStatus? status,
     int? numWatchedEpisodes,
@@ -156,7 +158,7 @@ class AnimeRepository {
     String? comments,
   }) async {
     try {
-      await _api.updateAnimeListStatus(
+      final updated = await _api.updateAnimeListStatus(
         animeId,
         status: status,
         numWatchedEpisodes: numWatchedEpisodes,
@@ -166,10 +168,51 @@ class AnimeRepository {
         rewatchValue: rewatchValue,
         comments: comments,
       );
-      _invalidateUserListCache();
+      _updateUserListCache(animeId, updated);
+      _cache.remove('detail_$animeId');
+      return updated;
     } on DioException catch (e) {
       _logger?.e('updateAnimeListStatus failed', error: e);
       throw _mapDioException(e);
+    }
+  }
+
+  void _updateUserListCache(int animeId, MyListStatus updatedStatus) {
+    const limit = 100;
+    final newStatus = updatedStatus.status;
+    final newKey = 'userlist_${newStatus.value}_$limit';
+    Anime? sourceAnime;
+
+    final oldKeys = _cache
+        .getWhere<List<Anime>>((key) => key.startsWith('userlist_'))
+        .map((e) => e.key)
+        .toList();
+
+    for (final key in oldKeys) {
+      final list = _cache.get<List<Anime>>(key);
+      if (list == null) continue;
+      final idx = list.indexWhere((a) => a.id == animeId);
+      if (idx == -1) continue;
+      sourceAnime ??= list[idx];
+      if (key == newKey) {
+        final newList = List<Anime>.from(list);
+        newList[idx] = list[idx].copyWith(myListStatus: updatedStatus);
+        _cache.put(key, newList, ttl: _ttlUserList);
+      } else {
+        final newList = list.where((a) => a.id != animeId).toList();
+        _cache.put(key, newList, ttl: _ttlUserList);
+      }
+    }
+
+    final newList = _cache.get<List<Anime>>(newKey);
+    if (newList != null &&
+        !newList.any((a) => a.id == animeId) &&
+        sourceAnime != null) {
+      _cache.put(
+        newKey,
+        [...newList, sourceAnime.copyWith(myListStatus: updatedStatus)],
+        ttl: _ttlUserList,
+      );
     }
   }
 

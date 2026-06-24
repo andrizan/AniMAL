@@ -276,9 +276,10 @@ class AnimeDetailPage extends ConsumerWidget {
                       if (inList) ...[
                         _MyListStatusCard(
                           detail: detail,
-                          onStatusChanged: () => _invalidateAll(
+                          onUpdated: (newStatus) => _invalidateForStatus(
                             ref,
-                            currentStatus: detail.myListStatus?.status,
+                            detail.myListStatus?.status,
+                            newStatus,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -478,13 +479,16 @@ class AnimeDetailPage extends ConsumerWidget {
     );
   }
 
-  void _invalidateAll(WidgetRef ref, {WatchStatus? currentStatus}) {
+  void _invalidateForStatus(
+    WidgetRef ref,
+    WatchStatus? oldStatus,
+    WatchStatus newStatus,
+  ) {
     ref.invalidate(animeDetailProvider(animeId));
-    if (currentStatus != null) {
-      ref.invalidate(userAnimeListProvider(currentStatus));
-    } else {
-      ref.invalidate(userAnimeListProvider(WatchStatus.watching));
+    if (oldStatus != null && oldStatus != newStatus) {
+      ref.invalidate(userAnimeListProvider(oldStatus));
     }
+    ref.invalidate(userAnimeListProvider(newStatus));
   }
 
   String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
@@ -524,11 +528,11 @@ class AnimeDetailPage extends ConsumerWidget {
 class _MyListStatusCard extends ConsumerWidget {
   const _MyListStatusCard({
     required this.detail,
-    required this.onStatusChanged,
+    required this.onUpdated,
   });
 
   final AnimeDetail detail;
-  final VoidCallback onStatusChanged;
+  final void Function(WatchStatus newStatus) onUpdated;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -677,20 +681,20 @@ class _MyListStatusCard extends ConsumerWidget {
 
   Future<void> _updateEpisodes(WidgetRef ref, int newCount) async {
     final repo = ref.read(animeRepositoryProvider);
-    await repo.updateAnimeListStatus(
+    final updated = await repo.updateAnimeListStatus(
       detail.id,
       numWatchedEpisodes: newCount,
     );
-    onStatusChanged();
+    onUpdated(updated.status);
   }
 
   Future<void> _updateScore(WidgetRef ref, int newScore) async {
     final repo = ref.read(animeRepositoryProvider);
-    await repo.updateAnimeListStatus(
+    final updated = await repo.updateAnimeListStatus(
       detail.id,
       score: newScore,
     );
-    onStatusChanged();
+    onUpdated(updated.status);
   }
 
   void _showStatusPicker(BuildContext context, WidgetRef ref) {
@@ -722,11 +726,11 @@ class _MyListStatusCard extends ConsumerWidget {
                   onTap: () async {
                     Navigator.pop(ctx);
                     final repo = ref.read(animeRepositoryProvider);
-                    await repo.updateAnimeListStatus(
+                    final updated = await repo.updateAnimeListStatus(
                       detail.id,
                       status: s,
                     );
-                    onStatusChanged();
+                    onUpdated(updated.status);
                   },
                 ),
               const SizedBox(height: 8),
@@ -752,7 +756,7 @@ class _MyListStatusCard extends ConsumerWidget {
 // Action Buttons
 // ═══════════════════════════════════════════════════════════════════
 
-class _ActionButtons extends ConsumerWidget {
+class _ActionButtons extends ConsumerStatefulWidget {
   const _ActionButtons({
     required this.animeId,
     required this.detail,
@@ -763,8 +767,15 @@ class _ActionButtons extends ConsumerWidget {
   final AnimeDetail detail;
   final bool inList;
 
-  void _invalidateAll(WidgetRef ref, {WatchStatus? currentStatus}) {
-    ref.invalidate(animeDetailProvider(animeId));
+  @override
+  ConsumerState<_ActionButtons> createState() => _ActionButtonsState();
+}
+
+class _ActionButtonsState extends ConsumerState<_ActionButtons> {
+  bool _busy = false;
+
+  void _invalidateAll({WatchStatus? currentStatus}) {
+    ref.invalidate(animeDetailProvider(widget.animeId));
     if (currentStatus != null) {
       ref.invalidate(userAnimeListProvider(currentStatus));
     } else {
@@ -772,26 +783,90 @@ class _ActionButtons extends ConsumerWidget {
     }
   }
 
+  Future<void> _addToList() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(animeRepositoryProvider);
+      await repo.updateAnimeListStatus(
+        widget.animeId,
+        status: WatchStatus.watching,
+      );
+      _invalidateAll(currentStatus: WatchStatus.watching);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added to Watching')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _removeFromList() async {
+    if (_busy) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove from List'),
+        content: Text('Remove "${widget.detail.title}" from your list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(animeRepositoryProvider);
+      await repo.deleteAnimeFromList(widget.animeId);
+      final currentStatus =
+          widget.detail.myListStatus?.status ?? WatchStatus.watching;
+      _invalidateAll(currentStatus: currentStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Removed from list')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (!inList) {
+  Widget build(BuildContext context) {
+    if (!widget.inList) {
       return SizedBox(
         width: double.infinity,
         child: FilledButton.icon(
-          onPressed: () async {
-            final repo = ref.read(animeRepositoryProvider);
-            await repo.updateAnimeListStatus(
-              animeId,
-              status: WatchStatus.watching,
-            );
-            _invalidateAll(ref, currentStatus: WatchStatus.watching);
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Added to Watching')),
-              );
-            }
-          },
-          icon: const Icon(Icons.add),
+          onPressed: _busy ? null : _addToList,
+          icon: _busy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.add),
           label: const Text('Add to Watching'),
         ),
       );
@@ -800,41 +875,14 @@ class _ActionButtons extends ConsumerWidget {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () async {
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Remove from List'),
-              content: Text(
-                'Remove "${detail.title}" from your list?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Remove'),
-                ),
-              ],
-            ),
-          );
-
-          if (confirmed == true && context.mounted) {
-            final repo = ref.read(animeRepositoryProvider);
-            await repo.deleteAnimeFromList(animeId);
-            final currentStatus =
-                detail.myListStatus?.status ?? WatchStatus.watching;
-            _invalidateAll(ref, currentStatus: currentStatus);
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Removed from list')),
-              );
-            }
-          }
-        },
-        icon: const Icon(Icons.delete_outline),
+        onPressed: _busy ? null : _removeFromList,
+        icon: _busy
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.delete_outline),
         label: const Text('Remove from List'),
       ),
     );

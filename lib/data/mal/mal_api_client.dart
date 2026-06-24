@@ -2,6 +2,7 @@ import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/mal_user.dart';
+import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:dio/dio.dart';
@@ -123,7 +124,7 @@ class MalApiClient {
     await _dio.delete<void>(MalEndpoints.myListStatus(animeId));
   }
 
-  Future<void> updateAnimeListStatus(
+  Future<MyListStatus> updateAnimeListStatus(
     int animeId, {
     WatchStatus? status,
     int? numWatchedEpisodes,
@@ -142,11 +143,21 @@ class MalApiClient {
     if (priority != null) data['priority'] = priority;
     if (rewatchValue != null) data['rewatch_value'] = rewatchValue;
     if (comments != null) data['comments'] = comments;
-    await _dio.put<void>(
+    final response = await _dio.put<Map<String, dynamic>>(
       MalEndpoints.myListStatus(animeId),
       data: data,
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
+    final body = response.data;
+    if (body == null) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        message: 'Empty response body',
+      );
+    }
+    return MyListStatus.fromJson(body);
   }
 
   Future<MalUser?> getUserInfo() async {

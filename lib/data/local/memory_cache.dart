@@ -20,6 +20,22 @@ class MemoryCache {
     return entry.value as T;
   }
 
+  List<({String key, T value})> getWhere<T>(
+    bool Function(String key) predicate,
+  ) {
+    final results = <({String key, T value})>[];
+    _store.removeWhere((key, entry) {
+      if (_isExpired(entry)) return true;
+      return false;
+    });
+    for (final entry in _store.entries) {
+      if (predicate(entry.key) && entry.value.value is T) {
+        results.add((key: entry.key, value: entry.value.value as T));
+      }
+    }
+    return results;
+  }
+
   void put<T>(
     String key,
     T value, {
