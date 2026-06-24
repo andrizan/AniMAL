@@ -1,6 +1,7 @@
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/season.dart';
-import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/providers/anime_providers.dart'
+    show animeListVersionProvider, animeRepositoryProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Parameters for [animeScheduleProvider] and [groupedSeasonalAnimeProvider].
@@ -57,6 +58,7 @@ GroupedSeasonalAnime _groupAnimeByDay(List<Anime> animeList) {
 final animeScheduleProvider =
     FutureProvider.family<List<Anime>, ScheduleParams>(
       (ref, params) async {
+        ref.watch(animeListVersionProvider);
         final repo = ref.watch(animeRepositoryProvider);
         return repo.getSeasonalAnime(
           year: params.year,

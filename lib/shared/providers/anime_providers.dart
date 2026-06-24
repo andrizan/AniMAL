@@ -14,6 +14,24 @@ import 'package:logger/logger.dart';
 
 final _cache = MemoryCache();
 
+/// Bumped whenever the user mutates their anime list. Providers that show
+/// `myListStatus` (user list, calendar, airing, search) watch this so the
+/// updated value propagates everywhere without manually invalidating each
+/// provider at every call site.
+class AnimeListVersionNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() {
+    state = state + 1;
+  }
+}
+
+final animeListVersionProvider =
+    NotifierProvider<AnimeListVersionNotifier, int>(
+      AnimeListVersionNotifier.new,
+    );
+
 /// Provider for [MalApiClient].
 final malAnimeApiProvider = Provider<MalApiClient>((ref) {
   return MalApiClient(ref.watch(dioProvider));
@@ -21,8 +39,9 @@ final malAnimeApiProvider = Provider<MalApiClient>((ref) {
 
 /// High-level repository that wraps [MalApiClient] with error handling and caching.
 class AnimeRepository {
-  const AnimeRepository(this._api, [this._logger]);
+  AnimeRepository(this._ref, this._api, [this._logger]);
 
+  final Ref _ref;
   final MalApiClient _api;
   final Logger? _logger;
 
@@ -141,6 +160,8 @@ class AnimeRepository {
       await _api.deleteAnimeFromList(animeId);
       _cache.remove('detail_$animeId');
       _invalidateUserListCache();
+      _clearMyListStatusInAuxCaches(animeId);
+      _bumpListVersion();
     } on DioException catch (e) {
       _logger?.e('deleteAnimeFromList failed', error: e);
       throw _mapDioException(e);
@@ -170,10 +191,64 @@ class AnimeRepository {
       );
       _updateUserListCache(animeId, updated);
       _cache.remove('detail_$animeId');
+      _propagateMyListStatusToAuxCaches(animeId, updated);
+      _bumpListVersion();
       return updated;
     } on DioException catch (e) {
       _logger?.e('updateAnimeListStatus failed', error: e);
       throw _mapDioException(e);
+    }
+  }
+
+  void _bumpListVersion() {
+    _ref.read(animeListVersionProvider.notifier).bump();
+  }
+
+  void _propagateMyListStatusToAuxCaches(int animeId, MyListStatus status) {
+    final seasonalKeys = _cache
+        .getWhere<List<Anime>>((key) => key.startsWith('seasonal_'))
+        .map((e) => e.key)
+        .toList();
+    for (final key in seasonalKeys) {
+      final list = _cache.get<List<Anime>>(key);
+      if (list == null) continue;
+      final idx = list.indexWhere((a) => a.id == animeId);
+      if (idx == -1) continue;
+      final newList = List<Anime>.from(list);
+      newList[idx] = list[idx].copyWith(myListStatus: status);
+      _cache.put(key, newList, ttl: _ttlLong);
+    }
+
+    final searchKeys = _cache
+        .getWhere<List<Anime>>((key) => key.startsWith('search_'))
+        .map((e) => e.key)
+        .toList();
+    for (final key in searchKeys) {
+      final list = _cache.get<List<Anime>>(key);
+      if (list == null) continue;
+      final idx = list.indexWhere((a) => a.id == animeId);
+      if (idx == -1) continue;
+      final newList = List<Anime>.from(list);
+      newList[idx] = list[idx].copyWith(myListStatus: status);
+      _cache.put(key, newList, ttl: _ttlShort);
+    }
+  }
+
+  void _clearMyListStatusInAuxCaches(int animeId) {
+    for (final prefix in ['seasonal_', 'search_']) {
+      final keys = _cache
+          .getWhere<List<Anime>>((key) => key.startsWith(prefix))
+          .map((e) => e.key)
+          .toList();
+      for (final key in keys) {
+        final list = _cache.get<List<Anime>>(key);
+        if (list == null) continue;
+        final idx = list.indexWhere((a) => a.id == animeId);
+        if (idx == -1) continue;
+        final newList = List<Anime>.from(list);
+        newList[idx] = list[idx].copyWith(myListStatus: null);
+        _cache.put(key, newList, ttl: _ttlShort);
+      }
     }
   }
 
@@ -288,6 +363,7 @@ class AnimeRepository {
 /// Provider for [AnimeRepository].
 final animeRepositoryProvider = Provider<AnimeRepository>((ref) {
   return AnimeRepository(
+    ref,
     ref.watch(malAnimeApiProvider),
     ref.watch(loggerProvider),
   );

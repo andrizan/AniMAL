@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:animal/data/models/anime.dart';
-import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/providers/anime_providers.dart'
+    show animeListVersionProvider, animeRepositoryProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Debounced FutureProvider family for anime search.
@@ -11,6 +12,7 @@ final animeSearchProvider = FutureProvider.family<List<Anime>, String>(
     ref,
     query,
   ) async {
+    ref.watch(animeListVersionProvider);
     if (query.trim().isEmpty) return [];
 
     final completer = Completer<List<Anime>>();

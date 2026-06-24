@@ -419,15 +419,43 @@ class AnimeCard extends ConsumerWidget {
                       spacing: 8,
                       runSpacing: 4,
                       children: WatchStatus.values.map((s) {
-                        return ChoiceChip(
-                          label: Text(s.label),
-                          selected: selectedStatus == s,
-                          onSelected: saving
-                              ? null
-                              : (_) => setModalState(() => selectedStatus = s),
+                        final isCompleted = s == WatchStatus.completed;
+                        final canMarkCompleted =
+                            !isCompleted || anime.status == 'finished_airing';
+                        return Tooltip(
+                          message:
+                              isCompleted && anime.status != 'finished_airing'
+                              ? 'Only available for finished anime'
+                              : '',
+                          child: ChoiceChip(
+                            label: Text(s.label),
+                            selected: selectedStatus == s,
+                            onSelected: saving || !canMarkCompleted
+                                ? null
+                                : (_) {
+                                    setModalState(() {
+                                      selectedStatus = s;
+                                      if (isCompleted && totalEps != null) {
+                                        selectedEps = totalEps;
+                                        epsController.text = '$totalEps';
+                                      }
+                                    });
+                                  },
+                          ),
                         );
                       }).toList(),
                     ),
+                    if (anime.status != 'finished_airing')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Completed can only be set for finished anime',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 20),
 
                     // Episodes

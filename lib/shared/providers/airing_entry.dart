@@ -181,17 +181,22 @@ class AiringRepository {
 
 /// Provider for [AiringRepository].
 final airingRepositoryProvider = Provider<AiringRepository>((ref) {
-  return AiringRepository(
+  final repo = AiringRepository(
     animeRepo: ref.watch(animeRepositoryProvider),
     anilistApi: ref.watch(anilistApiProvider),
     logger: ref.watch(loggerProvider),
   );
+  // Bypass the 15-minute cache when the user mutates their list so the
+  // airing page shows the fresh `myListStatus` immediately.
+  ref.listen(animeListVersionProvider, (_, __) => repo.invalidateCache());
+  return repo;
 });
 
 /// Fetches weekly airing schedule (AniList schedule + MAL scores).
 final weeklyAiringProvider = FutureProvider<Map<String, List<AiringEntry>>>((
   ref,
 ) async {
+  ref.watch(animeListVersionProvider);
   final repo = ref.watch(airingRepositoryProvider);
   return repo.getWeeklySchedule();
 });
@@ -200,6 +205,7 @@ final weeklyAiringProvider = FutureProvider<Map<String, List<AiringEntry>>>((
 final airingByMalIdProvider = FutureProvider<Map<int, AiringEntry>>((
   ref,
 ) async {
+  ref.watch(animeListVersionProvider);
   final schedule = await ref.watch(weeklyAiringProvider.future);
   final map = <int, AiringEntry>{};
   for (final entries in schedule.values) {

@@ -1,7 +1,8 @@
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
-import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/providers/anime_providers.dart'
+    show animeListVersionProvider, animeRepositoryProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Sort options for the anime list.
@@ -86,6 +87,7 @@ List<Anime> _filterAnimeList(List<Anime> list, AiringFilter airingFilter) {
 // ignore: specify_nonobvious_property_types
 final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>(
   (ref, status) async {
+    ref.watch(animeListVersionProvider);
     final repo = ref.watch(animeRepositoryProvider);
     return repo.getUserAnimeList(status: status);
   },

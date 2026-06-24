@@ -607,9 +607,12 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
     setState(() => _busy = true);
     try {
       final repo = ref.read(animeRepositoryProvider);
+      final isCompleted = newStatus == WatchStatus.completed;
+      final totalEps = widget.detail.numEpisodes;
       final updated = await repo.updateAnimeListStatus(
         widget.detail.id,
         status: newStatus,
+        numWatchedEpisodes: isCompleted && totalEps != null ? totalEps : null,
       );
       if (!mounted) return;
       widget.onUpdated(updated.status);
@@ -631,6 +634,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
 
   void _showStatusPicker(BuildContext context) {
     final theme = Theme.of(context);
+    final isFinished = widget.detail.status == 'finished_airing';
     unawaited(
       showModalBottomSheet<void>(
         context: context,
@@ -649,18 +653,37 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
                 ),
               ),
               for (final s in WatchStatus.values)
-                ListTile(
-                  leading: Icon(_statusIcon(s)),
-                  title: Text(s.label),
-                  trailing: s == widget.detail.myListStatus!.status
-                      ? Icon(Icons.check, color: theme.colorScheme.primary)
-                      : null,
-                  onTap: _busy
-                      ? null
-                      : () {
-                          Navigator.pop(ctx);
-                          unawaited(_changeStatus(s));
-                        },
+                Builder(
+                  builder: (_) {
+                    final disabled =
+                        _busy || (s == WatchStatus.completed && !isFinished);
+                    return ListTile(
+                      leading: Icon(_statusIcon(s)),
+                      title: Text(
+                        s.label,
+                        style: TextStyle(
+                          color: disabled
+                              ? theme.colorScheme.onSurfaceVariant
+                              : null,
+                        ),
+                      ),
+                      subtitle: disabled && s == WatchStatus.completed
+                          ? const Text(
+                              'Only available for finished anime',
+                              style: TextStyle(fontSize: 11),
+                            )
+                          : null,
+                      trailing: s == widget.detail.myListStatus!.status
+                          ? Icon(Icons.check, color: theme.colorScheme.primary)
+                          : null,
+                      onTap: disabled
+                          ? null
+                          : () {
+                              Navigator.pop(ctx);
+                              unawaited(_changeStatus(s));
+                            },
+                    );
+                  },
                 ),
               const SizedBox(height: 8),
             ],

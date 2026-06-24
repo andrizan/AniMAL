@@ -172,17 +172,13 @@ class _AiringCard extends StatefulWidget {
 }
 
 class _AiringCardState extends State<_AiringCard> {
-  late final Anime _anime;
+  late Anime _anime;
   late final VoidCallback? _onTap;
 
-  @override
-  void initState() {
-    super.initState();
-    final entry = widget.entry;
+  Anime _buildAnime(AiringEntry entry) {
     final airingTime = _formatAiringTime(entry.airingAt);
     final malId = entry.malId;
-
-    _anime = Anime(
+    return Anime(
       id: malId ?? entry.anilistId,
       title: entry.title,
       mainPicture: entry.imageUrl != null
@@ -199,8 +195,13 @@ class _AiringCardState extends State<_AiringCard> {
       ),
       myListStatus: entry.myListStatus,
     );
+  }
 
-    _onTap = malId != null
+  @override
+  void initState() {
+    super.initState();
+    _anime = _buildAnime(widget.entry);
+    _onTap = widget.entry.malId != null
         ? null
         : () {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -210,6 +211,14 @@ class _AiringCardState extends State<_AiringCard> {
               ),
             );
           };
+  }
+
+  @override
+  void didUpdateWidget(_AiringCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.entry != widget.entry) {
+      _anime = _buildAnime(widget.entry);
+    }
   }
 
   @override
