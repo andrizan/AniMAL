@@ -16,16 +16,19 @@ class App extends ConsumerStatefulWidget {
 
 class _AppState extends ConsumerState<App> {
   StreamSubscription<Uri>? _linkSubscription;
+  StreamSubscription<int>? _notificationSubscription;
 
   @override
   void initState() {
     super.initState();
     unawaited(_initDeepLinks());
+    _initNotificationListener();
   }
 
   @override
   void dispose() {
     _linkSubscription?.cancel();
+    _notificationSubscription?.cancel();
     super.dispose();
   }
 
@@ -51,6 +54,26 @@ class _AppState extends ConsumerState<App> {
         });
       }
     }
+  }
+
+  void _initNotificationListener() {
+    final service = ref.read(notificationServiceProvider);
+    final launchId = service.consumeLaunchAnimeId();
+    if (launchId != null) _openAnime(launchId);
+    _notificationSubscription = service.onNotificationTapped.listen(_openAnime);
+  }
+
+  void _openAnime(int animeId) {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(routerProvider)
+          .pushNamed(
+            'animeDetail',
+            pathParameters: {'id': '$animeId'},
+          );
+    });
   }
 
   @override

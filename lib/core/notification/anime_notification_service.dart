@@ -22,6 +22,17 @@ class AnimeNotificationService {
   final _notificationTapController = StreamController<int>.broadcast();
   Stream<int> get onNotificationTapped => _notificationTapController.stream;
 
+  /// Captured during [initialize] when the user tapped a notification that
+  /// launched the app. Read once via [consumeLaunchAnimeId] to navigate
+  /// to the right detail page after the router is ready.
+  int? _launchAnimeId;
+
+  int? consumeLaunchAnimeId() {
+    final id = _launchAnimeId;
+    _launchAnimeId = null;
+    return id;
+  }
+
   static const _prefsKey = 'anime_notification_ids';
 
   Future<void> initialize() async {
@@ -46,6 +57,11 @@ class AnimeNotificationService {
           _notificationTapController.add(animeId);
       },
     );
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      final animeId = launchDetails?.notificationResponse?.id;
+      if (animeId != null && animeId > 0) _launchAnimeId = animeId;
+    }
     await Future.wait([_initPermission(), _loadIds()]);
   }
 
