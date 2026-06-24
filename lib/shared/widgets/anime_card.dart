@@ -579,6 +579,82 @@ class AnimeCard extends ConsumerWidget {
                             : const Text('Save'),
                       ),
                     ),
+                    if (anime.myListStatus != null) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: saving
+                              ? null
+                              : () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: ctx,
+                                    builder: (dctx) => AlertDialog(
+                                      title: const Text('Remove from List'),
+                                      content: Text(
+                                        'Remove "${anime.title}" from your list?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dctx, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dctx, true),
+                                          child: const Text('Remove'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed != true) return;
+                                  setModalState(() => saving = true);
+                                  try {
+                                    final repo = ref.read(
+                                      animeRepositoryProvider,
+                                    );
+                                    await repo.deleteAnimeFromList(anime.id);
+                                    ref.invalidate(
+                                      userAnimeListProvider(currentStatus),
+                                    );
+                                    if (currentStatus != WatchStatus.watching) {
+                                      ref
+                                          .read(
+                                            animeNotificationProvider.notifier,
+                                          )
+                                          .removeAnime(anime.id);
+                                    }
+                                    if (ctx.mounted) Navigator.pop(ctx);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${anime.title} removed from list',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (ctx.mounted) {
+                                      setModalState(() => saving = false);
+                                      ScaffoldMessenger.of(ctx).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Failed to remove: $e',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Remove from List'),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               );

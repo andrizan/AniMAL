@@ -485,10 +485,15 @@ class AnimeDetailPage extends ConsumerWidget {
     WatchStatus newStatus,
   ) {
     ref.invalidate(animeDetailProvider(animeId));
-    if (oldStatus != null && oldStatus != newStatus) {
+    if (oldStatus != null) {
       ref.invalidate(userAnimeListProvider(oldStatus));
     }
     ref.invalidate(userAnimeListProvider(newStatus));
+    for (final s in WatchStatus.values) {
+      if (s != oldStatus && s != newStatus) {
+        ref.invalidate(userAnimeListProvider(s));
+      }
+    }
   }
 
   String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
@@ -525,7 +530,7 @@ class AnimeDetailPage extends ConsumerWidget {
 // My List Status Card with inline editing
 // ═══════════════════════════════════════════════════════════════════
 
-class _MyListStatusCard extends ConsumerWidget {
+class _MyListStatusCard extends ConsumerStatefulWidget {
   const _MyListStatusCard({
     required this.detail,
     required this.onUpdated,
@@ -535,8 +540,150 @@ class _MyListStatusCard extends ConsumerWidget {
   final void Function(WatchStatus newStatus) onUpdated;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MyListStatusCard> createState() => _MyListStatusCardState();
+}
+
+class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
+  bool _busy = false;
+
+  Future<void> _updateEpisodes(int newCount) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(animeRepositoryProvider);
+      final updated = await repo.updateAnimeListStatus(
+        widget.detail.id,
+        numWatchedEpisodes: newCount,
+      );
+      if (!mounted) return;
+      widget.onUpdated(updated.status);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Episodes updated to $newCount'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _updateScore(int newScore) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(animeRepositoryProvider);
+      final updated = await repo.updateAnimeListStatus(
+        widget.detail.id,
+        score: newScore,
+      );
+      if (!mounted) return;
+      widget.onUpdated(updated.status);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newScore == 0 ? 'Score cleared' : 'Score set to $newScore',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _changeStatus(WatchStatus newStatus) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(animeRepositoryProvider);
+      final updated = await repo.updateAnimeListStatus(
+        widget.detail.id,
+        status: newStatus,
+      );
+      if (!mounted) return;
+      widget.onUpdated(updated.status);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Status changed to ${newStatus.label}'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _showStatusPicker(BuildContext context) {
     final theme = Theme.of(context);
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Change Status',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              for (final s in WatchStatus.values)
+                ListTile(
+                  leading: Icon(_statusIcon(s)),
+                  title: Text(s.label),
+                  trailing: s == widget.detail.myListStatus!.status
+                      ? Icon(Icons.check, color: theme.colorScheme.primary)
+                      : null,
+                  onTap: _busy
+                      ? null
+                      : () {
+                          Navigator.pop(ctx);
+                          unawaited(_changeStatus(s));
+                        },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static IconData _statusIcon(WatchStatus status) {
+    return switch (status) {
+      WatchStatus.watching => Icons.play_circle,
+      WatchStatus.completed => Icons.check_circle,
+      WatchStatus.onHold => Icons.pause_circle,
+      WatchStatus.dropped => Icons.cancel,
+      WatchStatus.planToWatch => Icons.bookmark,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final detail = widget.detail;
     final status = detail.myListStatus!;
     final watched = status.numEpisodesWatched ?? 0;
     final total = detail.numEpisodes;
@@ -565,7 +712,7 @@ class _MyListStatusCard extends ConsumerWidget {
                 ),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () => _showStatusPicker(context, ref),
+                  onPressed: _busy ? null : () => _showStatusPicker(context),
                   icon: const Icon(Icons.edit, size: 16),
                   label: const Text('Change'),
                 ),
@@ -587,14 +734,12 @@ class _MyListStatusCard extends ConsumerWidget {
                   style: theme.textTheme.bodyLarge,
                 ),
                 const Spacer(),
-                // Decrement button
                 IconButton(
                   icon: const Icon(Icons.remove_circle_outline),
-                  onPressed: watched > 0
-                      ? () => _updateEpisodes(ref, watched - 1)
-                      : null,
+                  onPressed: (_busy || watched <= 0)
+                      ? null
+                      : () => _updateEpisodes(watched - 1),
                 ),
-                // Editable episode count
                 SizedBox(
                   width: 60,
                   height: 36,
@@ -603,6 +748,7 @@ class _MyListStatusCard extends ConsumerWidget {
                     initialValue: '$watched',
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
+                    enabled: !_busy,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -621,17 +767,16 @@ class _MyListStatusCard extends ConsumerWidget {
                     onFieldSubmitted: (value) {
                       final parsed = int.tryParse(value);
                       if (parsed != null && parsed >= 0) {
-                        unawaited(_updateEpisodes(ref, parsed));
+                        unawaited(_updateEpisodes(parsed));
                       }
                     },
                   ),
                 ),
-                // Increment button
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline),
-                  onPressed: (total == null || watched < total)
-                      ? () => _updateEpisodes(ref, watched + 1)
-                      : null,
+                  onPressed: (_busy || (total != null && watched >= total))
+                      ? null
+                      : () => _updateEpisodes(watched + 1),
                 ),
               ],
             ),
@@ -667,9 +812,13 @@ class _MyListStatusCard extends ConsumerWidget {
                       ),
                     );
                   }),
-                  onChanged: (value) {
-                    if (value != null) unawaited(_updateScore(ref, value));
-                  },
+                  onChanged: _busy
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            unawaited(_updateScore(value));
+                          }
+                        },
                 ),
               ],
             ),
@@ -677,78 +826,6 @@ class _MyListStatusCard extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _updateEpisodes(WidgetRef ref, int newCount) async {
-    final repo = ref.read(animeRepositoryProvider);
-    final updated = await repo.updateAnimeListStatus(
-      detail.id,
-      numWatchedEpisodes: newCount,
-    );
-    onUpdated(updated.status);
-  }
-
-  Future<void> _updateScore(WidgetRef ref, int newScore) async {
-    final repo = ref.read(animeRepositoryProvider);
-    final updated = await repo.updateAnimeListStatus(
-      detail.id,
-      score: newScore,
-    );
-    onUpdated(updated.status);
-  }
-
-  void _showStatusPicker(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        builder: (ctx) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Change Status',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              for (final s in WatchStatus.values)
-                ListTile(
-                  leading: Icon(_statusIcon(s)),
-                  title: Text(s.label),
-                  trailing: s == detail.myListStatus!.status
-                      ? Icon(Icons.check, color: theme.colorScheme.primary)
-                      : null,
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    final repo = ref.read(animeRepositoryProvider);
-                    final updated = await repo.updateAnimeListStatus(
-                      detail.id,
-                      status: s,
-                    );
-                    onUpdated(updated.status);
-                  },
-                ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static IconData _statusIcon(WatchStatus status) {
-    return switch (status) {
-      WatchStatus.watching => Icons.play_circle,
-      WatchStatus.completed => Icons.check_circle,
-      WatchStatus.onHold => Icons.pause_circle,
-      WatchStatus.dropped => Icons.cancel,
-      WatchStatus.planToWatch => Icons.bookmark,
-    };
   }
 }
 
