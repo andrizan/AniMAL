@@ -6,7 +6,6 @@ import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
 import 'package:animal/data/models/auth_token.dart';
-import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 
@@ -39,14 +38,13 @@ class MalAuthRepository {
     ).join();
   }
 
-  String _deriveCodeChallenge(String codeVerifier) {
-    final digest = sha256.convert(utf8.encode(codeVerifier));
-    return base64Url.encode(digest.bytes).replaceAll('=', '');
+  String _basicAuthHeader() {
+    final credentials = '${Env.malClientId}:${Env.malClientSecret}';
+    return 'Basic ${base64.encode(utf8.encode(credentials))}';
   }
 
   Future<Uri> buildAuthorizationUrl() async {
     final codeVerifier = _generateCodeVerifier();
-    final codeChallenge = _deriveCodeChallenge(codeVerifier);
     final state = _generateState();
     await Future.wait([
       _tokenStorage.saveCodeVerifier(codeVerifier),
@@ -58,8 +56,8 @@ class MalAuthRepository {
         'client_id': Env.malClientId,
         'redirect_uri': Env.malRedirectUri,
         'state': state,
-        'code_challenge': codeChallenge,
-        'code_challenge_method': 'S256',
+        'code_challenge': codeVerifier,
+        'code_challenge_method': 'plain',
       },
     );
   }
@@ -80,10 +78,11 @@ class MalAuthRepository {
     _logger.i('Exchanging authorization code...');
     final response = await _dio.post<String>(
       Env.malTokenUrl,
-      options: Options(contentType: Headers.formUrlEncodedContentType),
+      options: Options(
+        contentType: Headers.formUrlEncodedContentType,
+        headers: {'Authorization': _basicAuthHeader()},
+      ),
       data: {
-        'client_id': Env.malClientId,
-        'client_secret': Env.malClientSecret,
         'grant_type': 'authorization_code',
         'code': authorizationCode,
         'redirect_uri': Env.malRedirectUri,
@@ -108,10 +107,11 @@ class MalAuthRepository {
     _logger.i('Refreshing access token...');
     final response = await _dio.post<String>(
       Env.malTokenUrl,
-      options: Options(contentType: Headers.formUrlEncodedContentType),
+      options: Options(
+        contentType: Headers.formUrlEncodedContentType,
+        headers: {'Authorization': _basicAuthHeader()},
+      ),
       data: {
-        'client_id': Env.malClientId,
-        'client_secret': Env.malClientSecret,
         'grant_type': 'refresh_token',
         'refresh_token': currentRefresh,
       },

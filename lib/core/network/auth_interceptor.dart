@@ -21,6 +21,11 @@ class AuthInterceptor extends Interceptor {
   final Logger _logger;
   Future<bool>? _refreshFuture;
 
+  String _basicAuthHeader() {
+    final credentials = '${Env.malClientId}:${Env.malClientSecret}';
+    return 'Basic ${base64.encode(utf8.encode(credentials))}';
+  }
+
   @override
   Future<void> onRequest(
     RequestOptions options,
@@ -58,10 +63,11 @@ class AuthInterceptor extends Interceptor {
       if (refreshToken == null || refreshToken.isEmpty) return false;
       final response = await _dio.post<String>(
         Env.malTokenUrl,
-        options: Options(contentType: Headers.formUrlEncodedContentType),
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+          headers: {'Authorization': _basicAuthHeader()},
+        ),
         data: {
-          'client_id': Env.malClientId,
-          'client_secret': Env.malClientSecret,
           'grant_type': 'refresh_token',
           'refresh_token': refreshToken,
         },
