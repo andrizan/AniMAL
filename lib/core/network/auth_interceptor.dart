@@ -40,9 +40,7 @@ class AuthInterceptor extends Interceptor {
     if (err.response?.statusCode == 401) {
       _logger.w('AuthInterceptor: 401 — attempting token refresh');
       _refreshFuture ??= _refreshToken();
-      final future = _refreshFuture!;
-      _refreshFuture = null;
-      final refreshed = await future;
+      final refreshed = await _refreshFuture!;
       if (refreshed) {
         final token = await _tokenStorage.getAccessToken();
         err.requestOptions.headers['Authorization'] = 'Bearer $token';
@@ -55,9 +53,9 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<bool> _refreshToken() async {
-    final refreshToken = await _tokenStorage.getRefreshToken();
-    if (refreshToken == null || refreshToken.isEmpty) return false;
     try {
+      final refreshToken = await _tokenStorage.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) return false;
       final response = await _dio.post<String>(
         Env.malTokenUrl,
         options: Options(contentType: Headers.formUrlEncodedContentType),
@@ -77,9 +75,11 @@ class AuthInterceptor extends Interceptor {
       );
       _logger.i('Token refreshed');
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _logger.e('Token refresh failed', error: e);
       return false;
+    } finally {
+      _refreshFuture = null;
     }
   }
 }

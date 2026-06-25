@@ -146,7 +146,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'oauthCallback',
         builder: (context, state) {
           final code = state.uri.queryParameters['code'];
-          return OAuthCallbackPage(code: code);
+          final oauthState = state.uri.queryParameters['state'];
+          return OAuthCallbackPage(code: code, state: oauthState);
         },
       ),
     ],

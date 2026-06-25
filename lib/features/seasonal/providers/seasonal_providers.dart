@@ -76,20 +76,3 @@ final groupedSeasonalAnimeProvider =
         return _groupAnimeByDay(animeList);
       },
     );
-
-/// The current season based on today's date.
-final Provider<({int year, Season season})> currentSeasonProvider =
-    Provider<({int year, Season season})>((ref) {
-      final now = DateTime.now();
-      return (
-        year: Season.yearFromDate(now),
-        season: Season.fromDate(now),
-      );
-    });
-
-/// Fetches the current season's anime schedule.
-final FutureProvider<List<Anime>> currentAnimeScheduleProvider =
-    FutureProvider<List<Anime>>((ref) async {
-      final params = ref.watch(currentSeasonProvider);
-      return ref.watch(animeScheduleProvider(params).future);
-    });

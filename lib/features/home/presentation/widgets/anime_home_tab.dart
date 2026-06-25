@@ -51,6 +51,7 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
       0,
       AiringFilter.values.length - 1,
     );
+    if (!mounted) return;
     setState(() {
       _sortBy = ListSort.values[sortIndex];
       _ascending = ascending;

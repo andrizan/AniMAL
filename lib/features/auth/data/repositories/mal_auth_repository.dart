@@ -6,6 +6,7 @@ import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
 import 'package:animal/data/models/auth_token.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 
@@ -28,18 +29,45 @@ class MalAuthRepository {
     ).join();
   }
 
+  String _generateState([int length = 32]) {
+    const charset =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    final random = Random.secure();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
+  }
+
+  String _deriveCodeChallenge(String codeVerifier) {
+    final digest = sha256.convert(utf8.encode(codeVerifier));
+    return base64Url.encode(digest.bytes).replaceAll('=', '');
+  }
+
   Future<Uri> buildAuthorizationUrl() async {
     final codeVerifier = _generateCodeVerifier();
-    await _tokenStorage.saveCodeVerifier(codeVerifier);
+    final codeChallenge = _deriveCodeChallenge(codeVerifier);
+    final state = _generateState();
+    await Future.wait([
+      _tokenStorage.saveCodeVerifier(codeVerifier),
+      _tokenStorage.saveOAuthState(state),
+    ]);
     return Uri.parse(Env.malAuthUrl).replace(
       queryParameters: {
         'response_type': 'code',
         'client_id': Env.malClientId,
         'redirect_uri': Env.malRedirectUri,
-        'code_challenge': codeVerifier,
-        'code_challenge_method': 'plain',
+        'state': state,
+        'code_challenge': codeChallenge,
+        'code_challenge_method': 'S256',
       },
     );
+  }
+
+  Future<bool> validateOAuthState(String? returnedState) async {
+    final storedState = await _tokenStorage.getOAuthState();
+    if (storedState == null || storedState.isEmpty) return false;
+    return returnedState == storedState;
   }
 
   Future<AuthToken> exchangeCode(String authorizationCode) async {

@@ -11,6 +11,7 @@ class SecureTokenStorage {
   static const _accessTokenKey = 'mal_access_token';
   static const _refreshTokenKey = 'mal_refresh_token';
   static const _codeVerifierKey = 'mal_code_verifier';
+  static const _oauthStateKey = 'mal_oauth_state';
 
   /// Persist both tokens.
   Future<void> saveTokens({
@@ -40,10 +41,24 @@ class SecureTokenStorage {
     await _storage.delete(key: _codeVerifierKey);
   }
 
-  /// Delete all stored tokens and code verifier (logout).
+  /// Persist the OAuth state parameter.
+  Future<void> saveOAuthState(String state) async {
+    await _storage.write(key: _oauthStateKey, value: state);
+  }
+
+  /// Read the stored OAuth state parameter.
+  Future<String?> getOAuthState() => _storage.read(key: _oauthStateKey);
+
+  /// Clear the stored OAuth state parameter.
+  Future<void> clearOAuthState() async {
+    await _storage.delete(key: _oauthStateKey);
+  }
+
+  /// Delete all stored tokens, code verifier, and state (logout).
   Future<void> clear() async {
     await _storage.delete(key: _accessTokenKey);
     await _storage.delete(key: _refreshTokenKey);
     await _storage.delete(key: _codeVerifierKey);
+    await _storage.delete(key: _oauthStateKey);
   }
 }

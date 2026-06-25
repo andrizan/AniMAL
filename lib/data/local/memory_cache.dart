@@ -1,8 +1,18 @@
+import 'dart:async';
+
 class MemoryCache {
-  MemoryCache();
+  MemoryCache({bool enablePeriodicCleanup = true}) {
+    if (enablePeriodicCleanup) {
+      _cleanupTimer = Timer.periodic(
+        const Duration(seconds: 30),
+        (_) => _evictExpired(),
+      );
+    }
+  }
 
   final _store = <String, _CacheEntry>{};
   int _putCount = 0;
+  Timer? _cleanupTimer;
 
   static const _cleanupInterval = 50;
 
@@ -58,6 +68,13 @@ class MemoryCache {
   }
 
   void clear() => _store.clear();
+
+  /// Cancels the periodic cleanup timer. Call this when the cache is no longer
+  /// needed (e.g., during test teardown or provider disposal).
+  void dispose() {
+    _cleanupTimer?.cancel();
+    _cleanupTimer = null;
+  }
 
   void _evictExpired() {
     final now = DateTime.now();

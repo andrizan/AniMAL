@@ -28,8 +28,8 @@ class _AppState extends ConsumerState<App> {
 
   @override
   void dispose() {
-    _linkSubscription?.cancel();
-    _notificationSubscription?.cancel();
+    unawaited(_linkSubscription?.cancel() ?? Future<void>.value());
+    unawaited(_notificationSubscription?.cancel() ?? Future<void>.value());
     super.dispose();
   }
 
@@ -47,10 +47,14 @@ class _AppState extends ConsumerState<App> {
         uri.host == 'oauth' &&
         uri.path == '/callback') {
       final code = uri.queryParameters['code'];
+      final oauthState = uri.queryParameters['state'];
       if (code != null && mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            ref.read(routerProvider).go('/oauth/callback?code=$code');
+            final stateParam = oauthState != null ? '&state=$oauthState' : '';
+            ref
+                .read(routerProvider)
+                .go('/oauth/callback?code=$code$stateParam');
           }
         });
       }
@@ -68,12 +72,14 @@ class _AppState extends ConsumerState<App> {
     if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref
-          .read(routerProvider)
-          .pushNamed(
-            'animeDetail',
-            pathParameters: {'id': '$animeId'},
-          );
+      unawaited(
+        ref
+            .read(routerProvider)
+            .pushNamed(
+              'animeDetail',
+              pathParameters: {'id': '$animeId'},
+            ),
+      );
     });
   }
 

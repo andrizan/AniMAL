@@ -167,7 +167,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
           title: const Text('Select Year'),
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
           content: SizedBox(
-            width: double.minPositive,
+            width: double.maxFinite,
             height: 300,
             child: ListView.builder(
               controller: scrollController,

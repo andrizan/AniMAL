@@ -1582,7 +1582,9 @@ class _NotificationBell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(animeNotificationProvider).contains(animeId);
+    final enabled = ref.watch(
+      animeNotificationProvider.select((s) => s.contains(animeId)),
+    );
 
     return IconButton(
       icon: Icon(
