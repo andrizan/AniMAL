@@ -63,9 +63,7 @@ class AnimeCard extends ConsumerWidget {
               'animeDetail',
               pathParameters: {'id': '${anime.id}'},
             ),
-        onLongPress: onTap != null
-            ? null
-            : () => _showUpdateModal(context, ref),
+        onLongPress: onTap != null ? null : () => _showUpdateModal(context),
         child: SizedBox(
           height: 120,
           child: Row(
@@ -134,7 +132,7 @@ class AnimeCard extends ConsumerWidget {
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                                 padding: EdgeInsets.zero,
-                                onPressed: () => _showUpdateModal(context, ref),
+                                onPressed: () => _showUpdateModal(context),
                               ),
                             ),
                         ],
@@ -308,388 +306,19 @@ class AnimeCard extends ConsumerWidget {
     );
   }
 
-  void _showUpdateModal(BuildContext context, WidgetRef ref) {
-    final currentStatus = anime.myListStatus?.status ?? WatchStatus.watching;
-    final currentScore = anime.myListStatus?.score ?? 0;
-    final currentEps = anime.myListStatus?.numEpisodesWatched ?? 0;
-    final totalEps = anime.numEpisodes;
-
-    var selectedScore = currentScore;
-    var selectedEps = currentEps;
-    var selectedStatus = currentStatus;
-    var saving = false;
-
-    final epsController = TextEditingController(
-      text: '$currentEps',
-    );
-
+  void _showUpdateModal(BuildContext context) {
     unawaited(
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
+        useSafeArea: true,
         builder: (ctx) {
-          return StatefulBuilder(
-            builder: (ctx, setModalState) {
-              final notifEnabled = ref
-                  .watch(animeNotificationProvider)
-                  .contains(anime.id);
-
-              if (notifEnabled && anime.status == 'finished_airing') {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (context.mounted) {
-                    ref
-                        .read(animeNotificationProvider.notifier)
-                        .removeAnime(anime.id);
-                  }
-                });
-              }
-
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      anime.title,
-                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Notification toggle (only for airing anime with nextAiring)
-                    if (nextAiring != null) ...[
-                      Text(
-                        'Notification',
-                        style: Theme.of(ctx).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            notifEnabled
-                                ? Icons.notifications_active
-                                : Icons.notifications_none,
-                            color: notifEnabled ? AppColors.starColor : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              notifEnabled
-                                  ? 'Notification enabled for Ep ${nextAiring!.episode}'
-                                  : 'Get notified before episode airs',
-                              style: Theme.of(ctx).textTheme.bodyMedium,
-                            ),
-                          ),
-                          Switch(
-                            value: notifEnabled,
-                            onChanged: (value) async {
-                              final success = await ref
-                                  .read(animeNotificationProvider.notifier)
-                                  .toggle(
-                                    animeId: anime.id,
-                                    title: anime.title,
-                                    episode: nextAiring!.episode,
-                                    airingAt: nextAiring!.airingAt,
-                                  );
-                              if (!success && ctx.mounted) {
-                                ScaffoldMessenger.of(ctx).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Notification permission denied',
-                                    ),
-                                  ),
-                                );
-                              }
-                              setModalState(() {});
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-
-                    // Status
-                    Text('Status', style: Theme.of(ctx).textTheme.titleSmall),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: WatchStatus.values.map((s) {
-                        final isCompleted = s == WatchStatus.completed;
-                        final canMarkCompleted =
-                            !isCompleted || anime.status == 'finished_airing';
-                        return Tooltip(
-                          message:
-                              isCompleted && anime.status != 'finished_airing'
-                              ? 'Only available for finished anime'
-                              : '',
-                          child: ChoiceChip(
-                            label: Text(s.label),
-                            selected: selectedStatus == s,
-                            onSelected: saving || !canMarkCompleted
-                                ? null
-                                : (_) {
-                                    setModalState(() {
-                                      selectedStatus = s;
-                                      if (isCompleted && totalEps != null) {
-                                        selectedEps = totalEps;
-                                        epsController.text = '$totalEps';
-                                      }
-                                    });
-                                  },
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    if (anime.status != 'finished_airing')
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Completed can only be set for finished anime',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-
-                    // Episodes
-                    Text(
-                      'Episodes Watched',
-                      style: Theme.of(ctx).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: (saving || selectedEps <= 0)
-                              ? null
-                              : () {
-                                  setModalState(() => selectedEps--);
-                                  epsController.text = '$selectedEps';
-                                },
-                        ),
-                        SizedBox(
-                          width: 70,
-                          child: TextField(
-                            controller: epsController,
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            enabled: !saving,
-                            decoration: InputDecoration(
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              suffixText: totalEps != null
-                                  ? '/$totalEps'
-                                  : null,
-                            ),
-                            onSubmitted: (v) {
-                              final parsed = int.tryParse(v);
-                              if (parsed != null && parsed >= 0) {
-                                setModalState(() => selectedEps = parsed);
-                              }
-                            },
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
-                          onPressed:
-                              (saving ||
-                                  (totalEps != null && selectedEps >= totalEps))
-                              ? null
-                              : () {
-                                  setModalState(() => selectedEps++);
-                                  epsController.text = '$selectedEps';
-                                },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Score
-                    Text('Score', style: Theme.of(ctx).textTheme.titleSmall),
-                    const SizedBox(height: 8),
-                    DropdownButton<int>(
-                      value: selectedScore,
-                      isExpanded: true,
-                      items: List.generate(11, (i) {
-                        return DropdownMenuItem(
-                          value: i,
-                          child: Text(i == 0 ? 'Not rated' : '$i'),
-                        );
-                      }),
-                      onChanged: saving
-                          ? null
-                          : (v) {
-                              if (v != null) {
-                                setModalState(() => selectedScore = v);
-                              }
-                            },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Save
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: saving
-                            ? null
-                            : () async {
-                                setModalState(() => saving = true);
-                                try {
-                                  final repo = ref.read(
-                                    animeRepositoryProvider,
-                                  );
-                                  await repo.updateAnimeListStatus(
-                                    anime.id,
-                                    status: selectedStatus,
-                                    numWatchedEpisodes: selectedEps,
-                                    score: selectedScore,
-                                  );
-                                  ref.invalidate(
-                                    userAnimeListProvider(currentStatus),
-                                  );
-                                  if (selectedStatus != currentStatus) {
-                                    ref.invalidate(
-                                      userAnimeListProvider(selectedStatus),
-                                    );
-                                  }
-                                  if (selectedStatus != WatchStatus.watching) {
-                                    ref
-                                        .read(
-                                          animeNotificationProvider.notifier,
-                                        )
-                                        .removeAnime(anime.id);
-                                  }
-                                  if (ctx.mounted) Navigator.pop(ctx);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          '${anime.title} updated',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (ctx.mounted) {
-                                    setModalState(() => saving = false);
-                                    ScaffoldMessenger.of(ctx).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Failed to update: $e',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                        child: saving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Save'),
-                      ),
-                    ),
-                    if (anime.myListStatus != null) ...[
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: saving
-                              ? null
-                              : () async {
-                                  final confirmed = await showDialog<bool>(
-                                    context: ctx,
-                                    builder: (dctx) => AlertDialog(
-                                      title: const Text('Remove from List'),
-                                      content: Text(
-                                        'Remove "${anime.title}" from your list?',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(dctx, false),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        FilledButton(
-                                          onPressed: () =>
-                                              Navigator.pop(dctx, true),
-                                          child: const Text('Remove'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirmed != true) return;
-                                  setModalState(() => saving = true);
-                                  try {
-                                    final repo = ref.read(
-                                      animeRepositoryProvider,
-                                    );
-                                    await repo.deleteAnimeFromList(anime.id);
-                                    ref.invalidate(
-                                      userAnimeListProvider(currentStatus),
-                                    );
-                                    if (currentStatus != WatchStatus.watching) {
-                                      ref
-                                          .read(
-                                            animeNotificationProvider.notifier,
-                                          )
-                                          .removeAnime(anime.id);
-                                    }
-                                    if (ctx.mounted) Navigator.pop(ctx);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '${anime.title} removed from list',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (ctx.mounted) {
-                                      setModalState(() => saving = false);
-                                      ScaffoldMessenger.of(ctx).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Failed to remove: $e',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                          icon: const Icon(Icons.delete_outline, size: 18),
-                          label: const Text('Remove from List'),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            },
+          return _UpdateListStatusModal(
+            anime: anime,
+            nextAiring: nextAiring,
           );
         },
-      ).whenComplete(epsController.dispose),
+      ),
     );
   }
 
@@ -700,6 +329,328 @@ class AnimeCard extends ConsumerWidget {
     WatchStatus.dropped => AppColors.listDropped,
     WatchStatus.planToWatch => AppColors.listPlanToWatch,
   };
+}
+
+/// Modal content for updating an anime's list status.
+class _UpdateListStatusModal extends ConsumerStatefulWidget {
+  const _UpdateListStatusModal({
+    required this.anime,
+    required this.nextAiring,
+  });
+
+  final Anime anime;
+  final AiringEntry? nextAiring;
+
+  @override
+  ConsumerState<_UpdateListStatusModal> createState() =>
+      _UpdateListStatusModalState();
+}
+
+class _UpdateListStatusModalState
+    extends ConsumerState<_UpdateListStatusModal> {
+  late final TextEditingController _epsController;
+  late WatchStatus _selectedStatus;
+  late int _selectedScore;
+  late int _selectedEps;
+  var _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = widget.anime.myListStatus?.status ?? WatchStatus.watching;
+    _selectedScore = widget.anime.myListStatus?.score ?? 0;
+    _selectedEps = widget.anime.myListStatus?.numEpisodesWatched ?? 0;
+    _epsController = TextEditingController(text: '$_selectedEps');
+
+    if (widget.anime.status == 'finished_airing') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final enabled = ref
+            .read(animeNotificationProvider)
+            .contains(
+              widget.anime.id,
+            );
+        if (enabled) {
+          ref
+              .read(animeNotificationProvider.notifier)
+              .removeAnime(
+                widget.anime.id,
+              );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _epsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final repo = ref.read(animeRepositoryProvider);
+      await repo.updateAnimeListStatus(
+        widget.anime.id,
+        status: _selectedStatus,
+        numWatchedEpisodes: _selectedEps,
+        score: _selectedScore,
+      );
+      final currentStatus =
+          widget.anime.myListStatus?.status ?? WatchStatus.watching;
+      ref.invalidate(userAnimeListProvider(currentStatus));
+      if (_selectedStatus != currentStatus) {
+        ref.invalidate(userAnimeListProvider(_selectedStatus));
+      }
+      if (_selectedStatus != WatchStatus.watching) {
+        ref
+            .read(animeNotificationProvider.notifier)
+            .removeAnime(
+              widget.anime.id,
+            );
+      }
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${widget.anime.title} updated')),
+        );
+      }
+    } on Exception catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final totalEps = widget.anime.numEpisodes;
+    final notifEnabled = ref.watch(
+      animeNotificationProvider.select(
+        (s) => s.contains(widget.anime.id),
+      ),
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.anime.title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 20),
+
+            // Notification toggle (only for airing anime with nextAiring)
+            if (widget.nextAiring != null) ...[
+              Text('Notification', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    notifEnabled
+                        ? Icons.notifications_active
+                        : Icons.notifications_none,
+                    color: notifEnabled ? AppColors.starColor : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      notifEnabled
+                          ? 'Notification enabled for Ep ${widget.nextAiring!.episode}'
+                          : 'Get notified before episode airs',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                  Switch(
+                    value: notifEnabled,
+                    onChanged: _saving
+                        ? null
+                        : (value) async {
+                            final success = await ref
+                                .read(animeNotificationProvider.notifier)
+                                .toggle(
+                                  animeId: widget.anime.id,
+                                  title: widget.anime.title,
+                                  episode: widget.nextAiring!.episode,
+                                  airingAt: widget.nextAiring!.airingAt,
+                                );
+                            if (!success && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Notification permission denied',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            // Status
+            Text('Status', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: WatchStatus.values.map((s) {
+                final isCompleted = s == WatchStatus.completed;
+                final canMarkCompleted =
+                    !isCompleted || widget.anime.status == 'finished_airing';
+                return Tooltip(
+                  message:
+                      isCompleted && widget.anime.status != 'finished_airing'
+                      ? 'Only available for finished anime'
+                      : '',
+                  child: ChoiceChip(
+                    label: Text(s.label),
+                    selected: _selectedStatus == s,
+                    onSelected: _saving || !canMarkCompleted
+                        ? null
+                        : (_) {
+                            setState(() {
+                              _selectedStatus = s;
+                              if (isCompleted && totalEps != null) {
+                                _selectedEps = totalEps;
+                                _epsController.text = '$totalEps';
+                              }
+                            });
+                          },
+                  ),
+                );
+              }).toList(),
+            ),
+            if (widget.anime.status != 'finished_airing')
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Completed can only be set for finished anime',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
+
+            // Episodes
+            Text(
+              'Episodes Watched',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: (_saving || _selectedEps <= 0)
+                      ? null
+                      : () {
+                          setState(() => _selectedEps--);
+                          _epsController.text = '$_selectedEps';
+                        },
+                ),
+                SizedBox(
+                  width: 70,
+                  child: TextField(
+                    controller: _epsController,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    enabled: !_saving,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      suffixText: totalEps != null ? '/$totalEps' : null,
+                    ),
+                    onSubmitted: (v) {
+                      final parsed = int.tryParse(v);
+                      if (parsed != null && parsed >= 0) {
+                        setState(() => _selectedEps = parsed);
+                      }
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  onPressed:
+                      (_saving ||
+                          (totalEps != null && _selectedEps >= totalEps))
+                      ? null
+                      : () {
+                          setState(() => _selectedEps++);
+                          _epsController.text = '$_selectedEps';
+                        },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Score
+            Text('Score', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            DropdownButton<int>(
+              value: _selectedScore,
+              isExpanded: true,
+              items: List.generate(11, (i) {
+                return DropdownMenuItem(
+                  value: i,
+                  child: Text(i == 0 ? 'Not rated' : '$i'),
+                );
+              }),
+              onChanged: _saving
+                  ? null
+                  : (v) {
+                      if (v != null) setState(() => _selectedScore = v);
+                    },
+            ),
+            const SizedBox(height: 24),
+
+            // Save
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Cover image with left-side rounded corners only.

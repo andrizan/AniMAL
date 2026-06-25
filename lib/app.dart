@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/providers.dart';
 import 'package:animal/core/router/app_router.dart';
 import 'package:animal/core/theme/app_theme.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
