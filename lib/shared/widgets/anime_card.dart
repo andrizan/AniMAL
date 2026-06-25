@@ -429,7 +429,9 @@ class _UpdateListStatusModalState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final totalEps = widget.anime.numEpisodes;
+    final totalEps = widget.anime.numEpisodes != 0
+        ? widget.anime.numEpisodes
+        : null;
     final notifEnabled = ref.watch(
       animeNotificationProvider.select(
         (s) => s.contains(widget.anime.id),

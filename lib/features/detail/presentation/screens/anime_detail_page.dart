@@ -218,7 +218,7 @@ class AnimeDetailPage extends ConsumerWidget {
                               icon: Icons.leaderboard,
                               label: '#${detail.rank}',
                             ),
-                          if (detail.numEpisodes != null)
+                          if (detail.numEpisodes != null && detail.numEpisodes != 0)
                             InfoChip(
                               icon: Icons.movie_outlined,
                               label: '${detail.numEpisodes} eps',
@@ -608,7 +608,9 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
     try {
       final repo = ref.read(animeRepositoryProvider);
       final isCompleted = newStatus == WatchStatus.completed;
-      final totalEps = widget.detail.numEpisodes;
+      final totalEps = widget.detail.numEpisodes != 0
+        ? widget.detail.numEpisodes
+        : null;
       final updated = await repo.updateAnimeListStatus(
         widget.detail.id,
         status: newStatus,
