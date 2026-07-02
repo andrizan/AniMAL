@@ -711,7 +711,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
     final detail = widget.detail;
     final status = detail.myListStatus!;
     final watched = status.numEpisodesWatched ?? 0;
-    final total = detail.numEpisodes;
+    final total = detail.numEpisodes != 0 ? detail.numEpisodes : null;
     final score = status.score ?? 0;
 
     return Card(
