@@ -50,66 +50,67 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
     if (detail == null) {
       return asyncDetail.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, _) => Scaffold(
-        appBar: AppBar(),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: theme.colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                const Text('Failed to load anime detail'),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: () => ref.invalidate(animeDetailProvider(animeId)),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                ),
-              ],
+        loading: () => const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => Scaffold(
+          appBar: AppBar(),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Failed to load anime detail'),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () =>
+                        ref.invalidate(animeDetailProvider(animeId)),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      data: (detail) {
-        if (detail == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.search_off,
-                      size: 48,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Anime not found'),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This anime may not be available on MyAnimeList.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+        data: (detail) {
+          if (detail == null) {
+            return Scaffold(
+              appBar: AppBar(),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: 48,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      const Text('Anime not found'),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This anime may not be available on MyAnimeList.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }
+            );
+          }
 
           return _buildDetailContent(detail, asyncExtra, theme);
         },
@@ -128,393 +129,389 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
     return Scaffold(
       body: CustomScrollView(
-            slivers: [
-              // App bar with cover image
-              SliverAppBar(
-                expandedHeight: 300,
-                pinned: true,
-                foregroundColor: theme.colorScheme.onSurfaceVariant,
-                backgroundColor: theme.colorScheme.surface,
-                leading: Container(
+        slivers: [
+          // App bar with cover image
+          SliverAppBar(
+            expandedHeight: 300,
+            pinned: true,
+            foregroundColor: theme.colorScheme.onSurfaceVariant,
+            backgroundColor: theme.colorScheme.surface,
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: AppColors.overlayDarker,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: AppColors.iconLight,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            actions: [
+              if (asyncExtra.value?.nextAiring != null)
+                Container(
                   margin: const EdgeInsets.all(8),
                   decoration: const BoxDecoration(
                     color: AppColors.overlayDarker,
                     shape: BoxShape.circle,
                   ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.iconLight,
-                    ),
-                    onPressed: () => Navigator.pop(context),
+                  child: _NotificationBell(
+                    animeId: animeId,
+                    title: detail.title,
+                    nextAiring: asyncExtra.value!.nextAiring!,
                   ),
                 ),
-                actions: [
-                  if (asyncExtra.value?.nextAiring != null)
-                    Container(
-                      margin: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: AppColors.overlayDarker,
-                        shape: BoxShape.circle,
-                      ),
-                      child: _NotificationBell(
-                        animeId: animeId,
-                        title: detail.title,
-                        nextAiring: asyncExtra.value!.nextAiring!,
-                      ),
-                    ),
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: AppColors.overlayDarker,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.share, color: AppColors.iconLight),
-                      onPressed: () => _shareAnime(detail),
-                    ),
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  title: SelectableText(
-                    detail.title,
-                    maxLines: 2,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
-                  background: GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      if (detail.mainPicture?.large != null) {
-                        FullScreenImageViewer.show(
-                          context,
-                          imageUrl: detail.mainPicture!.large!,
-                          heroTag: 'anime_cover',
-                        );
-                      }
-                    },
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        AppCachedImage(
-                          imageUrl: detail.mainPicture?.large ?? '',
-                        ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                AppColors.transparent,
-                                AppColors.transparent,
-                                theme.colorScheme.surface.withValues(
-                                  alpha: 0.6,
-                                ),
-                                theme.colorScheme.surface,
-                              ],
-                              stops: const [0.0, 0.45, 0.8, 1.0],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              Container(
+                margin: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: AppColors.overlayDarker,
+                  shape: BoxShape.circle,
                 ),
-              ),
-
-              // Content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Info Chips ──
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (detail.mean != null)
-                            InfoChip(
-                              icon: Icons.star_rounded,
-                              label: detail.mean!.toStringAsFixed(2),
-                              color: AppColors.starColor,
-                            ),
-                          if (detail.rank != null)
-                            InfoChip(
-                              icon: Icons.leaderboard,
-                              label: '#${detail.rank}',
-                            ),
-                          if (detail.numEpisodes != null && detail.numEpisodes != 0)
-                            InfoChip(
-                              icon: Icons.movie_outlined,
-                              label: '${detail.numEpisodes} eps',
-                            ),
-                          if (detail.mediaType != null)
-                            InfoChip(
-                              label: AnimeLabels.mediaTypeLabel(
-                                detail.mediaType!,
-                              ),
-                            ),
-                          if (detail.status != null)
-                            InfoChip(
-                              label: AnimeLabels.statusLabel(detail.status!),
-                              color: AnimeLabels.statusColor(detail.status!),
-                            ),
-                          if (detail.rating != null)
-                            InfoChip(
-                              label: AnimeLabels.ratingLabel(detail.rating!),
-                              color: theme.colorScheme.error,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ── Alternative Titles ──
-                      if (detail.alternativeTitles != null) ...[
-                        Text(
-                          'Alternative Titles',
-                          style: theme.textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        if (detail.alternativeTitles!.ja != null &&
-                            detail.alternativeTitles!.ja!.isNotEmpty)
-                          _TitleRow(
-                            label: 'Japanese',
-                            title: detail.alternativeTitles!.ja!,
-                          ),
-                        if (detail.alternativeTitles!.en != null &&
-                            detail.alternativeTitles!.en!.isNotEmpty)
-                          _TitleRow(
-                            label: 'English',
-                            title: detail.alternativeTitles!.en!,
-                          ),
-                        for (final synonym
-                            in detail.alternativeTitles!.synonyms)
-                          if (synonym.isNotEmpty)
-                            _TitleRow(
-                              label: 'Synonym',
-                              title: synonym,
-                            ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── My List Status Card ──
-                      if (inList) ...[
-                        _MyListStatusCard(
-                          detail: detail,
-                          onUpdated: (updatedStatus) {
-                            _onListStatusUpdated(
-                              updatedStatus,
-                              detail.myListStatus?.status,
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Genres ──
-                      if (detail.genres.isNotEmpty) ...[
-                        Text('Genres', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: detail.genres
-                              .map(
-                                (g) => Chip(
-                                  label: Text(g.name),
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Broadcast ──
-                      if (detail.broadcast?.dayOfWeek != null) ...[
-                        Text('Broadcast', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: 18,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_capitalize(detail.broadcast!.dayOfWeek!)}'
-                              ' at ${detail.broadcast!.startTime ?? '?'} JST',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Airing Dates ──
-                      if (detail.startDate != null ||
-                          detail.endDate != null) ...[
-                        Text('Airing', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        if (detail.startDate != null)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 18,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${detail.endDate != null ? 'Aired' : 'Airing'}: ${_formatDate(detail.startDate!)}'
-                                '${detail.endDate != null ? ' to ${_formatDate(detail.endDate!)}' : ''}',
-                              ),
-                            ],
-                          ),
-                        if (detail.endDate != null && detail.startDate == null)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 18,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 8),
-                              Text('Ended: ${_formatDate(detail.endDate!)}'),
-                            ],
-                          ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Start Season ──
-                      if (detail.startSeason != null) ...[
-                        Text('Season', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_month,
-                              size: 18,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${AnimeLabels.seasonLabel(detail.startSeason!.season)} ${detail.startSeason!.year}',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Episode Duration ──
-                      if (detail.averageEpisodeDuration != null &&
-                          detail.averageEpisodeDuration! > 0) ...[
-                        Text(
-                          'Episode Duration',
-                          style: theme.textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.timer_outlined,
-                              size: 18,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              AnimeLabels.durationLabel(
-                                detail.averageEpisodeDuration,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Next Episode, External Links, Characters & Staff, Studios ──
-                      _AniListExtraSection(
-                        malId: animeId,
-                        asyncExtra: asyncExtra,
-                      ),
-
-                      // ── Source ──
-                      if (detail.source != null &&
-                          detail.source!.isNotEmpty) ...[
-                        Text('Source', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.book_outlined,
-                              size: 18,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(AnimeLabels.sourceLabel(detail.source!)),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Related Anime ──
-                      if (detail.relatedAnime.isNotEmpty) ...[
-                        Text(
-                          'Related Anime',
-                          style: theme.textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        ...detail.relatedAnime.map(
-                          (related) => _RelatedAnimeTile(
-                            related: related,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Synopsis ──
-                      if (detail.synopsis != null &&
-                          detail.synopsis!.isNotEmpty) ...[
-                        Text('Synopsis', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        SelectableText(
-                          detail.synopsis!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ── Action Buttons ──
-                      _ActionButtons(
-                        animeId: animeId,
-                        detail: detail,
-                        inList: inList,
-                        onAdded: (updatedStatus) {
-                          _onListStatusUpdated(updatedStatus, null);
-                        },
-                        onRemoved: () {
-                          _onAnimeRemoved(
-                            detail.myListStatus?.status ??
-                                WatchStatus.watching,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
+                child: IconButton(
+                  icon: const Icon(Icons.share, color: AppColors.iconLight),
+                  onPressed: () => _shareAnime(detail),
                 ),
               ),
             ],
+            flexibleSpace: FlexibleSpaceBar(
+              title: SelectableText(
+                detail.title,
+                maxLines: 2,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+              background: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  if (detail.mainPicture?.large != null) {
+                    FullScreenImageViewer.show(
+                      context,
+                      imageUrl: detail.mainPicture!.large!,
+                      heroTag: 'anime_cover',
+                    );
+                  }
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    AppCachedImage(
+                      imageUrl: detail.mainPicture?.large ?? '',
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.transparent,
+                            AppColors.transparent,
+                            theme.colorScheme.surface.withValues(
+                              alpha: 0.6,
+                            ),
+                            theme.colorScheme.surface,
+                          ],
+                          stops: const [0.0, 0.45, 0.8, 1.0],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        );
+
+          // Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Info Chips ──
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (detail.mean != null)
+                        InfoChip(
+                          icon: Icons.star_rounded,
+                          label: detail.mean!.toStringAsFixed(2),
+                          color: AppColors.starColor,
+                        ),
+                      if (detail.rank != null)
+                        InfoChip(
+                          icon: Icons.leaderboard,
+                          label: '#${detail.rank}',
+                        ),
+                      if (detail.numEpisodes != null && detail.numEpisodes != 0)
+                        InfoChip(
+                          icon: Icons.movie_outlined,
+                          label: '${detail.numEpisodes} eps',
+                        ),
+                      if (detail.mediaType != null)
+                        InfoChip(
+                          label: AnimeLabels.mediaTypeLabel(
+                            detail.mediaType!,
+                          ),
+                        ),
+                      if (detail.status != null)
+                        InfoChip(
+                          label: AnimeLabels.statusLabel(detail.status!),
+                          color: AnimeLabels.statusColor(detail.status!),
+                        ),
+                      if (detail.rating != null)
+                        InfoChip(
+                          label: AnimeLabels.ratingLabel(detail.rating!),
+                          color: theme.colorScheme.error,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Alternative Titles ──
+                  if (detail.alternativeTitles != null) ...[
+                    Text(
+                      'Alternative Titles',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    if (detail.alternativeTitles!.ja != null &&
+                        detail.alternativeTitles!.ja!.isNotEmpty)
+                      _TitleRow(
+                        label: 'Japanese',
+                        title: detail.alternativeTitles!.ja!,
+                      ),
+                    if (detail.alternativeTitles!.en != null &&
+                        detail.alternativeTitles!.en!.isNotEmpty)
+                      _TitleRow(
+                        label: 'English',
+                        title: detail.alternativeTitles!.en!,
+                      ),
+                    for (final synonym in detail.alternativeTitles!.synonyms)
+                      if (synonym.isNotEmpty)
+                        _TitleRow(
+                          label: 'Synonym',
+                          title: synonym,
+                        ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── My List Status Card ──
+                  if (inList) ...[
+                    _MyListStatusCard(
+                      detail: detail,
+                      onUpdated: (updatedStatus) {
+                        _onListStatusUpdated(
+                          updatedStatus,
+                          detail.myListStatus?.status,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Genres ──
+                  if (detail.genres.isNotEmpty) ...[
+                    Text('Genres', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: detail.genres
+                          .map(
+                            (g) => Chip(
+                              label: Text(g.name),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Broadcast ──
+                  if (detail.broadcast?.dayOfWeek != null) ...[
+                    Text('Broadcast', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_capitalize(detail.broadcast!.dayOfWeek!)}'
+                          ' at ${detail.broadcast!.startTime ?? '?'} JST',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Airing Dates ──
+                  if (detail.startDate != null || detail.endDate != null) ...[
+                    Text('Airing', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    if (detail.startDate != null)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${detail.endDate != null ? 'Aired' : 'Airing'}: ${_formatDate(detail.startDate!)}'
+                            '${detail.endDate != null ? ' to ${_formatDate(detail.endDate!)}' : ''}',
+                          ),
+                        ],
+                      ),
+                    if (detail.endDate != null && detail.startDate == null)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Text('Ended: ${_formatDate(detail.endDate!)}'),
+                        ],
+                      ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Start Season ──
+                  if (detail.startSeason != null) ...[
+                    Text('Season', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_month,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${AnimeLabels.seasonLabel(detail.startSeason!.season)} ${detail.startSeason!.year}',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Episode Duration ──
+                  if (detail.averageEpisodeDuration != null &&
+                      detail.averageEpisodeDuration! > 0) ...[
+                    Text(
+                      'Episode Duration',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          AnimeLabels.durationLabel(
+                            detail.averageEpisodeDuration,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Next Episode, External Links, Characters & Staff, Studios ──
+                  _AniListExtraSection(
+                    malId: animeId,
+                    asyncExtra: asyncExtra,
+                  ),
+
+                  // ── Source ──
+                  if (detail.source != null && detail.source!.isNotEmpty) ...[
+                    Text('Source', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.book_outlined,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(AnimeLabels.sourceLabel(detail.source!)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Related Anime ──
+                  if (detail.relatedAnime.isNotEmpty) ...[
+                    Text(
+                      'Related Anime',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    ...detail.relatedAnime.map(
+                      (related) => _RelatedAnimeTile(
+                        related: related,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Synopsis ──
+                  if (detail.synopsis != null &&
+                      detail.synopsis!.isNotEmpty) ...[
+                    Text('Synopsis', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      detail.synopsis!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Action Buttons ──
+                  _ActionButtons(
+                    animeId: animeId,
+                    detail: detail,
+                    inList: inList,
+                    onAdded: (updatedStatus) {
+                      _onListStatusUpdated(updatedStatus, null);
+                    },
+                    onRemoved: () {
+                      _onAnimeRemoved(
+                        detail.myListStatus?.status ?? WatchStatus.watching,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onListStatusUpdated(
@@ -656,8 +653,8 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
       final repo = ref.read(animeRepositoryProvider);
       final isCompleted = newStatus == WatchStatus.completed;
       final totalEps = widget.detail.numEpisodes != 0
-        ? widget.detail.numEpisodes
-        : null;
+          ? widget.detail.numEpisodes
+          : null;
       final updated = await repo.updateAnimeListStatus(
         widget.detail.id,
         status: newStatus,

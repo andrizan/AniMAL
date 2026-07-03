@@ -32,6 +32,19 @@ final animeListVersionProvider =
       AnimeListVersionNotifier.new,
     );
 
+final pendingRemovalProvider =
+    NotifierProvider<_PendingRemovalNotifier, Set<int>>(
+      _PendingRemovalNotifier.new,
+    );
+
+class _PendingRemovalNotifier extends Notifier<Set<int>> {
+  @override
+  Set<int> build() => const {};
+
+  void add(int animeId) => state = {...state, animeId};
+  void remove(int animeId) => state = state.difference({animeId});
+}
+
 /// Provider for [MalApiClient].
 final malAnimeApiProvider = Provider<MalApiClient>((ref) {
   return MalApiClient(ref.watch(dioProvider));
