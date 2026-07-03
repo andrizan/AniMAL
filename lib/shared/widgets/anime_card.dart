@@ -435,9 +435,11 @@ class _UpdateListStatusModalState
       final currentStatus =
           widget.anime.myListStatus?.status ?? WatchStatus.watching;
       final statusChanged = _selectedStatus != currentStatus;
+      final container = ProviderScope.containerOf(context);
+      final pendingNotifier = container.read(pendingRemovalProvider.notifier);
 
       if (statusChanged) {
-        ref.read(pendingRemovalProvider.notifier).add(widget.anime.id);
+        pendingNotifier.add(widget.anime.id);
       }
 
       if (_selectedStatus != WatchStatus.watching) {
@@ -450,12 +452,11 @@ class _UpdateListStatusModalState
 
       if (statusChanged) {
         await Future<void>.delayed(const Duration(milliseconds: 320));
-      }
-
-      ref.invalidate(userAnimeListProvider(currentStatus));
-      if (statusChanged) {
-        ref.invalidate(userAnimeListProvider(_selectedStatus));
-        ref.read(pendingRemovalProvider.notifier).remove(widget.anime.id);
+        container.invalidate(userAnimeListProvider(currentStatus));
+        container.invalidate(userAnimeListProvider(_selectedStatus));
+        pendingNotifier.remove(widget.anime.id);
+      } else {
+        container.invalidate(userAnimeListProvider(currentStatus));
       }
 
       if (mounted) {
