@@ -1,3 +1,4 @@
+import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
@@ -32,7 +33,11 @@ class AnimeListTab extends ConsumerWidget {
       airingFilter: airingFilter,
     );
     final asyncList = ref.watch(sortedUserAnimeListProvider(params));
-    final theme = Theme.of(context);
+
+    if (asyncList.hasValue) {
+      final result = asyncList.requireValue;
+      return _buildList(context, result.anime, result.airingMap, ref);
+    }
 
     return asyncList.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -41,50 +46,60 @@ class AnimeListTab extends ConsumerWidget {
         onRetry: () => ref.invalidate(sortedUserAnimeListProvider(params)),
       ),
       data: (result) {
-        final sorted = result.anime;
-        final airingMap = result.airingMap;
-        if (sorted.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.inbox_outlined,
-                  size: 64,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No anime here yet',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref
-              ..invalidate(userAnimeListProvider(status))
-              ..invalidate(airingByMalIdProvider);
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: sorted.length,
-            itemBuilder: (context, index) {
-              final anime = sorted[index];
-              final nextAiring = airingMap[anime.id];
-              return AnimeCard(
-                anime: anime,
-                nextAiring: nextAiring,
-              );
-            },
-          ),
-        );
+        return _buildList(context, result.anime, result.airingMap, ref);
       },
+    );
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    List<Anime> sorted,
+    Map<int, AiringEntry> airingMap,
+    WidgetRef ref,
+  ) {
+    final theme = Theme.of(context);
+
+    if (sorted.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.inbox_outlined,
+              size: 64,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No anime here yet',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref
+          ..invalidate(userAnimeListProvider(status))
+          ..invalidate(airingByMalIdProvider);
+      },
+      child: ListView.builder(
+        key: PageStorageKey<String>('anime_list_${status.value}'),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: sorted.length,
+        itemBuilder: (context, index) {
+          final anime = sorted[index];
+          final nextAiring = airingMap[anime.id];
+          return AnimeCard(
+            anime: anime,
+            nextAiring: nextAiring,
+          );
+        },
+      ),
     );
   }
 }

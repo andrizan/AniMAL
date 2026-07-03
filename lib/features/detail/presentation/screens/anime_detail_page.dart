@@ -5,6 +5,7 @@ import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/models/anime_detail.dart';
+import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
@@ -21,18 +22,34 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Detail page for a single anime.
-class AnimeDetailPage extends ConsumerWidget {
+class AnimeDetailPage extends ConsumerStatefulWidget {
   const AnimeDetailPage({required this.animeId, super.key});
 
   final int animeId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AnimeDetailPage> createState() => _AnimeDetailPageState();
+}
+
+class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
+  AnimeDetail? _detail;
+
+  int get animeId => widget.animeId;
+
+  @override
+  Widget build(BuildContext context) {
     final asyncDetail = ref.watch(animeDetailProvider(animeId));
     final asyncExtra = ref.watch(anilistAnimeExtraProvider(animeId));
     final theme = Theme.of(context);
 
-    return asyncDetail.when(
+    if (_detail == null && asyncDetail.hasValue && asyncDetail.value != null) {
+      _detail = asyncDetail.value;
+    }
+
+    final detail = _detail;
+
+    if (detail == null) {
+      return asyncDetail.when(
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
@@ -94,10 +111,23 @@ class AnimeDetailPage extends ConsumerWidget {
           );
         }
 
-        final inList = detail.myListStatus != null;
+          return _buildDetailContent(detail, asyncExtra, theme);
+        },
+      );
+    }
 
-        return Scaffold(
-          body: CustomScrollView(
+    return _buildDetailContent(detail, asyncExtra, theme);
+  }
+
+  Widget _buildDetailContent(
+    AnimeDetail detail,
+    AsyncValue<AniListAnimeExtra> asyncExtra,
+    ThemeData theme,
+  ) {
+    final inList = detail.myListStatus != null;
+
+    return Scaffold(
+      body: CustomScrollView(
             slivers: [
               // App bar with cover image
               SliverAppBar(
@@ -276,11 +306,12 @@ class AnimeDetailPage extends ConsumerWidget {
                       if (inList) ...[
                         _MyListStatusCard(
                           detail: detail,
-                          onUpdated: (newStatus) => _invalidateForStatus(
-                            ref,
-                            detail.myListStatus?.status,
-                            newStatus,
-                          ),
+                          onUpdated: (updatedStatus) {
+                            _onListStatusUpdated(
+                              updatedStatus,
+                              detail.myListStatus?.status,
+                            );
+                          },
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -466,6 +497,15 @@ class AnimeDetailPage extends ConsumerWidget {
                         animeId: animeId,
                         detail: detail,
                         inList: inList,
+                        onAdded: (updatedStatus) {
+                          _onListStatusUpdated(updatedStatus, null);
+                        },
+                        onRemoved: () {
+                          _onAnimeRemoved(
+                            detail.myListStatus?.status ??
+                                WatchStatus.watching,
+                          );
+                        },
                       ),
                       const SizedBox(height: 32),
                     ],
@@ -475,16 +515,16 @@ class AnimeDetailPage extends ConsumerWidget {
             ],
           ),
         );
-      },
-    );
   }
 
-  void _invalidateForStatus(
-    WidgetRef ref,
+  void _onListStatusUpdated(
+    MyListStatus updatedStatus,
     WatchStatus? oldStatus,
-    WatchStatus newStatus,
   ) {
-    ref.invalidate(animeDetailProvider(animeId));
+    setState(() {
+      _detail = _detail?.copyWith(myListStatus: updatedStatus);
+    });
+    final newStatus = updatedStatus.status;
     if (oldStatus != null) {
       ref.invalidate(userAnimeListProvider(oldStatus));
     }
@@ -494,6 +534,13 @@ class AnimeDetailPage extends ConsumerWidget {
         ref.invalidate(userAnimeListProvider(s));
       }
     }
+  }
+
+  void _onAnimeRemoved(WatchStatus currentStatus) {
+    setState(() {
+      _detail = _detail?.copyWith(myListStatus: null);
+    });
+    ref.invalidate(userAnimeListProvider(currentStatus));
   }
 
   String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
@@ -537,7 +584,7 @@ class _MyListStatusCard extends ConsumerStatefulWidget {
   });
 
   final AnimeDetail detail;
-  final void Function(WatchStatus newStatus) onUpdated;
+  final void Function(MyListStatus updatedStatus) onUpdated;
 
   @override
   ConsumerState<_MyListStatusCard> createState() => _MyListStatusCardState();
@@ -556,7 +603,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
         numWatchedEpisodes: newCount,
       );
       if (!mounted) return;
-      widget.onUpdated(updated.status);
+      widget.onUpdated(updated);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Episodes updated to $newCount'),
@@ -583,7 +630,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
         score: newScore,
       );
       if (!mounted) return;
-      widget.onUpdated(updated.status);
+      widget.onUpdated(updated);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -617,7 +664,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
         numWatchedEpisodes: isCompleted && totalEps != null ? totalEps : null,
       );
       if (!mounted) return;
-      widget.onUpdated(updated.status);
+      widget.onUpdated(updated);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Status changed to ${newStatus.label}'),
@@ -863,11 +910,15 @@ class _ActionButtons extends ConsumerStatefulWidget {
     required this.animeId,
     required this.detail,
     required this.inList,
+    required this.onAdded,
+    required this.onRemoved,
   });
 
   final int animeId;
   final AnimeDetail detail;
   final bool inList;
+  final void Function(MyListStatus updatedStatus) onAdded;
+  final VoidCallback onRemoved;
 
   @override
   ConsumerState<_ActionButtons> createState() => _ActionButtonsState();
@@ -876,25 +927,16 @@ class _ActionButtons extends ConsumerStatefulWidget {
 class _ActionButtonsState extends ConsumerState<_ActionButtons> {
   bool _busy = false;
 
-  void _invalidateAll({WatchStatus? currentStatus}) {
-    ref.invalidate(animeDetailProvider(widget.animeId));
-    if (currentStatus != null) {
-      ref.invalidate(userAnimeListProvider(currentStatus));
-    } else {
-      ref.invalidate(userAnimeListProvider(WatchStatus.watching));
-    }
-  }
-
   Future<void> _addToList() async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
       final repo = ref.read(animeRepositoryProvider);
-      await repo.updateAnimeListStatus(
+      final updatedStatus = await repo.updateAnimeListStatus(
         widget.animeId,
         status: WatchStatus.watching,
       );
-      _invalidateAll(currentStatus: WatchStatus.watching);
+      widget.onAdded(updatedStatus);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Added to Watching')),
@@ -936,9 +978,7 @@ class _ActionButtonsState extends ConsumerState<_ActionButtons> {
     try {
       final repo = ref.read(animeRepositoryProvider);
       await repo.deleteAnimeFromList(widget.animeId);
-      final currentStatus =
-          widget.detail.myListStatus?.status ?? WatchStatus.watching;
-      _invalidateAll(currentStatus: currentStatus);
+      widget.onRemoved();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Removed from list')),
