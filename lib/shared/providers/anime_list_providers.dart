@@ -2,7 +2,7 @@ import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_providers.dart'
-    show animeRepositoryProvider;
+    show animeListVersionProvider, animeRepositoryProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Sort options for the anime list.
@@ -84,11 +84,10 @@ List<Anime> _filterAnimeList(List<Anime> list, AiringFilter airingFilter) {
 }
 
 /// Fetches the current user's anime list filtered by [WatchStatus].
-/// Must be explicitly invalidated after mutations; no version watch to avoid
-/// premature re-fetch that would prevent dismissal animations.
 // ignore: specify_nonobvious_property_types
 final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>(
   (ref, status) async {
+    ref.watch(animeListVersionProvider);
     final repo = ref.watch(animeRepositoryProvider);
     return repo.getUserAnimeList(status: status);
   },

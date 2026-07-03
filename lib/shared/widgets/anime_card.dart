@@ -52,292 +52,257 @@ class AnimeCard extends ConsumerWidget {
     final notifEnabled = ref.watch(
       animeNotificationProvider.select((s) => s.contains(anime.id)),
     );
-    final isPendingRemoval = ref
-        .watch(pendingRemovalProvider)
-        .contains(anime.id);
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      alignment: Alignment.topCenter,
-      clipBehavior: Clip.hardEdge,
-      child: isPendingRemoval
-          ? const SizedBox(width: double.infinity, height: 0)
-          : Card(
-              margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap:
-                    onTap ??
-                    () => context.pushNamed(
-                      'animeDetail',
-                      pathParameters: {'id': '${anime.id}'},
-                    ),
-                onLongPress: onTap != null
-                    ? null
-                    : () => _showUpdateModal(context),
-                child: SizedBox(
-                  height: 120,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap:
+            onTap ??
+            () => context.pushNamed(
+              'animeDetail',
+              pathParameters: {'id': '${anime.id}'},
+            ),
+        onLongPress: onTap != null ? null : () => _showUpdateModal(context),
+        child: SizedBox(
+          height: 120,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Cover image (left rounded only) ──
+              _CoverImage(
+                anime: anime,
+                statusLabel: statusLabel,
+                statusColor: statusColor,
+              ),
+
+              // ── Info section ──
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Cover image (left rounded only) ──
-                      _CoverImage(
-                        anime: anime,
-                        statusLabel: statusLabel,
-                        statusColor: statusColor,
+                      // Title row + edit button
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              anime.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (anime.myListStatus != null)
+                            Container(
+                              margin: const EdgeInsets.only(right: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _listStatusColor(
+                                  anime.myListStatus!.status,
+                                ).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                anime.myListStatus!.status.label,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: _listStatusColor(
+                                    anime.myListStatus!.status,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (onTap == null)
+                            SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.more_vert,
+                                  size: 18,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                padding: EdgeInsets.zero,
+                                onPressed: () => _showUpdateModal(context),
+                              ),
+                            ),
+                        ],
                       ),
 
-                      // ── Info section ──
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title row + edit button
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      anime.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  if (anime.myListStatus != null)
-                                    Container(
-                                      margin: const EdgeInsets.only(right: 4),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 5,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _listStatusColor(
-                                          anime.myListStatus!.status,
-                                        ).withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Text(
-                                        anime.myListStatus!.status.label,
-                                        style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w600,
-                                          color: _listStatusColor(
-                                            anime.myListStatus!.status,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  if (onTap == null)
-                                    SizedBox(
-                                      width: 32,
-                                      height: 32,
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.more_vert,
-                                          size: 18,
-                                          color: theme
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                        onPressed: () =>
-                                            _showUpdateModal(context),
-                                      ),
-                                    ),
-                                ],
-                              ),
-
-                              // Japanese title
-                              if (jaTitle != null && jaTitle.isNotEmpty)
-                                Text(
-                                  jaTitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-
-                              // Genres
-                              if (anime.genres.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Wrap(
-                                    spacing: 4,
-                                    runSpacing: 2,
-                                    children: anime.genres.take(3).map((g) {
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 5,
-                                          vertical: 1,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: theme
-                                              .colorScheme
-                                              .secondaryContainer,
-                                          borderRadius: BorderRadius.circular(
-                                            3,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          g.name,
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            color: theme
-                                                .colorScheme
-                                                .onSecondaryContainer,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-
-                              const Spacer(),
-
-                              // Scores + episodes
-                              Row(
-                                children: [
-                                  if (anime.mean != null) ...[
-                                    const Icon(
-                                      Icons.star_rounded,
-                                      size: 14,
-                                      color: AppColors.starColor,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      anime.mean!.toStringAsFixed(1),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                  if (personalScore != null &&
-                                      personalScore > 0) ...[
-                                    const SizedBox(width: 10),
-                                    Icon(
-                                      Icons.star,
-                                      size: 14,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      '$personalScore',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                    ),
-                                  ],
-                                  const Spacer(),
-                                  if (watchedEps != null && episodes != null)
-                                    Text(
-                                      '$watchedEps/$episodes ep',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                    )
-                                  else if (episodes != null)
-                                    Text(
-                                      '${episodes}ep',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                    ),
-                                ],
-                              ),
-
-                              // Bottom: rating + broadcast (left) | badge (right)
-                              Row(
-                                children: [
-                                  if (anime.rating != null)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.errorContainer,
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Text(
-                                        AnimeLabels.ratingLabel(
-                                          anime.rating,
-                                          compact: true,
-                                        ),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: theme
-                                              .colorScheme
-                                              .onErrorContainer,
-                                        ),
-                                      ),
-                                    ),
-                                  if (anime.broadcast?.startTime != null) ...[
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      Icons.access_time,
-                                      size: 12,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      convertJstToLocal(
-                                            anime.broadcast?.startTime,
-                                          ) ??
-                                          '',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            fontSize: 11,
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                    ),
-                                  ],
-                                  const Spacer(),
-                                  if (notifEnabled &&
-                                      anime.status != 'finished_airing') ...[
-                                    const Icon(
-                                      Icons.notifications_active,
-                                      size: 14,
-                                      color: AppColors.starColor,
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  if (nextAiring case final next?)
-                                    CountdownBadge(
-                                      airingAt: next.airingAt,
-                                      episode: next.episode,
-                                    ),
-                                  if (trailing case final trailing?) trailing,
-                                ],
-                              ),
-                            ],
+                      // Japanese title
+                      if (jaTitle != null && jaTitle.isNotEmpty)
+                        Text(
+                          jaTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
+
+                      // Genres
+                      if (anime.genres.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Wrap(
+                            spacing: 4,
+                            runSpacing: 2,
+                            children: anime.genres.take(3).map((g) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondaryContainer,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(
+                                  g.name,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color:
+                                        theme.colorScheme.onSecondaryContainer,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+
+                      const Spacer(),
+
+                      // Scores + episodes
+                      Row(
+                        children: [
+                          if (anime.mean != null) ...[
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 14,
+                              color: AppColors.starColor,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              anime.mean!.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                          if (personalScore != null && personalScore > 0) ...[
+                            const SizedBox(width: 10),
+                            Icon(
+                              Icons.star,
+                              size: 14,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '$personalScore',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          if (watchedEps != null && episodes != null)
+                            Text(
+                              '$watchedEps/$episodes ep',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            )
+                          else if (episodes != null)
+                            Text(
+                              '${episodes}ep',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+
+                      // Bottom: rating + broadcast (left) | badge (right)
+                      Row(
+                        children: [
+                          if (anime.rating != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.errorContainer,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                AnimeLabels.ratingLabel(
+                                  anime.rating,
+                                  compact: true,
+                                ),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          if (anime.broadcast?.startTime != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.access_time,
+                              size: 12,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              convertJstToLocal(anime.broadcast?.startTime) ??
+                                  '',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 11,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          if (notifEnabled &&
+                              anime.status != 'finished_airing') ...[
+                            const Icon(
+                              Icons.notifications_active,
+                              size: 14,
+                              color: AppColors.starColor,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          if (nextAiring case final next?)
+                            CountdownBadge(
+                              airingAt: next.airingAt,
+                              episode: next.episode,
+                            ),
+                          if (trailing case final trailing?) trailing,
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -434,31 +399,18 @@ class _UpdateListStatusModalState
       );
       final currentStatus =
           widget.anime.myListStatus?.status ?? WatchStatus.watching;
-      final statusChanged = _selectedStatus != currentStatus;
-      final container = ProviderScope.containerOf(context);
-      final pendingNotifier = container.read(pendingRemovalProvider.notifier);
-
-      if (statusChanged) {
-        pendingNotifier.add(widget.anime.id);
+      ref.invalidate(userAnimeListProvider(currentStatus));
+      if (_selectedStatus != currentStatus) {
+        ref.invalidate(userAnimeListProvider(_selectedStatus));
       }
-
       if (_selectedStatus != WatchStatus.watching) {
         ref
             .read(animeNotificationProvider.notifier)
-            .removeAnime(widget.anime.id);
+            .removeAnime(
+              widget.anime.id,
+            );
       }
-
       if (mounted) Navigator.pop(context);
-
-      if (statusChanged) {
-        await Future<void>.delayed(const Duration(milliseconds: 320));
-        container.invalidate(userAnimeListProvider(currentStatus));
-        container.invalidate(userAnimeListProvider(_selectedStatus));
-        pendingNotifier.remove(widget.anime.id);
-      } else {
-        container.invalidate(userAnimeListProvider(currentStatus));
-      }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${widget.anime.title} updated')),
