@@ -1,27 +1,39 @@
 name: Build & Release APK
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*'
+  pull_request:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.47.2"
 
 jobs:
-  build:
+  quality:
+    name: Quality Checks
     runs-on: ubuntu-latest
-    environment: build-config
-    permissions:
-      contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
 
-      - uses: actions/cache@v4
+      - name: Cache pub dependencies
+        uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
@@ -30,21 +42,74 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      - uses: subosito/flutter-action@v2
+      - name: Fetch Flutter dependencies
+        run: flutter pub get
+
+      - name: Regenerate freezed/json_serializable
+        run: dart run build_runner build
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+  build:
+    name: Build APK
+    needs: quality
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Update version from tag
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool/pub
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Bump pubspec version to match tag
         run: |
+          set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
-          sed -i "s/^version: .*/version: ${VERSION}+${BUILD_NUMBER}/" pubspec.yaml
-          echo "Version set to ${VERSION}+${BUILD_NUMBER}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+([A-Za-z][0-9A-Za-z._]*|[-_][0-9A-Za-z][0-9A-Za-z._-]*)?$'; then
+            if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
+              echo "Invalid tag: $GITHUB_REF_NAME. Expected vX.Y.Z, vX.Y.Zsuffix, vX.Y.Z_suffix, or vX.Y.Z-suffix."
+              exit 1
+            fi
+            VERSION="manual-${GITHUB_RUN_NUMBER}"
+          fi
+          BUILD=$(grep '^version:' pubspec.yaml | sed 's/.*+\([0-9]*\).*/\1/')
+          NEW_BUILD=$((BUILD + 1))
+          sed -i "s/^version: .*/version: ${VERSION}+${NEW_BUILD}/" pubspec.yaml
+          echo "Version set to ${VERSION}+${NEW_BUILD}"
 
-      - run: flutter pub get
+      - name: Fetch Flutter dependencies
+        run: flutter pub get
 
-      - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Regenerate freezed/json_serializable
+        run: dart run build_runner build
 
       - name: Decode keystore
         run: |
@@ -68,7 +133,77 @@ jobs:
       - name: Rename APK
         run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/animal-${{ github.ref_name }}.apk
 
-      - uses: softprops/action-gh-release@v2
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
         with:
-          files: build/app/outputs/flutter-apk/animal-${{ github.ref_name }}.apk
+          name: animal-apk
+          path: build/app/outputs/flutter-apk/animal-${{ github.ref_name }}.apk
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download APK
+        uses: actions/download-artifact@v8
+        with:
+          name: animal-apk
+          path: dist
+
+      - name: Verify download
+        run: |
+          set -euo pipefail
+          ls -la dist
+          test "$(find dist -maxdepth 1 -type f -name '*.apk' | wc -l)" -gt 0
+
+      - name: Resolve release metadata
+        id: release-metadata
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create release and upload APK
+        uses: softprops/action-gh-release@v3
+        with:
+          name: AniMAL ${{ github.ref_name }}
+          files: dist/animal-*.apk
+          fail_on_unmatched_files: true
           generate_release_notes: true
+          prerelease: ${{ steps.release-metadata.outputs.prerelease }}
+
+      - name: Commit version bump back to main
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Read the version currently on main.
+          CURRENT_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: \([0-9][0-9.]*\).*/\1/')
+          if [ "$CURRENT_VERSION" = "$VERSION" ]; then
+            echo "Version on main already matches tag ($VERSION). Skipping commit."
+            exit 0
+          fi
+          BUILD=$(grep '^version:' pubspec.yaml | sed 's/.*+\([0-9]*\).*/\1/')
+          NEW_BUILD=$((BUILD + 1))
+          sed -i "s/^version: .*/version: ${VERSION}+${NEW_BUILD}/" pubspec.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git diff --cached --quiet && echo "No version change to commit" && exit 0
+          git commit -m "chore: bump version to ${VERSION}+${NEW_BUILD} [skip ci]"
+          git push origin main
