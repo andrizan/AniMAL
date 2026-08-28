@@ -24,6 +24,7 @@ final dioClientProvider = Provider<DioClient>((ref) {
     onAuthFailure: () async {
       await ref.read(authControllerProvider.notifier).logout();
     },
+    ref: ref,
     logger: ref.watch(loggerProvider),
   );
 });

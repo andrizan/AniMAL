@@ -3,9 +3,11 @@ import 'package:animal/core/constants/anilist_queries.dart';
 import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/network/api_exception.dart';
+import 'package:animal/core/network/api_health_interceptor.dart';
 import 'package:animal/data/local/memory_cache.dart';
 import 'package:animal/data/models/anilist/anilist_models.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
 export 'package:animal/data/models/anilist/anilist_models.dart';
@@ -13,7 +15,7 @@ export 'package:animal/data/models/anilist/anilist_models.dart';
 final _anilistCache = MemoryCache();
 
 class AniListClient {
-  AniListClient({Logger? logger})
+  AniListClient({Ref? ref, Logger? logger})
     : _logger = logger ?? appLogger,
       _dio = Dio(
         BaseOptions(
@@ -23,9 +25,17 @@ class AniListClient {
           contentType: 'application/json',
           headers: {'Accept': 'application/json'},
         ),
-      );
+      ) {
+    if (ref != null) {
+      _dio.interceptors.add(ApiHealthInterceptor(ref));
+    }
+  }
 
   final Dio _dio;
+
+  /// The underlying [Dio] instance.
+  Dio get dio => _dio;
+
   final Logger _logger;
 
   Future<dynamic> _query(

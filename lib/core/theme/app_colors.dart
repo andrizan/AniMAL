@@ -126,6 +126,8 @@ abstract final class AppColors {
   static const statusFinished = Color(0xFF3B82F6);
   static const statusUpcoming = Color(0xFFF59E0B);
   static const statusDefault = Color(0xFF64748B);
+  static const statusHealthy = Color(0xFF10B981);
+  static const statusRateLimited = Color(0xFFF59E0B);
 
   static const listWatching = Color(0xFF10B981);
   static const listCompleted = Color(0xFF3B82F6);

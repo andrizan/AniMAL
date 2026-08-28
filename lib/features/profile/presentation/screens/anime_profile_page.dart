@@ -4,6 +4,7 @@ import 'package:animal/core/config/env.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/github_check.dart';
+import 'package:animal/features/profile/presentation/widgets/api_status_section.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -242,6 +243,10 @@ class AnimeProfilePage extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
           ],
+
+          // API Status section
+          const ApiStatusSection(),
+          const SizedBox(height: 24),
 
           // Settings section
           Text(

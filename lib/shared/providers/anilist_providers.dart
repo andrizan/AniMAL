@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider for [AniListClient].
 final anilistApiProvider = Provider<AniListClient>((ref) {
-  return AniListClient(logger: ref.watch(loggerProvider));
+  return AniListClient(ref: ref, logger: ref.watch(loggerProvider));
 });
 
 final anilistCharacterDetailProvider = FutureProvider.autoDispose

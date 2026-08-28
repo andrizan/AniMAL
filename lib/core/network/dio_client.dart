@@ -1,8 +1,10 @@
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/logger/app_logger.dart';
+import 'package:animal/core/network/api_health_interceptor.dart';
 import 'package:animal/core/network/auth_interceptor.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
 /// Configured [Dio] instance for communicating with the MyAnimeList API.
@@ -10,6 +12,7 @@ class DioClient {
   DioClient({
     required SecureTokenStorage tokenStorage,
     Future<void> Function()? onAuthFailure,
+    Ref? ref,
     Logger? logger,
   }) : _dio = Dio(
          BaseOptions(
@@ -28,6 +31,7 @@ class DioClient {
         onAuthFailure: onAuthFailure,
         logger: logger,
       ),
+      if (ref != null) ApiHealthInterceptor(ref),
       _SafeLogInterceptor(logger ?? appLogger),
     ]);
   }
