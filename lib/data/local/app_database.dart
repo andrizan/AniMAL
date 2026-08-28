@@ -1,9 +1,6 @@
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
-/// Single SQLite database for persistent application/API cache.
-///
-/// One connection, one schema (version 1), one startup cleanup pass.
 class AppDatabase {
   AppDatabase._(this._db);
 
@@ -14,10 +11,6 @@ class AppDatabase {
   static const _schemaVersion = 1;
   static const _fileName = 'animal_cache.db';
 
-  /// Opens (or creates) the SQLite database and runs migrations + cleanup.
-  ///
-  /// [pathOverride] is for tests; production uses the platform's default
-  /// databases directory + the private `_fileName` constant.
   static Future<AppDatabase> open({
     String? pathOverride,
     bool runMigrations = true,
@@ -31,10 +24,7 @@ class AppDatabase {
         await _createV1(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        // Additive migrations only. Future versions add cases here.
-        if (oldVersion < 1) {
-          await _createV1(db);
-        }
+        await _createV1(db);
       },
     );
     final appDb = AppDatabase._(db);
@@ -58,43 +48,36 @@ class AppDatabase {
     final fourteenDaysAgo = now.subtract(const Duration(days: 14));
 
     await _db.transaction((txn) async {
-      // 1h: search results
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['search_%', oneHourAgo.millisecondsSinceEpoch],
       );
-      // 24h: ranking
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['ranking_%', oneDayAgo.millisecondsSinceEpoch],
       );
-      // 90d: seasonal
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['seasonal_%', ninetyDaysAgo.millisecondsSinceEpoch],
       );
-      // 24h: userlist
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['userlist_%', oneDayAgo.millisecondsSinceEpoch],
       );
-      // 24h: userInfo
       await txn.delete(
         'cache_meta',
         where: 'cache_key = ? AND fetched_at < ?',
         whereArgs: ['userInfo', oneDayAgo.millisecondsSinceEpoch],
       );
-      // 30d: detail
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['detail_%', thirtyDaysAgo.millisecondsSinceEpoch],
       );
-      // 14d: weeklyAiringSchedule
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
@@ -103,40 +86,32 @@ class AppDatabase {
           fourteenDaysAgo.millisecondsSinceEpoch,
         ],
       );
-      // 30d: animeExtra
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['animeExtra_%', thirtyDaysAgo.millisecondsSinceEpoch],
       );
-      // 90d: character
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['character_%', ninetyDaysAgo.millisecondsSinceEpoch],
       );
-      // 90d: staff
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['staff_%', ninetyDaysAgo.millisecondsSinceEpoch],
       );
-      // 90d: studio
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['studio_%', ninetyDaysAgo.millisecondsSinceEpoch],
       );
-
-      // 7d: airing entries (by epoch seconds)
       final sevenDaysEpochSec = sevenDaysAgo.millisecondsSinceEpoch ~/ 1000;
       await txn.delete(
         'airing_schedule',
         where: 'airing_at < ?',
         whereArgs: [sevenDaysEpochSec],
       );
-
-      // Orphan relation rows: cache_meta entries point to nothing.
       await txn.delete(
         'anime_query_item',
         where: "cache_key NOT IN (SELECT cache_key FROM cache_meta WHERE cache_key LIKE 'search_%' OR cache_key LIKE 'seasonal_%' OR cache_key LIKE 'ranking_%')",
@@ -145,8 +120,6 @@ class AppDatabase {
         'user_anime_list_item',
         where: "cache_key NOT IN (SELECT cache_key FROM cache_meta WHERE cache_key LIKE 'userlist_%')",
       );
-
-      // Orphan anime (no references in any relation table or detail)
       await txn.delete(
         'anime',
         where:
@@ -476,7 +449,7 @@ class AppDatabase {
         format                TEXT,
         status                TEXT,
         my_list_status_json   TEXT,
-        PRIMARY KEY (week_key, day, anilist_id)
+        PRIMARY KEY (week_key, anilist_id, episode)
       );
     ''');
     await db.execute(

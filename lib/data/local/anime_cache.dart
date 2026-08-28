@@ -40,8 +40,7 @@ abstract interface class AnimeCache {
   // Invalidation
   Future<void> invalidateAnimeDetail(int malId);
   Future<void> invalidateUserAnimeLists();
+  Future<void> invalidateUserAnimeList(String status, int limit, int offset);
   Future<void> updateCachedAnimeListStatus(int malId, MyListStatus status);
   Future<void> clearCachedAnimeListStatus(int malId);
-  Future<void> invalidateSearchResultsContainingAnime(int malId);
-  Future<void> invalidateSeasonalResultsContainingAnime(int malId);
 }

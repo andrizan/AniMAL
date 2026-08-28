@@ -195,6 +195,16 @@ class SqliteAnimeCache implements AnimeCache {
   }
 
   @override
+  Future<void> invalidateUserAnimeList(
+      String status, int limit, int offset) async {
+    await _db.delete(
+      'cache_meta',
+      where: 'cache_key = ?',
+      whereArgs: [userListKey(status, limit, offset)],
+    );
+  }
+
+  @override
   Future<void> updateCachedAnimeListStatus(
     int malId,
     MyListStatus status,
@@ -204,19 +214,6 @@ class SqliteAnimeCache implements AnimeCache {
 
   @override
   Future<void> clearCachedAnimeListStatus(int malId) async {
-    await _writeMyListStatus(malId, null);
-  }
-
-  @override
-  Future<void> invalidateSearchResultsContainingAnime(int malId) async {
-    // Embedded my_list_status is updated via updateCachedAnimeListStatus;
-    // we only drop the cache meta when status moves between lists.
-    // For deletes/clears, callers should use the appropriate invalidation.
-    await _writeMyListStatus(malId, null);
-  }
-
-  @override
-  Future<void> invalidateSeasonalResultsContainingAnime(int malId) async {
     await _writeMyListStatus(malId, null);
   }
 

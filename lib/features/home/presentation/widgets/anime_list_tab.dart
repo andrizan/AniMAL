@@ -1,3 +1,4 @@
+import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
@@ -83,9 +84,14 @@ class AnimeListTab extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async {
+        await ref.read(animeCacheProvider).invalidateUserAnimeList(status.value, 100, 0);
         ref
           ..invalidate(userAnimeListProvider(status))
           ..invalidate(airingByMalIdProvider);
+        // Wait until fresh data is fetched so indicator shows correct state
+        try {
+          await ref.read(userAnimeListProvider(status).future);
+        } catch (_) {}
       },
       child: ListView.builder(
         key: PageStorageKey<String>('anime_list_${status.value}'),

@@ -153,14 +153,20 @@ class AnimeRepository {
       final fetchedAt = await _cache.getFetchedAt(key);
       if (cached != null && fetchedAt != null) {
         if (DateTime.now().difference(fetchedAt) < _ttlUserList) {
+          _logger?.d(
+              'getUserAnimeList cache hit ${status.value} cached=${cached.length} age=${DateTime.now().difference(fetchedAt).inSeconds}s');
           return cached;
         }
+        _logger?.d('getUserAnimeList stale ${status.value} cached=${cached.length}');
+      } else {
+        _logger?.d('getUserAnimeList cache miss ${status.value}');
       }
       final fresh = await _api.getUserAnimeList(
         status: status,
         limit: limit,
         offset: offset,
       );
+      _logger?.i('getUserAnimeList network ${status.value} fresh=${fresh.length}');
       await _cache.saveUserAnimeList(status.value, limit, offset, fresh);
       return fresh;
     });
@@ -230,47 +236,74 @@ class AnimeRepository {
 
   /// Apply a list mutation to SQLite caches.
   Future<void> _applyListMutation(int animeId, MyListStatus updated) async {
-    final newStatus = updated.status;
-    const newLimit = 100;
-    const newOffset = 0;
-    final newKey = SqliteAnimeCache.userListKey(
-      newStatus.value,
-      newLimit,
-      newOffset,
-    );
+    try {
+      final newStatus = updated.status;
+      const newLimit = 100;
+      const newOffset = 0;
+      final newKey = SqliteAnimeCache.userListKey(
+        newStatus.value,
+        newLimit,
+        newOffset,
+      );
 
-    final metaRows = await _appDb.raw.query(
-      'cache_meta',
-      columns: ['cache_key'],
-      where: 'cache_key LIKE ?',
-      whereArgs: ['userlist_%'],
-    );
+      final metaRows = await _appDb.raw.query(
+        'cache_meta',
+        columns: ['cache_key'],
+        where: 'cache_key LIKE ?',
+        whereArgs: ['userlist_%'],
+      );
 
-    for (final row in metaRows) {
-      final key = row['cache_key']! as String;
-      final status = _statusFromKey(key);
-      final limit = _limitFromKey(key);
-      final offset = _offsetFromKey(key);
-      final list = await _cache.getUserAnimeList(status, limit, offset);
-      if (list == null) continue;
-      final idx = list.indexWhere((a) => a.id == animeId);
+      Anime? sourceAnime;
+      bool foundInNewKey = false;
+      final keys = metaRows.map((r) => r['cache_key']! as String).toList();
 
-      if (key == newKey) {
-        if (idx != -1) {
-          final newList = List<Anime>.from(list);
-          newList[idx] = list[idx].copyWith(myListStatus: updated);
-          await _cache.saveUserAnimeList(status, limit, offset, newList);
+      for (final key in keys) {
+        try {
+          final status = _statusFromKey(key);
+          final limit = _limitFromKey(key);
+          final offset = _offsetFromKey(key);
+          final list = await _cache.getUserAnimeList(status, limit, offset);
+          if (list == null) continue;
+          final idx = list.indexWhere((a) => a.id == animeId);
+          if (idx != -1) {
+            sourceAnime ??= list[idx];
+            if (key == newKey) {
+              foundInNewKey = true;
+              final newList = List<Anime>.from(list);
+              newList[idx] = list[idx].copyWith(myListStatus: updated);
+              await _cache.saveUserAnimeList(status, limit, offset, newList);
+            } else {
+              final newList = list.where((a) => a.id != animeId).toList();
+              await _cache.saveUserAnimeList(status, limit, offset, newList);
+            }
+          }
+        } catch (e) {
+          _logger?.w('Skipping malformed userlist cache key: $e');
         }
-        // idx == -1: the new status page doesn't have this anime; it will
-        // be inserted on the next refetch.
-      } else if (idx != -1) {
-        final newList = list.where((a) => a.id != animeId).toList();
-        await _cache.saveUserAnimeList(status, limit, offset, newList);
       }
-    }
 
-    await _cache.updateCachedAnimeListStatus(animeId, updated);
-    await _cache.invalidateAnimeDetail(animeId);
+      if (!foundInNewKey && sourceAnime != null) {
+        final existingNewList = await _cache.getUserAnimeList(
+            newStatus.value, newLimit, newOffset);
+        if (existingNewList != null) {
+          if (!existingNewList.any((a) => a.id == animeId)) {
+            await _cache.saveUserAnimeList(newStatus.value, newLimit,
+                newOffset, [...existingNewList, sourceAnime.copyWith(myListStatus: updated)]);
+          }
+        } else {
+          await _cache.saveUserAnimeList(newStatus.value, newLimit, newOffset,
+              [sourceAnime.copyWith(myListStatus: updated)]);
+        }
+      } else if (!foundInNewKey && sourceAnime == null) {
+        await _cache.invalidateUserAnimeList(newStatus.value, newLimit, newOffset);
+      }
+
+      await _cache.updateCachedAnimeListStatus(animeId, updated);
+      await _cache.invalidateAnimeDetail(animeId);
+    } catch (e, st) {
+      _logger?.e('Failed to apply list mutation to cache',
+          error: e, stackTrace: st);
+    }
   }
 
   // The repository's cache wraps the AppDatabase; expose a tiny accessor for
@@ -281,9 +314,20 @@ class AnimeRepository {
   // a dedicated helper for that via the AppDatabase provider.
   AppDatabase get _appDb => _ref.read(appDatabaseProvider);
 
-  String _statusFromKey(String key) => key.split('_')[1];
-  int _limitFromKey(String key) => int.parse(key.split('_')[2]);
-  int _offsetFromKey(String key) => int.parse(key.split('_')[3]);
+  String _statusFromKey(String key) {
+    final parts = key.split('_');
+    return parts.sublist(1, parts.length - 2).join('_');
+  }
+
+  int _limitFromKey(String key) {
+    final parts = key.split('_');
+    return int.parse(parts[parts.length - 2]);
+  }
+
+  int _offsetFromKey(String key) {
+    final parts = key.split('_');
+    return int.parse(parts.last);
+  }
 
   void _bumpListVersion() {
     _ref.read(animeListVersionProvider.notifier).bump();

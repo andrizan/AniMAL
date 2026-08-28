@@ -116,7 +116,7 @@ class SqliteAiringCache implements AiringCache {
             'my_list_status_json': e.myListStatus == null
                 ? null
                 : _encodeStatus(e.myListStatus!),
-          });
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       }
       await txn.insert(
