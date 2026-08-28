@@ -11,13 +11,16 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor({
     required SecureTokenStorage tokenStorage,
     required Dio dio,
+    Future<void> Function()? onAuthFailure,
     Logger? logger,
   }) : _tokenStorage = tokenStorage,
        _dio = dio,
+       _onAuthFailure = onAuthFailure,
        _logger = logger ?? appLogger;
 
   final SecureTokenStorage _tokenStorage;
   final Dio _dio;
+  final Future<void> Function()? _onAuthFailure;
   final Logger _logger;
   Future<bool>? _refreshFuture;
 
@@ -81,6 +84,20 @@ class AuthInterceptor extends Interceptor {
       );
       _logger.i('Token refreshed');
       return true;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 400 || status == 401) {
+        _logger.e(
+          'Refresh token rejected (HTTP $status) — forcing logout',
+          error: e,
+        );
+        await _tokenStorage.clear();
+        final cb = _onAuthFailure;
+        if (cb != null) await cb();
+      } else {
+        _logger.e('Token refresh failed (HTTP $status)', error: e);
+      }
+      return false;
     } on Exception catch (e) {
       _logger.e('Token refresh failed', error: e);
       return false;

@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 class DioClient {
   DioClient({
     required SecureTokenStorage tokenStorage,
+    Future<void> Function()? onAuthFailure,
     Logger? logger,
   }) : _dio = Dio(
          BaseOptions(
@@ -24,6 +25,7 @@ class DioClient {
       AuthInterceptor(
         tokenStorage: tokenStorage,
         dio: _dio,
+        onAuthFailure: onAuthFailure,
         logger: logger,
       ),
       _SafeLogInterceptor(logger ?? appLogger),

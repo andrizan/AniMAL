@@ -21,6 +21,9 @@ final tokenStorageProvider = Provider<SecureTokenStorage>((ref) {
 final dioClientProvider = Provider<DioClient>((ref) {
   return DioClient(
     tokenStorage: ref.watch(tokenStorageProvider),
+    onAuthFailure: () async {
+      await ref.read(authControllerProvider.notifier).logout();
+    },
     logger: ref.watch(loggerProvider),
   );
 });
