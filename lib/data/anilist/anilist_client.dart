@@ -508,7 +508,11 @@ class AniListClient {
       writeCache: writeCache,
       isMissingNetworkValue: isMissingNetworkValue,
     );
-    unawaited(fut.then((_) => _inFlight.remove(key)));
+    unawaited(
+      fut.whenComplete(() {
+        _inFlight.remove(key);
+      }),
+    );
     _inFlight[key] = fut;
     return fut;
   }

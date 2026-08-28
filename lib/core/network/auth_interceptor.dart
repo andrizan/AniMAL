@@ -45,6 +45,11 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    if (err.requestOptions.path == Env.malTokenUrl ||
+        err.requestOptions.uri.toString() == Env.malTokenUrl) {
+      handler.next(err);
+      return;
+    }
     if (err.response?.statusCode == 401) {
       _logger.w('AuthInterceptor: 401 — attempting token refresh');
       _refreshFuture ??= _refreshToken();
@@ -52,9 +57,14 @@ class AuthInterceptor extends Interceptor {
       if (refreshed) {
         final token = await _tokenStorage.getAccessToken();
         err.requestOptions.headers['Authorization'] = 'Bearer $token';
-        final response = await _dio.fetch<dynamic>(err.requestOptions);
-        handler.resolve(response);
-        return;
+        try {
+          final response = await _dio.fetch<dynamic>(err.requestOptions);
+          handler.resolve(response);
+          return;
+        } on DioException catch (e) {
+          handler.next(e);
+          return;
+        }
       }
     }
     handler.next(err);

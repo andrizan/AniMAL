@@ -77,6 +77,8 @@ class AiringRepository {
 
   static const _ttlMerged = Duration(minutes: 15);
 
+  final Map<String, Future<Map<String, List<AiringEntry>>>> _inFlight = {};
+
   int _currentWeekStartEpochSec() {
     final now = DateTime.now().toUtc();
     final monday = now.subtract(Duration(days: now.weekday - 1));
@@ -86,19 +88,28 @@ class AiringRepository {
 
   Future<Map<String, List<AiringEntry>>> getWeeklySchedule() async {
     final weekStartSec = _currentWeekStartEpochSec();
+    final key = _weekKey(weekStartSec);
+    final existing = _inFlight[key];
+    if (existing != null) return existing;
+    final fut = _getWeeklyScheduleInner(weekStartSec);
+    _inFlight[key] = fut;
+    unawaited(fut.whenComplete(() => _inFlight.remove(key)));
+    return fut;
+  }
 
-    // Freshness check + dedup combined: a single in-flight future per week.
+  Future<Map<String, List<AiringEntry>>> _getWeeklyScheduleInner(
+    int weekStartSec,
+  ) async {
     final cached = await cache.getMergedWeek(weekStartSec);
     final fetchedAt = await cache.getFetchedAt(_weekKey(weekStartSec));
     if (cached != null && fetchedAt != null) {
       if (DateTime.now().difference(fetchedAt) < _ttlMerged) {
         return cached;
       }
-      // Stale: return stale, refresh in background.
       unawaited(_refreshMerged(weekStartSec));
       return cached;
     }
-    // Missing: blocking fetch + save.
+    _logger.d('Airing cache miss for week $weekStartSec, building');
     return _buildAndSave(weekStartSec);
   }
 

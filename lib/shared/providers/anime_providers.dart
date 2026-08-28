@@ -421,7 +421,15 @@ class AnimeRepository {
       return existing as Future<T>;
     }
     final fut = run();
-    unawaited(fut.then((_) => _inFlight.remove(key)));
+    // whenComplete fires the callback whether `fut` succeeds or rejects,
+    // which is what we want for cleanup. The resulting future propagates
+    // any rejection from `fut`; we suppress it here since the original
+    // caller already sees it through `fut`.
+    unawaited(
+      fut.whenComplete(() {
+        _inFlight.remove(key);
+      }),
+    );
     _inFlight[key] = fut;
     return fut;
   }
