@@ -84,7 +84,9 @@ class AnimeListTab extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(animeCacheProvider).invalidateUserAnimeList(status.value, 100, 0);
+        await ref
+            .read(animeCacheProvider)
+            .invalidateUserAnimeList(status.value, 100, 0);
         ref
           ..invalidate(userAnimeListProvider(status))
           ..invalidate(airingByMalIdProvider);

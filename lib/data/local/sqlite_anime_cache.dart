@@ -196,7 +196,10 @@ class SqliteAnimeCache implements AnimeCache {
 
   @override
   Future<void> invalidateUserAnimeList(
-      String status, int limit, int offset) async {
+    String status,
+    int limit,
+    int offset,
+  ) async {
     await _db.delete(
       'cache_meta',
       where: 'cache_key = ?',

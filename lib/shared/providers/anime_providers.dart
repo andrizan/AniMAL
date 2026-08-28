@@ -154,10 +154,13 @@ class AnimeRepository {
       if (cached != null && fetchedAt != null) {
         if (DateTime.now().difference(fetchedAt) < _ttlUserList) {
           _logger?.d(
-              'getUserAnimeList cache hit ${status.value} cached=${cached.length} age=${DateTime.now().difference(fetchedAt).inSeconds}s');
+            'getUserAnimeList cache hit ${status.value} cached=${cached.length} age=${DateTime.now().difference(fetchedAt).inSeconds}s',
+          );
           return cached;
         }
-        _logger?.d('getUserAnimeList stale ${status.value} cached=${cached.length}');
+        _logger?.d(
+          'getUserAnimeList stale ${status.value} cached=${cached.length}',
+        );
       } else {
         _logger?.d('getUserAnimeList cache miss ${status.value}');
       }
@@ -166,7 +169,9 @@ class AnimeRepository {
         limit: limit,
         offset: offset,
       );
-      _logger?.i('getUserAnimeList network ${status.value} fresh=${fresh.length}');
+      _logger?.i(
+        'getUserAnimeList network ${status.value} fresh=${fresh.length}',
+      );
       await _cache.saveUserAnimeList(status.value, limit, offset, fresh);
       return fresh;
     });
@@ -284,25 +289,40 @@ class AnimeRepository {
 
       if (!foundInNewKey && sourceAnime != null) {
         final existingNewList = await _cache.getUserAnimeList(
-            newStatus.value, newLimit, newOffset);
+          newStatus.value,
+          newLimit,
+          newOffset,
+        );
         if (existingNewList != null) {
           if (!existingNewList.any((a) => a.id == animeId)) {
-            await _cache.saveUserAnimeList(newStatus.value, newLimit,
-                newOffset, [...existingNewList, sourceAnime.copyWith(myListStatus: updated)]);
+            await _cache.saveUserAnimeList(
+              newStatus.value,
+              newLimit,
+              newOffset,
+              [...existingNewList, sourceAnime.copyWith(myListStatus: updated)],
+            );
           }
         } else {
-          await _cache.saveUserAnimeList(newStatus.value, newLimit, newOffset,
-              [sourceAnime.copyWith(myListStatus: updated)]);
+          await _cache.saveUserAnimeList(newStatus.value, newLimit, newOffset, [
+            sourceAnime.copyWith(myListStatus: updated),
+          ]);
         }
       } else if (!foundInNewKey && sourceAnime == null) {
-        await _cache.invalidateUserAnimeList(newStatus.value, newLimit, newOffset);
+        await _cache.invalidateUserAnimeList(
+          newStatus.value,
+          newLimit,
+          newOffset,
+        );
       }
 
       await _cache.updateCachedAnimeListStatus(animeId, updated);
       await _cache.invalidateAnimeDetail(animeId);
     } catch (e, st) {
-      _logger?.e('Failed to apply list mutation to cache',
-          error: e, stackTrace: st);
+      _logger?.e(
+        'Failed to apply list mutation to cache',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
