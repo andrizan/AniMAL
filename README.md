@@ -1,122 +1,217 @@
 # AniMAL
 
-Unofficial MyAnimeList client built with Flutter.
+> Unofficial [MyAnimeList](https://myanimelist.net) client built with Flutter — clean, fast, and offline-capable.
+
+[![Quality Checks](https://github.com/andrizan/AniMAL/actions/workflows/quality.yml/badge.svg)](https://github.com/andrizan/AniMAL/actions/workflows/quality.yml)
+[![Release APK](https://github.com/andrizan/AniMAL/actions/workflows/release-apk.yml/badge.svg)](https://github.com/andrizan/AniMAL/actions/workflows/release-apk.yml)
+[![Flutter](https://img.shields.io/badge/Flutter-3.47-blue?logo=flutter)](https://flutter.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Track your anime, discover seasonal charts, follow weekly airing schedules, and dive into character / staff details. MAL is the source of truth for user data; AniList enriches it with schedule and people data.
+
+---
+
+## Features
+
+- **Home** — User anime lists by status (Watching / Plan to Watch / On Hold / Completed / Dropped) with sort & airing filter, unified card UI, inline status edit
+- **Airing** — Weekly schedule grouped by day (Mon–Sun) with countdown (`2d 5h`, `45m`, urgent <6h in red), merged from AniList + MAL scores
+- **Calendar** — Seasonal browser (Winter/Spring/Summer/Fall + Later) with year picker (current-50 → current+1)
+- **Search & Ranking** — Full-text search and MAL rankings with local cache
+- **Detail** — Cover with gradient overlay & full-screen viewer, chips, genres, broadcast, related anime, staff & characters (4 + See All)
+- **Profile** — Real MAL user stats (`/users/@me`), days watched, mean score, per-status counts
+- **Auth** — MAL OAuth2 PKCE, secure token storage, auto refresh on 401
+- **Offline** — Persistent SQLite cache survives cold start; works offline for cached screens
+
+---
 
 ## Tech Stack
 
 | Layer | Package |
 |-------|---------|
-| State | `flutter_riverpod` |
-| Routing | `go_router` (StatefulShellRoute for tab navigation) |
-| HTTP | `dio` |
-| Codegen | `freezed` + `json_serializable` (data layer DTOs only) |
-| Secure storage | `flutter_secure_storage` |
-| Preferences | `shared_preferences` |
+| State | `flutter_riverpod` 3.x |
+| Routing | `go_router` (StatefulShellRoute, auth guard) |
+| Network | `dio` 5.x |
+| Persistence | `sqflite` + `path` (typed SQLite cache) |
+| Data | `sqflite_common_ffi` (host tests) |
+| Codegen | `freezed` + `json_serializable` (DTOs only) |
+| Auth | `flutter_secure_storage` |
+| Prefs | `shared_preferences` |
 | Images | `cached_network_image` |
-| Fonts | `google_fonts` (Inter + Noto Sans JP) |
-| Notifications | `flutter_local_notifications` |
-| Timezone | `timezone` |
+| Fonts | `google_fonts` (Inter 400/500/600/700, fallback Noto Sans JP) |
+| Notifications | `flutter_local_notifications` + `timezone` |
+| Logging | `logger` (PrettyPrinter) |
+
+---
 
 ## APIs
 
-| API | Usage |
-|-----|-------|
-| [MyAnimeList API v2](https://myanimelist.net/apiconfig) | User list, detail, search, ranking, seasonal, scores |
-| [AniList GraphQL](https://anilist.gitbook.io/anilist-apiv2-docs/) | Characters, staff, studios, airing schedule |
+| Source | Data |
+|--------|------|
+| **MyAnimeList API v2** | User list, detail, search, ranking, seasonal, scores (`mean`), auth |
+| **AniList GraphQL** | Characters, staff, studios, airing schedule (`airingAt`, `episode`, `timeUntilAiring`) |
+
+MAL is primary; AniList is supplementary. On merge MAL wins.
+
+---
 
 ## Architecture
 
-**Feature-Based** with strict isolation. No cross-feature imports.
+**Feature-based, strict isolation** — features never import each other. Shared data lives in `data/`, `core/`, `shared/`.
 
 ```
 feature/
-├── data/          Repo implementations, maps DTO → entity
-├── domain/        Entities (plain Dart), abstract repos, use cases
-├── providers/     Riverpod providers (*_providers.dart)
-└── presentation/  Screens (*_page.dart) + widgets
+├── data/           Repo impl, DTO → entity mappers
+├── domain/         Entities (plain Dart), abstract repos, use cases
+├── providers/      Riverpod providers (*_providers.dart)
+└── presentation/   Screens (*_page.dart) + widgets
 ```
 
-Shared layers: `data/` (models, API clients), `core/` (infrastructure), `shared/` (widgets, providers).
-
-## Project Structure
+### Project Structure
 
 ```
 lib/
-├── main.dart
+├── main.dart                          # WidgetsFlutterBinding + TZ + SQLite + notifications → runApp
 ├── app.dart
-│
 ├── core/
-│   ├── config/            Environment (--dart-define)
-│   ├── constants/         MAL endpoints, AniList GraphQL queries
-│   ├── logger/            Standardized appLogger (PrettyPrinter)
-│   ├── network/           Dio, auth/refresh interceptors, ApiException
-│   ├── notification/      Local notification service
-│   ├── router/            GoRouter, auth guard, route guards
-│   ├── storage/           Secure token storage
-│   ├── theme/             AppColors, StatusColors, text styles, theme builder
-│   ├── utils/             Date/timezone, anime labels, github check
-│   └── providers.dart     Dio, logger, tokens, notification, auth
-│
-├── data/                  Shared data layer
-│   ├── mal/               MAL API client, MAL OAuth client
-│   ├── anilist/           AniList GraphQL client
-│   ├── local/             In-memory cache (MemoryCache)
-│   └── models/            @freezed DTOs
-│       └── anilist/       AniList plain Dart models
-│
+│   ├── config/env.dart               # --dart-define (MAL_CLIENT_ID/SECRET/REDIRECT_URI)
+│   ├── constants/                     # mal_endpoints, anilist_queries
+│   ├── logger/app_logger.dart
+│   ├── network/                       # DioClient, AuthInterceptor, ApiHealth*, ApiException (incl. RateLimit)
+│   ├── notification/
+│   ├── router/                        # GoRouter + AuthRefreshListenable + guards
+│   ├── storage/secure_token_storage.dart
+│   ├── theme/                         # AppColors/StatusColors, AppTextStyles, app_theme (M3, indigo, dark)
+│   ├── utils/date_utils.dart          # JST→local, countdown
+│   └── providers.dart                 # logger, dio, appDatabase, caches, auth
+├── data/
+│   ├── mal/mal_api_client.dart
+│   ├── anilist/anilist_client.dart
+│   ├── local/                         # SQLite cache
+│   │   ├── app_database.dart          # single DB, versioned schema, startup prune
+│   │   ├── cache_mappers.dart         # pure DTO ↔ row mappers
+│   │   ├── anime_cache.dart           # interface
+│   │   ├── sqlite_anime_cache.dart    # MAL caches (search/seasonal/ranking/detail/userList/userInfo)
+│   │   ├── anilist_cache.dart         # AniList caches (schedule/extra/character/staff/studio)
+│   │   └── airing_cache.dart          # merged weekly schedule
+│   └── models/                        # @freezed DTOs (MAL) + plain Dart (AniList)
 ├── shared/
-│   ├── providers/         Shared Riverpod providers
-│   │   ├── airing_entry.dart (AiringEntry + airingByMalIdProvider)
-│   │   ├── anime_providers.dart (AnimeRepository + detail/ranking providers)
-│   │   ├── anilist_providers.dart (AniList character/staff/studio/extra)
-│   │   ├── anime_list_providers.dart (userAnimeListProvider)
-│   │   ├── anime_notification_providers.dart
-│   │   └── theme_providers.dart (themeModeProvider)
-│   └── widgets/           Shared widgets
-│       ├── anime_card.dart (unified card with list status badge)
-│       ├── info_chip.dart
-│       └── full_screen_image.dart
-│
+│   ├── providers/
+│   │   ├── anime_providers.dart       # AnimeRepository (SWR, dedup, mutations)
+│   │   ├── anime_list_providers.dart  # userAnimeListProvider, sortedUserAnimeListProvider
+│   │   ├── airing_entry.dart          # AiringEntry, AiringRepository, weeklyAiringProvider
+│   │   ├── anilist_providers.dart
+│   │   └── theme_providers.dart
+│   └── widgets/                       # anime_card, loading_shimmer, app_cached_image, etc.
 └── features/
-    ├── home/              Anime lists (Watching/Completed/etc.)
-    │   └── presentation/  (composed via StatefulShellRoute)
-    ├── airing/            Weekly schedule (AniList + MAL scores)
-    │   ├── providers/
-    │   └── presentation/
-    ├── seasonal/          Seasonal calendar browser
-    │   ├── providers/
-    │   └── presentation/
-    ├── profile/           User profile + stats
-    │   ├── domain/
-    │   ├── providers/
-    │   └── presentation/
-    ├── auth/              MAL OAuth2 PKCE login
-    │   ├── data/
-    │   ├── providers/
-    │   └── presentation/
-    ├── detail/            Anime detail, character, staff, studio pages
-    │   └── presentation/
-    └── search/            Search + rankings
-        ├── providers/
-        └── presentation/
+    ├── home/ airing/ seasonal/ profile/ auth/ detail/ search/
 ```
 
+### Caching
+
+Single `animal_cache.db` (SQLite). No raw JSON blobs — typed tables only.
+
+| Endpoint | Key | TTL | SWR |
+|----------|-----|-----|-----|
+| Search | `search_<q>_<limit>` | 1 min | Yes |
+| Seasonal | `seasonal_<y>_<season>_<limit>` | 15 min | Yes |
+| Ranking | `ranking_<type>_<limit>` | 10 min | Yes |
+| Detail | `detail_<id>` | 15 min | Yes |
+| User list | `userlist_<status>_<limit>_<offset>` | 3 min | No (blocking) |
+| User info | `userInfo` | 10 min | No |
+| AniList weekly | `weeklyAiringSchedule:<YYYY-MM-DD>` | 15 min | Yes |
+| Merged weekly | `weekly_schedule:<YYYY-MM-DD>` | 15 min | Yes |
+| Anime extra / character / staff / studio | `animeExtra_…` etc | 15–30 min | Yes |
+
+- **SWR** = serve stale immediately + one background refresh, deduped per key.
+- **Rate limit** `429` → `ApiException.rateLimited` (no auto-retry), health tracked in `ApiHealthTracker`.
+- **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update the embedded `my_list_status` in the shared `anime` row and bump `animeListVersionProvider`.
+
+---
+
 ## Getting Started
+
+### Prerequisites
+
+- Flutter 3.47+ (`flutter --version`)
+- Dart 3.13+
+- Android SDK / Xcode for device builds
+- MAL API credentials — create a client at https://myanimelist.net/apiconfig (Application Type: `web`, Non-Commercial: `yes`)
+
+### Install
 
 ```bash
 git clone https://github.com/andrizan/AniMAL.git
 cd AniMAL
 flutter pub get
-dart run build_runner build
+dart run build_runner build --delete-conflicting-outputs
 ```
+
+### Environment
+
+Credentials are compile-time `--dart-define`, not `.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `MAL_CLIENT_ID` | From MAL apiconfig |
+| `MAL_CLIENT_SECRET` | From MAL apiconfig (PKCE) |
+| `MAL_REDIRECT_URI` | Must match apiconfig, e.g. `animal://oauth/callback` |
+
+A local `.env` is gitignored and only for helper scripts — the app never reads it.
 
 ### Run
 
 ```bash
 flutter run \
-  --dart-define=MAL_CLIENT_ID=xxx \
-  --dart-define=MAL_CLIENT_SECRET=xxx
+  --dart-define=MAL_CLIENT_ID=your_id \
+  --dart-define=MAL_CLIENT_SECRET=your_secret \
+  --dart-define=MAL_REDIRECT_URI=animal://oauth/callback
 ```
+
+### Analyze / Format / Test
+
+```bash
+dart format lib test
+flutter analyze
+flutter test
+# or with coverage
+flutter test --coverage
+```
+
+`very_good_analysis` is enabled — `flutter analyze` must be 0 errors (infos are allowed unless `--fatal-infos`).
+
+### Build APK (debug)
+
+```bash
+flutter build apk --debug \
+  --dart-define=MAL_CLIENT_ID=... \
+  --dart-define=MAL_CLIENT_SECRET=... \
+  --dart-define=MAL_REDIRECT_URI=...
+```
+
+Release APK is built by CI on tag push (see `.github/workflows/release-apk.yml`); it signs with `KEYSTORE_BASE64` secrets and attaches to a GitHub Release.
+
+---
+
+## CI
+
+| Workflow | Trigger | What |
+|----------|---------|------|
+| `quality.yml` | push `**` + PR | `pub get` → `build_runner` → `dart format --set-exit-if-changed` → `flutter analyze` → `flutter test` |
+| `release-apk.yml` | tag `v*` + manual dispatch | quality → bump version → `flutter build apk --release --dart-define=...` → upload artifact → GitHub Release → bump `pubspec.yaml` on `main` |
+
+---
+
+## Conventions
+
+- **Commits** follow Conventional Commits (`feat:`, `fix:`, `chore:`). No auto-commit without explicit instruction.
+- **Codegen** — run `dart run build_runner build` after touching `*.dart` with `@freezed`/`@JsonSerializable`.
+- **Formatting** — `dart format lib test` before every commit (CI enforces).
+- **Analysis** — `flutter analyze` with `very_good_analysis`.
+- **Imports** — `dart:` → `package:` → relative, alphabetically; `directives_ordering` lint.
+- **Colors** — never raw `Colors.*`, use `AppColors.*` / `StatusColors` in `core/theme/app_colors.dart`.
+- **Logging** — use shared `appLogger`, never `Logger()` directly.
+
+---
 
 ## License
 
