@@ -8,9 +8,8 @@ import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
-
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Profile page for an AniList character.
 class CharacterProfilePage extends ConsumerWidget {

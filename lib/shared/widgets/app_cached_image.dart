@@ -1,5 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Shared cached image widget with consistent placeholder/error handling.
 class AppCachedImage extends StatelessWidget {

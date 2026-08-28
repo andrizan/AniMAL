@@ -11,9 +11,9 @@ import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/countdown_badge.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Unified anime card used across all pages.
 ///

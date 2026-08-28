@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'anime.dart';
@@ -9,6 +9,7 @@ part of 'anime.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$AnimeCopyWithImpl<$Res>
 /// Create a copy of Anime
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? mainPicture = freezed,Object? mean = freezed,Object? rank = freezed,Object? popularity = freezed,Object? numEpisodes = freezed,Object? status = freezed,Object? rating = freezed,Object? mediaType = freezed,Object? broadcast = freezed,Object? alternativeTitles = freezed,Object? genres = null,Object? myListStatus = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(Anime(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
@@ -264,7 +265,7 @@ return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_th
 @JsonSerializable()
 
 class _Anime implements Anime {
-  const _Anime({required this.id, required this.title, @JsonKey(name: 'main_picture') this.mainPicture, this.mean, this.rank, this.popularity, @JsonKey(name: 'num_episodes') this.numEpisodes, this.status, this.rating, @JsonKey(name: 'media_type') this.mediaType, this.broadcast, @JsonKey(name: 'alternative_titles') this.alternativeTitles, final  List<Genre> genres = const [], @JsonKey(name: 'my_list_status') this.myListStatus}): _genres = genres;
+  const _Anime({required this.id, required this.title, @JsonKey(name: 'main_picture') this.mainPicture, this.mean, this.rank, this.popularity, @JsonKey(name: 'num_episodes') this.numEpisodes, this.status, this.rating, @JsonKey(name: 'media_type') this.mediaType, this.broadcast, @JsonKey(name: 'alternative_titles') this.alternativeTitles,  List<Genre> genres = const [], @JsonKey(name: 'my_list_status') this.myListStatus}): _genres = genres;
   factory _Anime.fromJson(Map<String, dynamic> json) => _$AnimeFromJson(json);
 
 @override final  int id;
@@ -464,7 +465,7 @@ class _$MainPictureCopyWithImpl<$Res>
 /// Create a copy of MainPicture
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? medium = freezed,Object? large = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(MainPicture(
 medium: freezed == medium ? _self.medium : medium // ignore: cast_nullable_to_non_nullable
 as String?,large: freezed == large ? _self.large : large // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -724,7 +725,7 @@ class _$AlternativeTitlesCopyWithImpl<$Res>
 /// Create a copy of AlternativeTitles
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? en = freezed,Object? ja = freezed,Object? synonyms = null,}) {
-  return _then(_self.copyWith(
+  return _then(AlternativeTitles(
 en: freezed == en ? _self.en : en // ignore: cast_nullable_to_non_nullable
 as String?,ja: freezed == ja ? _self.ja : ja // ignore: cast_nullable_to_non_nullable
 as String?,synonyms: null == synonyms ? _self.synonyms : synonyms // ignore: cast_nullable_to_non_nullable
@@ -863,7 +864,7 @@ return $default(_that.en,_that.ja,_that.synonyms);case _:
 @JsonSerializable()
 
 class _AlternativeTitles implements AlternativeTitles {
-  const _AlternativeTitles({this.en, this.ja, final  List<String> synonyms = const []}): _synonyms = synonyms;
+  const _AlternativeTitles({this.en, this.ja,  List<String> synonyms = const []}): _synonyms = synonyms;
   factory _AlternativeTitles.fromJson(Map<String, dynamic> json) => _$AlternativeTitlesFromJson(json);
 
 @override final  String? en;

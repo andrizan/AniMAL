@@ -2,8 +2,8 @@ import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart'
     show AiringFilter, ListSort;
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Home tab with tabbed anime lists and filter bar.

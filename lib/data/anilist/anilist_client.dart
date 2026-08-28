@@ -80,13 +80,11 @@ class AniListClient {
     var hasNextPage = true;
 
     while (hasNextPage && page <= ApiConstants.anilistWeekPageLimit) {
-      final data =
-          await _query(AniListQueries.airingSchedule, {
-                'startAt': startSec,
-                'endAt': endSec,
-                'page': page,
-              })
-              as Map<String, dynamic>;
+      final data = await _query(AniListQueries.airingSchedule, {
+        'startAt': startSec,
+        'endAt': endSec,
+        'page': page,
+      }) as Map<String, dynamic>;
       final pageData = data['Page'] as Map<String, dynamic>;
       final pageInfo = pageData['pageInfo'] as Map<String, dynamic>;
       hasNextPage = pageInfo['hasNextPage'] as bool? ?? false;
@@ -166,9 +164,9 @@ class AniListClient {
     final cached = _anilistCache.get<AniListAnimeExtra>(key);
     if (cached != null) return cached;
 
-    final data =
-        await _query(AniListQueries.animeExtra, {'idMal': malId})
-            as Map<String, dynamic>;
+    final data = await _query(AniListQueries.animeExtra, {
+      'idMal': malId,
+    }) as Map<String, dynamic>;
     final media = data['Media'] as Map<String, dynamic>?;
     if (media == null) return const AniListAnimeExtra();
 
@@ -214,9 +212,9 @@ class AniListClient {
     final cached = _anilistCache.get<AniListCharacterDetail>(key);
     if (cached != null) return cached;
 
-    final data =
-        await _query(AniListQueries.characterDetail, {'id': id})
-            as Map<String, dynamic>;
+    final data = await _query(AniListQueries.characterDetail, {
+      'id': id,
+    }) as Map<String, dynamic>;
     final c = data['Character'] as Map<String, dynamic>;
     final name = c['name'] as Map<String, dynamic>;
     final image = c['image'] as Map<String, dynamic>;
@@ -262,9 +260,9 @@ class AniListClient {
     final cached = _anilistCache.get<AniListStaffDetail>(key);
     if (cached != null) return cached;
 
-    final data =
-        await _query(AniListQueries.staffDetail, {'id': id})
-            as Map<String, dynamic>;
+    final data = await _query(AniListQueries.staffDetail, {
+      'id': id,
+    }) as Map<String, dynamic>;
     final s = data['Staff'] as Map<String, dynamic>;
     final name = s['name'] as Map<String, dynamic>;
     final image = s['image'] as Map<String, dynamic>;
@@ -384,9 +382,9 @@ class AniListClient {
     final cached = _anilistCache.get<AniListStudioDetail>(key);
     if (cached != null) return cached;
 
-    final data =
-        await _query(AniListQueries.studioDetail, {'id': id})
-            as Map<String, dynamic>;
+    final data = await _query(AniListQueries.studioDetail, {
+      'id': id,
+    }) as Map<String, dynamic>;
     final s = data['Studio'] as Map<String, dynamic>;
 
     final mediaEdges =

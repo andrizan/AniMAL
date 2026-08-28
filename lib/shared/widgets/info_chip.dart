@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class InfoChip extends StatelessWidget {
   const InfoChip({required this.label, this.icon, this.color, super.key});

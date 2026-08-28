@@ -53,3 +53,5 @@ app.*.map.json
 android/key.properties
 
 AUDIT.md
+# Widget Preview related
+.widget_preview/

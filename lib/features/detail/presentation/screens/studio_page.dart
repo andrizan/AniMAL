@@ -3,8 +3,8 @@ import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 class StudioProfilePage extends ConsumerWidget {
   const StudioProfilePage({required this.studioId, super.key});

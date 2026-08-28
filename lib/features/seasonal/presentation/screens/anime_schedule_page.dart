@@ -1,8 +1,8 @@
 import 'package:animal/data/models/season.dart';
 import 'package:animal/features/seasonal/providers/seasonal_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Calendar page showing 4 seasons + "Later" tab for a selected year.
 ///

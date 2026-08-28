@@ -5,8 +5,8 @@ import 'package:animal/core/router/app_router.dart';
 import 'package:animal/core/theme/app_theme.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
 import 'package:app_links/app_links.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -95,6 +95,13 @@ class _AppState extends ConsumerState<App> {
       darkTheme: buildDarkTheme(),
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) =>
+          // ignore: deprecated_member_use
+          // Bridges legacy package:flutter/material.dart imports in transitive
+          // plugins (cached_network_image, google_fonts, etc.) to material_ui.
+          MaterialUiCompatibilityBridge(
+            child: child ?? const SizedBox.shrink(),
+          ),
     );
   }
 }

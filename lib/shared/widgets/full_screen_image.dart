@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class FullScreenImageViewer extends StatelessWidget {
   const FullScreenImageViewer({

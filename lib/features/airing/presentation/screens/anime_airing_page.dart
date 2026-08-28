@@ -4,8 +4,8 @@ import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/features/airing/providers/airing_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/countdown_badge.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Airing page showing weekly anime schedule.
 ///

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'anime_detail.dart';
@@ -9,6 +9,7 @@ part of 'anime_detail.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$AnimeDetailCopyWithImpl<$Res>
 /// Create a copy of AnimeDetail
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? mainPicture = freezed,Object? mean = freezed,Object? rank = freezed,Object? popularity = freezed,Object? numEpisodes = freezed,Object? status = freezed,Object? rating = freezed,Object? source = freezed,Object? synopsis = freezed,Object? startDate = freezed,Object? endDate = freezed,Object? mediaType = freezed,Object? numScoringUsers = freezed,Object? genres = null,Object? broadcast = freezed,Object? alternativeTitles = freezed,Object? relatedAnime = null,Object? myListStatus = freezed,Object? startSeason = freezed,Object? averageEpisodeDuration = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(AnimeDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
@@ -284,7 +285,7 @@ return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_th
 @JsonSerializable()
 
 class _AnimeDetail implements AnimeDetail {
-  const _AnimeDetail({required this.id, required this.title, @JsonKey(name: 'main_picture') this.mainPicture, this.mean, this.rank, this.popularity, @JsonKey(name: 'num_episodes') this.numEpisodes, this.status, this.rating, this.source, this.synopsis, @JsonKey(name: 'start_date') this.startDate, @JsonKey(name: 'end_date') this.endDate, @JsonKey(name: 'media_type') this.mediaType, @JsonKey(name: 'num_scoring_users') this.numScoringUsers, final  List<Genre> genres = const [], this.broadcast, @JsonKey(name: 'alternative_titles') this.alternativeTitles, @JsonKey(name: 'related_anime') final  List<RelatedAnime> relatedAnime = const [], @JsonKey(name: 'my_list_status') this.myListStatus, @JsonKey(name: 'start_season') this.startSeason, @JsonKey(name: 'average_episode_duration') this.averageEpisodeDuration}): _genres = genres,_relatedAnime = relatedAnime;
+  const _AnimeDetail({required this.id, required this.title, @JsonKey(name: 'main_picture') this.mainPicture, this.mean, this.rank, this.popularity, @JsonKey(name: 'num_episodes') this.numEpisodes, this.status, this.rating, this.source, this.synopsis, @JsonKey(name: 'start_date') this.startDate, @JsonKey(name: 'end_date') this.endDate, @JsonKey(name: 'media_type') this.mediaType, @JsonKey(name: 'num_scoring_users') this.numScoringUsers,  List<Genre> genres = const [], this.broadcast, @JsonKey(name: 'alternative_titles') this.alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime = const [], @JsonKey(name: 'my_list_status') this.myListStatus, @JsonKey(name: 'start_season') this.startSeason, @JsonKey(name: 'average_episode_duration') this.averageEpisodeDuration}): _genres = genres,_relatedAnime = relatedAnime;
   factory _AnimeDetail.fromJson(Map<String, dynamic> json) => _$AnimeDetailFromJson(json);
 
 @override final  int id;
@@ -518,7 +519,7 @@ class _$GenreCopyWithImpl<$Res>
 /// Create a copy of Genre
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,}) {
-  return _then(_self.copyWith(
+  return _then(Genre(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,
@@ -778,7 +779,7 @@ class _$RelatedAnimeCopyWithImpl<$Res>
 /// Create a copy of RelatedAnime
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? node = null,Object? relationType = freezed,Object? relationTypeFormatted = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RelatedAnime(
 node: null == node ? _self.node : node // ignore: cast_nullable_to_non_nullable
 as AnimeNode,relationType: freezed == relationType ? _self.relationType : relationType // ignore: cast_nullable_to_non_nullable
 as String?,relationTypeFormatted: freezed == relationTypeFormatted ? _self.relationTypeFormatted : relationTypeFormatted // ignore: cast_nullable_to_non_nullable
@@ -1059,7 +1060,7 @@ class _$AnimeNodeCopyWithImpl<$Res>
 /// Create a copy of AnimeNode
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? mainPicture = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(AnimeNode(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,mainPicture: freezed == mainPicture ? _self.mainPicture : mainPicture // ignore: cast_nullable_to_non_nullable
@@ -1346,7 +1347,7 @@ class _$StartSeasonCopyWithImpl<$Res>
 /// Create a copy of StartSeason
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? year = null,Object? season = null,}) {
-  return _then(_self.copyWith(
+  return _then(StartSeason(
 year: null == year ? _self.year : year // ignore: cast_nullable_to_non_nullable
 as int,season: null == season ? _self.season : season // ignore: cast_nullable_to_non_nullable
 as String,

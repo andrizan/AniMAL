@@ -11,9 +11,9 @@ import 'package:animal/features/home/presentation/widgets/anime_home_tab.dart';
 import 'package:animal/features/profile/presentation/screens/anime_profile_page.dart';
 import 'package:animal/features/search/presentation/screens/anime_search_page.dart';
 import 'package:animal/features/seasonal/presentation/screens/anime_schedule_page.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 abstract final class AppRoutes {
   static const String login = '/login';

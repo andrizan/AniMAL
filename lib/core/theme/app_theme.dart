@@ -1,7 +1,7 @@
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_text_styles.dart';
-import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_ui/material_ui.dart';
 
 ThemeData buildLightTheme() {
   const scheme = AppColors.light;
