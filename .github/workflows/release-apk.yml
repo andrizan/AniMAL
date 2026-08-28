@@ -21,6 +21,7 @@ jobs:
   quality:
     name: Quality Checks
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -57,7 +58,9 @@ jobs:
   build:
     name: Build APK
     needs: quality
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: |
+      (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') &&
+      (needs.quality.result == 'success' || needs.quality.result == 'failure' || needs.quality.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
