@@ -4,6 +4,11 @@ import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/network/dio_client.dart';
 import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
+import 'package:animal/data/local/airing_cache.dart';
+import 'package:animal/data/local/anime_cache.dart';
+import 'package:animal/data/local/anilist_cache.dart';
+import 'package:animal/data/local/app_database.dart';
+import 'package:animal/data/local/sqlite_anime_cache.dart';
 import 'package:animal/features/auth/data/repositories/mal_auth_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +45,28 @@ final notificationServiceProvider = Provider<AnimeNotificationService>(
     'Override this provider in main.dart with the initialized instance',
   ),
 );
+
+/// SQLite database — initialized once in main.dart.
+final appDatabaseProvider = Provider<AppDatabase>(
+  (ref) => throw UnimplementedError(
+    'Override this provider in main.dart with the initialized instance',
+  ),
+);
+
+/// Typed cache for MAL endpoints, backed by [appDatabaseProvider].
+final animeCacheProvider = Provider<AnimeCache>((ref) {
+  return SqliteAnimeCache(ref.watch(appDatabaseProvider));
+});
+
+/// Typed cache for AniList endpoints, backed by [appDatabaseProvider].
+final anilistCacheProvider = Provider<AniListCache>((ref) {
+  return SqliteAniListCache(ref.watch(appDatabaseProvider));
+});
+
+/// Typed cache for the merged weekly airing schedule.
+final airingCacheProvider = Provider<AiringCache>((ref) {
+  return SqliteAiringCache(ref.watch(appDatabaseProvider));
+});
 
 /// Auth state – keeps track of whether the user is logged in.
 enum AuthStatus { unknown, authenticated, unauthenticated }

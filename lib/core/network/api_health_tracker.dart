@@ -16,6 +16,8 @@ class ApiHealth {
     this.lastErrorMessage,
     this.lastStatusCode,
     this.retryAfter,
+    this.rateLimitRemaining,
+    this.rateLimitReset,
   });
 
   final ApiSource source;
@@ -28,6 +30,8 @@ class ApiHealth {
   final String? lastErrorMessage;
   final int? lastStatusCode;
   final DateTime? retryAfter;
+  final int? rateLimitRemaining;
+  final DateTime? rateLimitReset;
 
   ApiHealth copyWith({
     ApiStatus? status,
@@ -39,6 +43,8 @@ class ApiHealth {
     String? lastErrorMessage,
     int? lastStatusCode,
     DateTime? retryAfter,
+    int? rateLimitRemaining,
+    DateTime? rateLimitReset,
   }) {
     return ApiHealth(
       source: source,
@@ -51,6 +57,8 @@ class ApiHealth {
       lastErrorMessage: lastErrorMessage ?? this.lastErrorMessage,
       lastStatusCode: lastStatusCode ?? this.lastStatusCode,
       retryAfter: retryAfter ?? this.retryAfter,
+      rateLimitRemaining: rateLimitRemaining ?? this.rateLimitRemaining,
+      rateLimitReset: rateLimitReset ?? this.rateLimitReset,
     );
   }
 }
@@ -111,6 +119,36 @@ class ApiHealthTracker extends Notifier<Map<ApiSource, ApiHealth>> {
         lastErrorMessage: message,
         lastStatusCode: statusCode,
         retryAfter: retryAfter,
+      ),
+    };
+  }
+
+  void recordRateLimitHeaders(
+    ApiSource source,
+    Map<String, List<String>>? headers,
+  ) {
+    if (headers == null) return;
+    final current = state[source]!;
+    int? remaining = current.rateLimitRemaining;
+    DateTime? reset = current.rateLimitReset;
+    final remValues =
+        headers['x-ratelimit-remaining'] ?? headers['X-RateLimit-Remaining'];
+    if (remValues != null && remValues.isNotEmpty) {
+      remaining = int.tryParse(remValues.first);
+    }
+    final resetValues =
+        headers['x-ratelimit-reset'] ?? headers['X-RateLimit-Reset'];
+    if (resetValues != null && resetValues.isNotEmpty) {
+      final seconds = int.tryParse(resetValues.first);
+      if (seconds != null) {
+        reset = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      }
+    }
+    state = {
+      ...state,
+      source: current.copyWith(
+        rateLimitRemaining: remaining,
+        rateLimitReset: reset,
       ),
     };
   }

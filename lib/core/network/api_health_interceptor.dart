@@ -19,25 +19,33 @@ class ApiHealthInterceptor extends Interceptor {
     Response<dynamic> response,
     ResponseInterceptorHandler handler,
   ) {
+    final source = _sourceForUri(response.requestOptions.uri);
     _ref
         .read(apiHealthTrackerProvider.notifier)
         .recordSuccess(
-          _sourceForUri(response.requestOptions.uri),
+          source,
           headers: response.headers.map,
         );
+    _ref
+        .read(apiHealthTrackerProvider.notifier)
+        .recordRateLimitHeaders(source, response.headers.map);
     handler.next(response);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    final source = _sourceForUri(err.requestOptions.uri);
     _ref
         .read(apiHealthTrackerProvider.notifier)
         .recordError(
-          _sourceForUri(err.requestOptions.uri),
+          source,
           statusCode: err.response?.statusCode ?? 0,
           message: err.message,
           headers: err.response?.headers.map,
         );
+    _ref
+        .read(apiHealthTrackerProvider.notifier)
+        .recordRateLimitHeaders(source, err.response?.headers.map);
     handler.next(err);
   }
 }

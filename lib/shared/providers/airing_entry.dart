@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
+import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
@@ -63,31 +66,43 @@ class AiringRepository {
   AiringRepository({
     required this._animeRepo,
     required this._anilistApi,
+    required this.cache,
     Logger? logger,
   }) : _logger = logger ?? appLogger;
 
   final AnimeRepository _animeRepo;
   final AniListClient _anilistApi;
+  final AiringCache cache;
   final Logger _logger;
 
-  // Cache
-  Map<String, List<AiringEntry>>? _cachedSchedule;
-  DateTime? _cacheTime;
-  static const _cacheDuration = Duration(minutes: 15);
+  static const _ttlMerged = Duration(minutes: 15);
 
-  bool get _isCacheValid =>
-      _cachedSchedule != null &&
-      _cacheTime != null &&
-      DateTime.now().difference(_cacheTime!) < _cacheDuration;
+  int _currentWeekStartEpochSec() {
+    final now = DateTime.now().toUtc();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+    return weekStart.millisecondsSinceEpoch ~/ 1000;
+  }
 
   Future<Map<String, List<AiringEntry>>> getWeeklySchedule() async {
-    if (_isCacheValid) {
-      _logger.d('Airing schedule cache hit');
-      return _cachedSchedule!;
+    final weekStartSec = _currentWeekStartEpochSec();
+
+    // Freshness check + dedup combined: a single in-flight future per week.
+    final cached = await cache.getMergedWeek(weekStartSec);
+    final fetchedAt = await cache.getFetchedAt(_weekKey(weekStartSec));
+    if (cached != null && fetchedAt != null) {
+      if (DateTime.now().difference(fetchedAt) < _ttlMerged) {
+        return cached;
+      }
+      // Stale: return stale, refresh in background.
+      unawaited(_refreshMerged(weekStartSec));
+      return cached;
     }
+    // Missing: blocking fetch + save.
+    return _buildAndSave(weekStartSec);
+  }
 
-    _logger.d('Fetching airing schedule...');
-
+  Future<Map<String, List<AiringEntry>>> _buildAndSave(int weekStartSec) async {
     final results = await Future.wait([
       _fetchAniListSchedule(),
       _fetchMalSeasonal(),
@@ -97,18 +112,12 @@ class AiringRepository {
         results[0] as Map<String, List<AniListScheduleEntry>>;
     final malAnimeMap = results[1] as Map<int, Anime>;
 
-    _logger.d(
-      'Merge: ${anilistSchedule.values.fold<int>(0, (sum, l) => sum + l.length)} '
-      'AniList entries, ${malAnimeMap.length} MAL entries',
-    );
-
     final merged = <String, List<AiringEntry>>{};
     var matchedCount = 0;
     for (final day in anilistSchedule.keys) {
       merged[day] = anilistSchedule[day]!.map((entry) {
         final malAnime = entry.malId != null ? malAnimeMap[entry.malId!] : null;
         if (malAnime != null) matchedCount++;
-
         return AiringEntry(
           anilistId: entry.anilistId,
           malId: entry.malId,
@@ -128,32 +137,39 @@ class AiringRepository {
         );
       }).toList();
     }
-
     _logger.d('Merge: $matchedCount entries matched with MAL scores');
 
-    for (final e in merged.entries) {
-      if (e.value.isNotEmpty) {
-        _logger.d('  ${e.key}: ${e.value.length} airing entries');
-      }
-    }
-
-    _cachedSchedule = merged;
-    _cacheTime = DateTime.now();
+    await cache.saveMergedWeek(weekStartSec, merged);
     return merged;
   }
 
+  Future<void> _refreshMerged(int weekStartSec) async {
+    try {
+      await _buildAndSave(weekStartSec);
+    } on Object catch (e) {
+      _logger.e('Background refresh failed', error: e);
+    }
+  }
+
+  String _weekKey(int weekStartSec) {
+    final dt = DateTime.fromMillisecondsSinceEpoch(weekStartSec * 1000).toUtc();
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    return 'weekly_schedule:$y-$m-$d';
+  }
+
   void invalidateCache() {
-    _cachedSchedule = null;
-    _cacheTime = null;
+    unawaited(cache.invalidateMergedWeek(_currentWeekStartEpochSec()));
   }
 
   Future<Map<String, List<AniListScheduleEntry>>>
   _fetchAniListSchedule() async {
     try {
       return await _anilistApi.getWeeklyAiringSchedule();
-    } on Exception catch (e) {
+    } on Object catch (e) {
       _logger.e('AniList schedule fetch failed', error: e);
-      return {};
+      return <String, List<AniListScheduleEntry>>{};
     }
   }
 
@@ -172,9 +188,9 @@ class AiringRepository {
 
       _logger.d('MAL seasonal returned ${animeList.length} anime');
       return {for (final a in animeList) a.id: a};
-    } on Exception catch (e) {
+    } on Object catch (e) {
       _logger.e('MAL seasonal fetch failed', error: e);
-      return {};
+      return <int, Anime>{};
     }
   }
 }
@@ -184,11 +200,10 @@ final airingRepositoryProvider = Provider<AiringRepository>((ref) {
   final repo = AiringRepository(
     animeRepo: ref.watch(animeRepositoryProvider),
     anilistApi: ref.watch(anilistApiProvider),
+    cache: ref.watch(airingCacheProvider),
     logger: ref.watch(loggerProvider),
   );
-  // Bypass the 15-minute cache when the user mutates their list so the
-  // airing page shows the fresh `myListStatus` immediately.
-  ref.listen(animeListVersionProvider, (_, __) => repo.invalidateCache());
+  ref.listen(animeListVersionProvider, (_, _) => repo.invalidateCache());
   return repo;
 });
 

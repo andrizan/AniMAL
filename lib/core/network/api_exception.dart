@@ -17,6 +17,11 @@ sealed class ApiException implements Exception {
       UnauthorizedException;
 
   const factory ApiException.unknown({String? message}) = UnknownApiException;
+
+  const factory ApiException.rateLimited({
+    required Duration retryAfter,
+    String? message,
+  }) = RateLimitException;
 }
 
 class NetworkException extends ApiException {
@@ -42,5 +47,12 @@ class UnauthorizedException extends ApiException {
 
 class UnknownApiException extends ApiException {
   const UnknownApiException({this.message});
+  final String? message;
+}
+
+/// HTTP 429 — caller decides fallback.
+class RateLimitException extends ApiException {
+  const RateLimitException({required this.retryAfter, this.message});
+  final Duration retryAfter;
   final String? message;
 }
