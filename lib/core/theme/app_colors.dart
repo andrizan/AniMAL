@@ -94,33 +94,33 @@ abstract final class AppColors {
     finished: Color(0xFF3B82F6), // Soft Blue
     upcoming: Color(0xFFF59E0B), // Soft Amber
     star: Color(0xFFFBBF24), // Warm Gold
-    listWatching: Color(0xFF10B981), // Senada dengan Airing
-    listCompleted: Color(0xFF3B82F6), // Senada dengan Finished
-    listOnHold: Color(0xFFF59E0B), // Senada dengan Upcoming
+    listWatching: Color(0xFF10B981), // Aligned with Airing
+    listCompleted: Color(0xFF3B82F6), // Aligned with Finished
+    listOnHold: Color(0xFFF59E0B), // Aligned with Upcoming
     listDropped: Color(0xFFEF4444), // Soft Red
     listPlanToWatch: Color(0xFF64748B), // Slate 500
-    overlayDark: Color(0x660F172A), // 40% Slate Base (Bukan hitam pekat)
-    overlayDarker: Color(0x990F172A), // 60% Slate Base
+    overlayDark: Color(0x660F172A), // 40% slate base (not solid black)
+    overlayDarker: Color(0x990F172A), // 60% slate base
     barrier: Color(0xCC0F172A), // 80% Slate Base
   );
 
   static const darkStatus = StatusColors(
-    airing: Color(0xFF34D399), // Emerald lebih cerah untuk kontras dark mode
-    finished: Color(0xFF60A5FA), // Blue lebih cerah
-    upcoming: Color(0xFFFBBF24), // Amber lebih cerah
+    airing: Color(0xFF34D399), // Brighter emerald for dark mode contrast
+    finished: Color(0xFF60A5FA), // Brighter blue
+    upcoming: Color(0xFFFBBF24), // Brighter amber
     star: Color(0xFFFBBF24),
     listWatching: Color(0xFF34D399),
     listCompleted: Color(0xFF60A5FA),
     listOnHold: Color(0xFFFBBF24),
-    listDropped: Color(0xFFF87171), // Soft Red terang
+    listDropped: Color(0xFFF87171), // Brighter soft red
     listPlanToWatch: Color(0xFF94A3B8), // Slate 400
     overlayDark: Color(0x660F172A),
     overlayDarker: Color(0x990F172A),
     barrier: Color(0xCC0F172A),
   );
 
-  // ── Static fallbacks (untuk kode tanpa BuildContext) ──
-  // Disamakan nilainya dengan lightStatus agar konsisten jika dipanggil statis
+  // ── Static fallbacks (for code without BuildContext) ──
+  // Keep same values as lightStatus for consistency when called statically
   static const starColor = Color(0xFFFBBF24);
   static const statusAiring = Color(0xFF10B981);
   static const statusFinished = Color(0xFF3B82F6);

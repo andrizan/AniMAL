@@ -9,7 +9,9 @@ import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
-import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/providers/anime_list_providers.dart';
+import 'package:animal/shared/providers/anime_providers.dart'
+    show AnimeRepository, animeListVersionProvider, animeRepositoryProvider;
 import 'package:animal/shared/providers/clock_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
@@ -483,6 +485,7 @@ final weeklyAiringProvider =
     });
 
 /// Map of MAL ID to next AiringEntry for quick lookup.
+/// Mandatory for all `currently_airing` anime unless truly not scheduled in AniList.
 final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
   (ref) async {
     ref.watch(animeListVersionProvider);
@@ -504,6 +507,46 @@ final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
         }
       }
     }
+    // Fallback for currently_airing anime not in weekly schedule
+    // (outside window or null idMal) using AniList extra nextAiring
+    // to keep countdown mandatory.
+    try {
+      final watching = await ref.watch(
+        userAnimeListProvider(WatchStatus.watching).future,
+      );
+      for (final anime in watching) {
+        if (anime.status != 'currently_airing') continue;
+        if (map.containsKey(anime.id)) continue;
+        try {
+          final AniListAnimeExtra extra = await ref.watch(
+            anilistAnimeExtraProvider(anime.id).future,
+          );
+          final AniListNextAiring? next = extra.nextAiring;
+          if (next == null) continue;
+          final int remaining = next.airingAt.toUtc().difference(now).inSeconds;
+          if (remaining <= 0) continue;
+          map[anime.id] = AiringEntry(
+            anilistId: anime.id,
+            malId: anime.id,
+            title: anime.title,
+            titleEnglish: anime.alternativeTitles?.en,
+            titleNative: anime.alternativeTitles?.ja,
+            imageUrl: anime.mainPicture?.medium,
+            airingAt: next.airingAt.toUtc(),
+            episode: next.episode,
+            timeUntilAiring: remaining,
+            malScore: anime.mean,
+            genres: anime.genres.map((g) => g.name).toList(),
+            episodes: anime.numEpisodes,
+            status: anime.status,
+            myListStatus: anime.myListStatus,
+            nextAiringAt: next.airingAt.toUtc(),
+            nextEpisode: next.episode,
+            nextTimeUntilAiring: next.timeUntilAiring,
+          );
+        } catch (_) {}
+      }
+    } catch (_) {}
     return map;
   },
 );
