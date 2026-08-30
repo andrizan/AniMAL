@@ -135,9 +135,24 @@ class AniListClient {
       hasNextPage = pageInfo['hasNextPage'] as bool? ?? false;
       final schedules = pageData['airingSchedules'] as List<dynamic>;
       for (final s in schedules) {
-        allEntries.add(_parseScheduleEntry(s as Map<String, dynamic>));
+        final parsed = _parseScheduleEntry(s as Map<String, dynamic>);
+        if (parsed != null) allEntries.add(parsed);
       }
       page++;
+    }
+    final now = DateTime.now();
+    final filtered = <AniListScheduleEntry>[];
+    final seen = <String>{};
+    for (final entry in allEntries) {
+      final remaining = entry.airingAt.difference(now).inSeconds;
+      final effectiveRemaining = entry.timeUntilAiring ?? remaining;
+      if (effectiveRemaining <= 0 && entry.airingAt.isBefore(now)) {
+        continue;
+      }
+      final dedupKey = '${entry.anilistId}_${entry.episode}';
+      if (seen.contains(dedupKey)) continue;
+      seen.add(dedupKey);
+      filtered.add(entry);
     }
     final grouped = <String, List<AniListScheduleEntry>>{
       'monday': [],
@@ -148,7 +163,7 @@ class AniListClient {
       'saturday': [],
       'sunday': [],
     };
-    for (final entry in allEntries) {
+    for (final entry in filtered) {
       final day = _dayName(entry.airingAt.weekday);
       if (grouped.containsKey(day)) grouped[day]!.add(entry);
     }
@@ -171,7 +186,7 @@ class AniListClient {
     };
   }
 
-  AniListScheduleEntry _parseScheduleEntry(Map<String, dynamic> schedule) {
+  AniListScheduleEntry? _parseScheduleEntry(Map<String, dynamic> schedule) {
     final media = schedule['media'] as Map<String, dynamic>;
     final title = media['title'] as Map<String, dynamic>;
     final cover = media['coverImage'] as Map<String, dynamic>?;
@@ -180,7 +195,31 @@ class AniListClient {
     final genres =
         (media['genres'] as List<dynamic>?)?.map((g) => g as String).toList() ??
         [];
-
+    var finalAiringAt = airingDate;
+    var finalEpisode = schedule['episode'] as int?;
+    var finalTimeUntil = schedule['timeUntilAiring'] as int?;
+    final nextRaw = media['nextAiringEpisode'] as Map<String, dynamic>?;
+    if (nextRaw != null) {
+      final nextAiringAt = nextRaw['airingAt'] as int?;
+      final nextEpisode = nextRaw['episode'] as int?;
+      final nextTimeUntil = nextRaw['timeUntilAiring'] as int?;
+      if (nextAiringAt != null && nextEpisode != null) {
+        final nextDate = DateTime.fromMillisecondsSinceEpoch(
+          nextAiringAt * 1000,
+        );
+        final now = DateTime.now();
+        final isExpired =
+            (finalTimeUntil != null && finalTimeUntil <= 0) ||
+            finalAiringAt.isBefore(now);
+        final nextRemaining =
+            nextTimeUntil ?? nextDate.difference(now).inSeconds;
+        if (isExpired && nextRemaining > 0 && nextDate.isAfter(now)) {
+          finalAiringAt = nextDate;
+          finalEpisode = nextEpisode;
+          finalTimeUntil = nextTimeUntil ?? nextRemaining;
+        }
+      }
+    }
     return AniListScheduleEntry(
       anilistId: media['id'] as int,
       malId: media['idMal'] as int?,
@@ -195,9 +234,9 @@ class AniListClient {
       genres: genres,
       format: media['format'] as String?,
       description: media['description'] as String?,
-      airingAt: airingDate,
-      episode: schedule['episode'] as int?,
-      timeUntilAiring: schedule['timeUntilAiring'] as int?,
+      airingAt: finalAiringAt,
+      episode: finalEpisode,
+      timeUntilAiring: finalTimeUntil,
     );
   }
 

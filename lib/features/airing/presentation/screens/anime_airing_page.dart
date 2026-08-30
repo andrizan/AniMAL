@@ -113,7 +113,11 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
               child: TabBarView(
                 controller: _tabController,
                 children: _days.map((day) {
-                  final animeForDay = grouped[day] ?? [];
+                  final allForDay = grouped[day] ?? [];
+                  final now = DateTime.now();
+                  final animeForDay = allForDay
+                      .where((e) => e.airingAt.isAfter(now))
+                      .toList();
 
                   if (animeForDay.isEmpty) {
                     return Center(
@@ -145,7 +149,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                       itemBuilder: (context, index) {
                         final entry = animeForDay[index];
                         return _AiringCard(
-                          key: ValueKey(entry.anilistId),
+                          key: ValueKey('${entry.anilistId}_${entry.episode}'),
                           entry: entry,
                         );
                       },

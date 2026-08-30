@@ -103,14 +103,104 @@ class AiringRepository {
     final cached = await cache.getMergedWeek(weekStartSec);
     final fetchedAt = await cache.getFetchedAt(_weekKey(weekStartSec));
     if (cached != null && fetchedAt != null) {
+      final filtered = _filterExpired(cached);
       if (DateTime.now().difference(fetchedAt) < _ttlMerged) {
-        return cached;
+        return filtered;
       }
       unawaited(_refreshMerged(weekStartSec));
-      return cached;
+      return filtered;
     }
     _logger.d('Airing cache miss for week $weekStartSec, building');
     return _buildAndSave(weekStartSec);
+  }
+
+  Map<String, List<AiringEntry>> _filterExpired(
+    Map<String, List<AiringEntry>> week,
+  ) {
+    final now = DateTime.now();
+    final result = <String, List<AiringEntry>>{};
+    final seenSynthetic = <String>{};
+    for (final entry in week.entries) {
+      final filtered = <AiringEntry>[];
+      for (final e in entry.value) {
+        final remaining = e.airingAt.difference(now).inSeconds;
+        if (remaining <= 0) {
+          final isReleasing =
+              e.status == 'RELEASING' || e.status == 'currently_airing';
+          if (isReleasing && e.episode > 0) {
+            final nextAiringAt = e.airingAt.add(const Duration(days: 7));
+            final nextRemaining = nextAiringAt.difference(now).inSeconds;
+            if (nextRemaining > 0) {
+              final syntheticKey = '${e.anilistId}_${e.episode + 1}';
+              if (!seenSynthetic.contains(syntheticKey)) {
+                seenSynthetic.add(syntheticKey);
+                final syntheticDay = _dayName(nextAiringAt.weekday);
+                final synthetic = AiringEntry(
+                  anilistId: e.anilistId,
+                  malId: e.malId,
+                  title: e.title,
+                  titleEnglish: e.titleEnglish,
+                  titleNative: e.titleNative,
+                  imageUrl: e.imageUrl,
+                  airingAt: nextAiringAt,
+                  episode: e.episode + 1,
+                  timeUntilAiring: nextRemaining,
+                  malScore: e.malScore,
+                  genres: e.genres,
+                  episodes: e.episodes,
+                  format: e.format,
+                  status: e.status,
+                  myListStatus: e.myListStatus,
+                );
+                result.putIfAbsent(syntheticDay, () => []).add(synthetic);
+              }
+            }
+          }
+          continue;
+        }
+        filtered.add(
+          AiringEntry(
+            anilistId: e.anilistId,
+            malId: e.malId,
+            title: e.title,
+            titleEnglish: e.titleEnglish,
+            titleNative: e.titleNative,
+            imageUrl: e.imageUrl,
+            airingAt: e.airingAt,
+            episode: e.episode,
+            timeUntilAiring: remaining,
+            malScore: e.malScore,
+            genres: e.genres,
+            episodes: e.episodes,
+            format: e.format,
+            status: e.status,
+            myListStatus: e.myListStatus,
+          ),
+        );
+      }
+      filtered.sort((a, b) => a.airingAt.compareTo(b.airingAt));
+      result[entry.key] = [...?result[entry.key], ...filtered]
+        ..sort(
+          (a, b) => a.airingAt.compareTo(b.airingAt),
+        );
+    }
+    for (final day in result.keys) {
+      result[day]!.sort((a, b) => a.airingAt.compareTo(b.airingAt));
+    }
+    return result;
+  }
+
+  String _dayName(int weekday) {
+    return switch (weekday) {
+      1 => 'monday',
+      2 => 'tuesday',
+      3 => 'wednesday',
+      4 => 'thursday',
+      5 => 'friday',
+      6 => 'saturday',
+      7 => 'sunday',
+      _ => 'monday',
+    };
   }
 
   Future<Map<String, List<AiringEntry>>> _buildAndSave(int weekStartSec) async {
@@ -125,28 +215,44 @@ class AiringRepository {
 
     final merged = <String, List<AiringEntry>>{};
     var matchedCount = 0;
+    final now = DateTime.now();
+    final seen = <String>{};
     for (final day in anilistSchedule.keys) {
-      merged[day] = anilistSchedule[day]!.map((entry) {
+      final list = <AiringEntry>[];
+      for (final entry in anilistSchedule[day]!) {
+        final remaining = entry.airingAt.difference(now).inSeconds;
+        final effectiveRemaining = entry.timeUntilAiring ?? remaining;
+        if (effectiveRemaining <= 0 && entry.airingAt.isBefore(now)) {
+          continue;
+        }
+        final dedupKey = '${entry.anilistId}_${entry.episode}';
+        if (seen.contains(dedupKey)) continue;
+        seen.add(dedupKey);
         final malAnime = entry.malId != null ? malAnimeMap[entry.malId!] : null;
         if (malAnime != null) matchedCount++;
-        return AiringEntry(
-          anilistId: entry.anilistId,
-          malId: entry.malId,
-          title: entry.titleEnglish ?? entry.title,
-          titleEnglish: entry.titleEnglish,
-          titleNative: entry.titleNative,
-          imageUrl: entry.imageUrl,
-          airingAt: entry.airingAt,
-          episode: entry.episode ?? 0,
-          timeUntilAiring: entry.timeUntilAiring ?? 0,
-          malScore: malAnime?.mean ?? entry.meanScore,
-          genres: entry.genres,
-          episodes: malAnime?.numEpisodes ?? entry.episodes,
-          format: entry.format,
-          status: entry.status,
-          myListStatus: malAnime?.myListStatus,
+        final liveRemaining = entry.airingAt.difference(now).inSeconds;
+        list.add(
+          AiringEntry(
+            anilistId: entry.anilistId,
+            malId: entry.malId,
+            title: entry.titleEnglish ?? entry.title,
+            titleEnglish: entry.titleEnglish,
+            titleNative: entry.titleNative,
+            imageUrl: entry.imageUrl,
+            airingAt: entry.airingAt,
+            episode: entry.episode ?? 0,
+            timeUntilAiring: liveRemaining > 0 ? liveRemaining : 0,
+            malScore: malAnime?.mean ?? entry.meanScore,
+            genres: entry.genres,
+            episodes: malAnime?.numEpisodes ?? entry.episodes,
+            format: entry.format,
+            status: entry.status,
+            myListStatus: malAnime?.myListStatus,
+          ),
         );
-      }).toList();
+      }
+      list.sort((a, b) => a.airingAt.compareTo(b.airingAt));
+      merged[day] = list;
     }
     _logger.d('Merge: $matchedCount entries matched with MAL scores');
 
@@ -233,15 +339,19 @@ final airingByMalIdProvider = FutureProvider<Map<int, AiringEntry>>((
 ) async {
   ref.watch(animeListVersionProvider);
   final schedule = await ref.watch(weeklyAiringProvider.future);
+  final now = DateTime.now();
   final map = <int, AiringEntry>{};
   for (final entries in schedule.values) {
     for (final entry in entries) {
-      if (entry.malId != null && entry.timeUntilAiring > 0) {
-        final existing = map[entry.malId!];
-        if (existing == null ||
-            entry.timeUntilAiring < existing.timeUntilAiring) {
-          map[entry.malId!] = entry;
-        }
+      if (entry.malId == null) continue;
+      final remaining = entry.airingAt.difference(now).inSeconds;
+      if (remaining <= 0) continue;
+      final existing = map[entry.malId!];
+      final entryRemaining = remaining;
+      final existingRemaining =
+          existing?.airingAt.difference(now).inSeconds ?? 999999999;
+      if (existing == null || entryRemaining < existingRemaining) {
+        map[entry.malId!] = entry;
       }
     }
   }

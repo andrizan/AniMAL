@@ -24,6 +24,7 @@ abstract final class AniListQueries {
             description
             format
             startDate { year month day }
+            nextAiringEpisode { airingAt episode timeUntilAiring }
           }
         }
       }

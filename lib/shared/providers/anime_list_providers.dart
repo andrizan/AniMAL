@@ -47,6 +47,7 @@ List<Anime> _sortAnimeList(
   ListSort sortBy,
   bool ascending,
 ) {
+  final now = DateTime.now();
   final sorted = List<Anime>.from(list)
     ..sort((a, b) {
       int cmp;
@@ -62,9 +63,21 @@ List<Anime> _sortAnimeList(
           final bEps = b.numEpisodes ?? 0;
           cmp = aEps.compareTo(bEps);
         case ListSort.airing:
-          final aTime = airingMap[a.id]?.timeUntilAiring ?? 999999999;
-          final bTime = airingMap[b.id]?.timeUntilAiring ?? 999999999;
-          cmp = aTime.compareTo(bTime);
+          final aEntry = airingMap[a.id];
+          final bEntry = airingMap[b.id];
+          final aHas = aEntry != null;
+          final bHas = bEntry != null;
+          if (!aHas && !bHas) {
+            cmp = 0;
+          } else if (!aHas) {
+            return 1;
+          } else if (!bHas) {
+            return -1;
+          } else {
+            final aTime = aEntry.airingAt.difference(now).inSeconds;
+            final bTime = bEntry.airingAt.difference(now).inSeconds;
+            cmp = aTime.compareTo(bTime);
+          }
       }
       return ascending ? cmp : -cmp;
     });
