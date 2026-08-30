@@ -67,7 +67,7 @@ class SqliteAiringCache implements AiringCache {
       'merged_airing_entry',
       where: 'week_key = ?',
       whereArgs: [key],
-      orderBy: 'day, position ASC',
+      orderBy: "CASE day WHEN 'monday' THEN 1 WHEN 'tuesday' THEN 2 WHEN 'wednesday' THEN 3 WHEN 'thursday' THEN 4 WHEN 'friday' THEN 5 WHEN 'saturday' THEN 6 WHEN 'sunday' THEN 7 ELSE 8 END, position ASC",
     );
     final grouped = <String, List<AiringEntry>>{
       for (final d in _dayNames) d: <AiringEntry>[],

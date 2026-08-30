@@ -128,9 +128,9 @@ class SqliteAniListCache implements AniListCache {
     Map<String, List<AniListScheduleEntry>> schedule,
   ) async {
     final key = weeklyKey(weekStartEpochSec);
-    final end = weekStartEpochSec + 7 * 24 * 60 * 60;
+    final end = weekStartEpochSec + 14 * 24 * 60 * 60;
     await _db.transaction((txn) async {
-      // Delete only entries within the week window.
+      // Delete 14d window to also clean synthetic +7d next-week entries.
       await txn.delete(
         'airing_schedule',
         where: 'airing_at >= ? AND airing_at < ?',

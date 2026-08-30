@@ -132,6 +132,10 @@ class AppDatabase {
             'AND mal_id NOT IN (SELECT mal_id FROM anime_detail) '
             'AND mal_id NOT IN (SELECT mal_id FROM anilist_anime_extra)',
       );
+      await txn.delete(
+        'merged_airing_entry',
+        where: "week_key NOT IN (SELECT cache_key FROM cache_meta WHERE cache_key LIKE 'weekly_schedule:%')",
+      );
     });
   }
 
