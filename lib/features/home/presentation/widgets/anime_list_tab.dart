@@ -89,10 +89,14 @@ class AnimeListTab extends ConsumerWidget {
             .invalidateUserAnimeList(status.value, 100, 0);
         ref
           ..invalidate(userAnimeListProvider(status))
+          ..invalidate(weeklyAiringProvider)
           ..invalidate(airingByMalIdProvider);
         // Wait until fresh data is fetched so indicator shows correct state
         try {
-          await ref.read(userAnimeListProvider(status).future);
+          await Future.wait([
+            ref.read(userAnimeListProvider(status).future),
+            ref.read(weeklyAiringProvider.future),
+          ]);
         } catch (_) {}
       },
       child: ListView.builder(

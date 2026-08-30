@@ -125,9 +125,11 @@ class AiringRepository {
       for (final e in entry.value) {
         final remaining = e.airingAt.difference(now).inSeconds;
         if (remaining <= 0) {
-          final isReleasing =
-              e.status == 'RELEASING' || e.status == 'currently_airing';
-          if (isReleasing && e.episode > 0) {
+          final isFinished =
+              e.status == 'FINISHED' ||
+              e.status == 'finished_airing' ||
+              e.status == 'CANCELLED';
+          if (!isFinished) {
             final nextAiringAt = e.airingAt.add(const Duration(days: 7));
             final nextRemaining = nextAiringAt.difference(now).inSeconds;
             if (nextRemaining > 0) {
