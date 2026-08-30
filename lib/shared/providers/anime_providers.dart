@@ -96,6 +96,7 @@ class AnimeRepository {
       },
       writeCache: (list) =>
           _cache.saveSeasonalAnime(year, season.value, limit, list),
+      isMissingNetworkValue: (list) => list.isEmpty,
     );
   }
 
@@ -376,6 +377,7 @@ class AnimeRepository {
     required Future<List<T>?> Function() readFresh,
     required Future<List<T>> Function() networkFetch,
     required Future<void> Function(List<T>) writeCache,
+    bool Function(List<T>)? isMissingNetworkValue,
   }) {
     return _deduped<List<T>>(key, () async {
       final cached = await readFresh();
@@ -388,7 +390,10 @@ class AnimeRepository {
       }
       try {
         final fresh = await networkFetch();
-        await writeCache(fresh);
+        final isMissing = isMissingNetworkValue?.call(fresh) ?? false;
+        if (!isMissing) {
+          await writeCache(fresh);
+        }
         return fresh;
       } on Object catch (e) {
         if (cached != null) return cached;

@@ -143,10 +143,80 @@ class AniListClient {
     final now = DateTime.now().toUtc();
     final filtered = <AniListScheduleEntry>[];
     final seen = <String>{};
+    final synthetics = <AniListScheduleEntry>[];
     for (final entry in allEntries) {
       final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
       final effectiveRemaining = entry.timeUntilAiring ?? remaining;
       if (effectiveRemaining <= 0 && entry.airingAt.toUtc().isBefore(now)) {
+        final isFinished =
+            entry.status == 'FINISHED' ||
+            entry.status == 'CANCELLED' ||
+            entry.status == 'HIATUS';
+        final isReleasing = entry.status == 'RELEASING';
+        if (!isFinished) {
+          DateTime? nextAt = entry.nextAiringAt?.toUtc();
+          int? nextEp = entry.nextEpisode;
+          int? nextUntil = entry.nextTimeUntilAiring;
+          AniListScheduleEntry synthetic;
+          if (nextAt != null &&
+              nextEp != null &&
+              nextAt.isAfter(now) &&
+              (nextUntil ?? nextAt.difference(now).inSeconds) > 0) {
+            synthetic = AniListScheduleEntry(
+              anilistId: entry.anilistId,
+              malId: entry.malId,
+              title: entry.title,
+              titleEnglish: entry.titleEnglish,
+              titleNative: entry.titleNative,
+              imageUrl: entry.imageUrl,
+              imageUrlLarge: entry.imageUrlLarge,
+              status: entry.status,
+              episodes: entry.episodes,
+              meanScore: entry.meanScore,
+              genres: entry.genres,
+              format: entry.format,
+              description: entry.description,
+              airingAt: nextAt,
+              episode: nextEp,
+              timeUntilAiring: nextUntil ?? nextAt.difference(now).inSeconds,
+              nextAiringAt: null,
+              nextEpisode: null,
+              nextTimeUntilAiring: null,
+            );
+          } else if (isReleasing) {
+            final nextAtFallback = entry.airingAt.toUtc().add(
+              const Duration(days: 7),
+            );
+            if (nextAtFallback.isAfter(now)) {
+              synthetic = AniListScheduleEntry(
+                anilistId: entry.anilistId,
+                malId: entry.malId,
+                title: entry.title,
+                titleEnglish: entry.titleEnglish,
+                titleNative: entry.titleNative,
+                imageUrl: entry.imageUrl,
+                imageUrlLarge: entry.imageUrlLarge,
+                status: entry.status,
+                episodes: entry.episodes,
+                meanScore: entry.meanScore,
+                genres: entry.genres,
+                format: entry.format,
+                description: entry.description,
+                airingAt: nextAtFallback,
+                episode: (entry.episode ?? 0) + 1,
+                timeUntilAiring: nextAtFallback.difference(now).inSeconds,
+              );
+            } else {
+              continue;
+            }
+          } else {
+            continue;
+          }
+          final dedupKeySyn = '${synthetic.anilistId}_${synthetic.episode}';
+          if (seen.contains(dedupKeySyn)) continue;
+          seen.add(dedupKeySyn);
+          synthetics.add(synthetic);
+        }
         continue;
       }
       final dedupKey = '${entry.anilistId}_${entry.episode}';
@@ -154,6 +224,7 @@ class AniListClient {
       seen.add(dedupKey);
       filtered.add(entry);
     }
+    filtered.addAll(synthetics);
     final grouped = <String, List<AniListScheduleEntry>>{
       'monday': [],
       'tuesday': [],
