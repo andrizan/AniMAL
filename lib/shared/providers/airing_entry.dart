@@ -7,6 +7,7 @@ import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
+import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/providers/clock_provider.dart';
@@ -242,11 +243,19 @@ class AiringRepository {
     final results = await Future.wait([
       _fetchAniListSchedule(),
       _fetchMalSeasonal(),
+      _fetchUserWatchingMap(),
     ]);
 
     final anilistSchedule =
         results[0] as Map<String, List<AniListScheduleEntry>>;
     final malAnimeMap = results[1] as Map<int, Anime>;
+    final userWatchingMap = results[2] as Map<int, Anime>;
+    final titleLookup = <String, Anime>{};
+    for (final m in {...malAnimeMap, ...userWatchingMap}.values) {
+      titleLookup[m.title.toLowerCase()] = m;
+      final altEn = m.alternativeTitles?.en?.toLowerCase();
+      if (altEn != null) titleLookup[altEn] = m;
+    }
 
     final merged = <String, List<AiringEntry>>{};
     var matchedCount = 0;
@@ -263,13 +272,27 @@ class AiringRepository {
         final dedupKey = '${entry.anilistId}_${entry.episode}';
         if (seen.contains(dedupKey)) continue;
         seen.add(dedupKey);
-        final malAnime = entry.malId != null ? malAnimeMap[entry.malId!] : null;
+        int? effectiveMalId = entry.malId;
+        Anime? malAnime = effectiveMalId != null
+            ? malAnimeMap[effectiveMalId]
+            : null;
+        malAnime ??= effectiveMalId != null
+            ? userWatchingMap[effectiveMalId]
+            : null;
+        if (effectiveMalId == null) {
+          final lowerTitle = entry.title.toLowerCase();
+          final lowerEnglish = entry.titleEnglish?.toLowerCase();
+          malAnime =
+              titleLookup[lowerTitle] ??
+              (lowerEnglish != null ? titleLookup[lowerEnglish] : null);
+          effectiveMalId = malAnime?.id;
+        }
         if (malAnime != null) matchedCount++;
         final liveRemaining = entry.airingAt.toUtc().difference(now).inSeconds;
         list.add(
           AiringEntry(
             anilistId: entry.anilistId,
-            malId: entry.malId,
+            malId: effectiveMalId,
             title: entry.titleEnglish ?? entry.title,
             titleEnglish: entry.titleEnglish,
             titleNative: entry.titleNative,
@@ -345,6 +368,18 @@ class AiringRepository {
       return {for (final a in animeList) a.id: a};
     } on Object catch (e) {
       _logger.e('MAL seasonal fetch failed', error: e);
+      return <int, Anime>{};
+    }
+  }
+
+  Future<Map<int, Anime>> _fetchUserWatchingMap() async {
+    try {
+      final list = await _animeRepo.getUserAnimeList(
+        status: WatchStatus.watching,
+        limit: 100,
+      );
+      return {for (final a in list) a.id: a};
+    } on Object catch (_) {
       return <int, Anime>{};
     }
   }
