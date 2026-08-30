@@ -140,7 +140,7 @@ class AnimeRepository {
     );
   }
 
-  // ---------- User list / User info (no SWR) ----------
+  // ---------- User list / User info (SWR with stale fallback) ----------
 
   Future<List<Anime>> getUserAnimeList({
     WatchStatus status = WatchStatus.watching,
@@ -148,50 +148,31 @@ class AnimeRepository {
     int offset = 0,
   }) {
     final key = SqliteAnimeCache.userListKey(status.value, limit, offset);
-    return _deduped<List<Anime>>(key, () async {
-      final cached = await _cache.getUserAnimeList(status.value, limit, offset);
-      final fetchedAt = await _cache.getFetchedAt(key);
-      if (cached != null && fetchedAt != null) {
-        if (DateTime.now().difference(fetchedAt) < _ttlUserList) {
-          _logger?.d(
-            'getUserAnimeList cache hit ${status.value} cached=${cached.length} age=${DateTime.now().difference(fetchedAt).inSeconds}s',
-          );
-          return cached;
-        }
-        _logger?.d(
-          'getUserAnimeList stale ${status.value} cached=${cached.length}',
-        );
-      } else {
-        _logger?.d('getUserAnimeList cache miss ${status.value}');
-      }
-      final fresh = await _api.getUserAnimeList(
+    return _swrList<Anime>(
+      key: key,
+      ttl: _ttlUserList,
+      readFresh: () => _cache.getUserAnimeList(status.value, limit, offset),
+      networkFetch: () => _api.getUserAnimeList(
         status: status,
         limit: limit,
         offset: offset,
-      );
-      _logger?.i(
-        'getUserAnimeList network ${status.value} fresh=${fresh.length}',
-      );
-      await _cache.saveUserAnimeList(status.value, limit, offset, fresh);
-      return fresh;
-    });
+      ),
+      writeCache: (list) =>
+          _cache.saveUserAnimeList(status.value, limit, offset, list),
+    );
   }
 
   Future<MalUser?> getUserInfo() {
-    return _deduped<MalUser?>('userInfo', () async {
-      final cached = await _cache.getUserInfo();
-      final fetchedAt = await _cache.getFetchedAt('userInfo');
-      if (cached != null && fetchedAt != null) {
-        if (DateTime.now().difference(fetchedAt) < _ttlMedium) {
-          return cached;
-        }
-      }
-      final fresh = await _api.getUserInfo();
-      if (fresh != null) {
-        await _cache.saveUserInfo(fresh);
-      }
-      return fresh;
-    });
+    const key = 'userInfo';
+    return _swrNullable<MalUser>(
+      key: key,
+      ttl: _ttlMedium,
+      readFresh: () => _cache.getUserInfo(),
+      networkFetch: () => _api.getUserInfo(),
+      writeCache: (u) async {
+        if (u != null) await _cache.saveUserInfo(u);
+      },
+    );
   }
 
   // ---------- Mutations ----------
