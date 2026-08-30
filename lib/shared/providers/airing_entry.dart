@@ -358,37 +358,36 @@ final airingRepositoryProvider = Provider<AiringRepository>((ref) {
 });
 
 /// Fetches weekly airing schedule (AniList schedule + MAL scores).
-final weeklyAiringProvider = FutureProvider<Map<String, List<AiringEntry>>>((
-  ref,
-) async {
-  ref.watch(animeListVersionProvider);
-  ref.watch(clockProvider);
-  final repo = ref.watch(airingRepositoryProvider);
-  return repo.getWeeklySchedule();
-});
+final weeklyAiringProvider =
+    FutureProvider.autoDispose<Map<String, List<AiringEntry>>>((ref) async {
+      ref.watch(animeListVersionProvider);
+      ref.watch(clockProvider);
+      final repo = ref.watch(airingRepositoryProvider);
+      return repo.getWeeklySchedule();
+    });
 
 /// Map of MAL ID to next AiringEntry for quick lookup.
-final airingByMalIdProvider = FutureProvider<Map<int, AiringEntry>>((
-  ref,
-) async {
-  ref.watch(animeListVersionProvider);
-  ref.watch(clockProvider);
-  final schedule = await ref.watch(weeklyAiringProvider.future);
-  final now = DateTime.now().toUtc();
-  final map = <int, AiringEntry>{};
-  for (final entries in schedule.values) {
-    for (final entry in entries) {
-      if (entry.malId == null) continue;
-      final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
-      if (remaining <= 0) continue;
-      final existing = map[entry.malId!];
-      final entryRemaining = remaining;
-      final existingRemaining =
-          existing?.airingAt.toUtc().difference(now).inSeconds ?? 999999999;
-      if (existing == null || entryRemaining < existingRemaining) {
-        map[entry.malId!] = entry;
+final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
+  (ref) async {
+    ref.watch(animeListVersionProvider);
+    ref.watch(clockProvider);
+    final schedule = await ref.watch(weeklyAiringProvider.future);
+    final now = DateTime.now().toUtc();
+    final map = <int, AiringEntry>{};
+    for (final entries in schedule.values) {
+      for (final entry in entries) {
+        if (entry.malId == null) continue;
+        final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
+        if (remaining <= 0) continue;
+        final existing = map[entry.malId!];
+        final entryRemaining = remaining;
+        final existingRemaining =
+            existing?.airingAt.toUtc().difference(now).inSeconds ?? 999999999;
+        if (existing == null || entryRemaining < existingRemaining) {
+          map[entry.malId!] = entry;
+        }
       }
     }
-  }
-  return map;
-});
+    return map;
+  },
+);

@@ -109,8 +109,8 @@ final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>(
 
 /// Memoized, sorted and filtered user anime list together with the airing map.
 // ignore: specify_nonobvious_property_types
-final sortedUserAnimeListProvider =
-    FutureProvider.family<SortedUserAnimeList, AnimeListParams>(
+final sortedUserAnimeListProvider = FutureProvider.autoDispose
+    .family<SortedUserAnimeList, AnimeListParams>(
       (ref, params) async {
         if (params.sortBy == ListSort.airing) {
           ref.watch(clockProvider);
