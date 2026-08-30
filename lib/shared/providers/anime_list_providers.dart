@@ -3,6 +3,7 @@ import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_providers.dart'
     show animeListVersionProvider, animeRepositoryProvider;
+import 'package:animal/shared/providers/clock_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Sort options for the anime list.
@@ -111,6 +112,9 @@ final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>(
 final sortedUserAnimeListProvider =
     FutureProvider.family<SortedUserAnimeList, AnimeListParams>(
       (ref, params) async {
+        if (params.sortBy == ListSort.airing) {
+          ref.watch(clockProvider);
+        }
         final animeList = await ref.watch(
           userAnimeListProvider(params.status).future,
         );

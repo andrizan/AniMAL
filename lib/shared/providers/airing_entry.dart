@@ -9,6 +9,7 @@ import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/providers/clock_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -333,6 +334,7 @@ final weeklyAiringProvider = FutureProvider<Map<String, List<AiringEntry>>>((
   ref,
 ) async {
   ref.watch(animeListVersionProvider);
+  ref.watch(clockProvider);
   final repo = ref.watch(airingRepositoryProvider);
   return repo.getWeeklySchedule();
 });
@@ -342,6 +344,7 @@ final airingByMalIdProvider = FutureProvider<Map<int, AiringEntry>>((
   ref,
 ) async {
   ref.watch(animeListVersionProvider);
+  ref.watch(clockProvider);
   final schedule = await ref.watch(weeklyAiringProvider.future);
   final now = DateTime.now().toUtc();
   final map = <int, AiringEntry>{};
