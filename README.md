@@ -116,8 +116,8 @@ Single `animal_cache.db` (SQLite). No raw JSON blobs — typed tables only.
 | Seasonal | `seasonal_<y>_<season>_<limit>` | 15 min | Yes |
 | Ranking | `ranking_<type>_<limit>` | 10 min | Yes |
 | Detail | `detail_<id>` | 15 min | Yes |
-| User list | `userlist_<status>_<limit>_<offset>` | 3 min | No (blocking) |
-| User info | `userInfo` | 10 min | No |
+| User list | `userlist_<status>_<limit>_<offset>` | 3 min | Yes |
+| User info | `userInfo` | 10 min | Yes |
 | AniList weekly | `weeklyAiringSchedule:<YYYY-MM-DD>` | 15 min | Yes |
 | Merged weekly | `weekly_schedule:<YYYY-MM-DD>` | 15 min | Yes |
 | Anime extra / character / staff / studio | `animeExtra_…` etc | 15–30 min | Yes |
@@ -139,7 +139,8 @@ Single `animal_cache.db` (SQLite). No raw JSON blobs — typed tables only.
 | `cache_meta` `weeklyAiringSchedule:%` | `fetched_at < now-14d` | 14 days |
 | `cache_meta` `animeExtra_%` | `fetched_at < now-30d` | 30 days |
 | `cache_meta` `character_%`/`staff_%`/`studio_%` | `fetched_at < now-90d` | 90 days |
-| `airing_schedule` rows | `airing_at < now-7d` (epoch sec) | 7 days |
+| `airing_schedule` rows | `airing_at < now-14d` (epoch sec) | 14 days |
+| `merged_airing_entry` rows | `week_key` not in `cache_meta` (`weekly_schedule:%`) | on next startup |
 | `anime_query_item` / `user_anime_list_item` / `anime` | orphan (`cache_key` not in `cache_meta` / `mal_id` not referenced) | on next startup |
 
 ---
