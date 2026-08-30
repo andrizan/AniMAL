@@ -8,7 +8,7 @@ class AppDatabase {
 
   Database get raw => _db;
 
-  static const _schemaVersion = 2;
+  static const _schemaVersion = 3;
   static const _fileName = 'animal_cache.db';
 
   static Future<AppDatabase> open({
@@ -27,6 +27,9 @@ class AppDatabase {
         await _createV1(db);
         if (oldVersion < 2) {
           await _migrateV1ToV2(db);
+        }
+        if (oldVersion < 3) {
+          await _migrateV2ToV3(db);
         }
       },
     );
@@ -396,21 +399,24 @@ class AppDatabase {
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS airing_schedule (
-        anilist_id         INTEGER NOT NULL,
-        episode            INTEGER NOT NULL,
-        mal_id             INTEGER,
-        airing_at          INTEGER NOT NULL,
-        title_romaji       TEXT NOT NULL,
-        title_english      TEXT,
-        title_native       TEXT,
-        image_url          TEXT,
-        image_url_large    TEXT,
-        status             TEXT,
-        episodes           INTEGER,
-        mean_score         REAL,
-        format             TEXT,
-        description        TEXT,
-        time_until_airing  INTEGER,
+        anilist_id              INTEGER NOT NULL,
+        episode                 INTEGER NOT NULL,
+        mal_id                  INTEGER,
+        airing_at               INTEGER NOT NULL,
+        title_romaji            TEXT NOT NULL,
+        title_english           TEXT,
+        title_native            TEXT,
+        image_url               TEXT,
+        image_url_large         TEXT,
+        status                  TEXT,
+        episodes                INTEGER,
+        mean_score              REAL,
+        format                  TEXT,
+        description             TEXT,
+        time_until_airing       INTEGER,
+        next_airing_at          INTEGER,
+        next_airing_episode     INTEGER,
+        next_airing_time_until  INTEGER,
         PRIMARY KEY (anilist_id, episode)
       );
     ''');
@@ -452,6 +458,9 @@ class AppDatabase {
         airing_at             INTEGER NOT NULL,
         episode               INTEGER NOT NULL,
         time_until_airing     INTEGER NOT NULL,
+        next_airing_at        INTEGER,
+        next_airing_episode   INTEGER,
+        next_airing_time_until INTEGER,
         mal_score             REAL,
         genres_json           TEXT,
         episodes              INTEGER,
@@ -482,6 +491,32 @@ class AppDatabase {
       await db.execute(
         'ALTER TABLE anilist_anime_extra ADD COLUMN staff_json TEXT',
       );
+    }
+  }
+
+  static Future<void> _migrateV2ToV3(Database db) async {
+    for (final table in ['airing_schedule', 'merged_airing_entry']) {
+      final cols = await db.rawQuery('PRAGMA table_info($table)');
+      final hasNextAt = cols.any((c) => c['name'] == 'next_airing_at');
+      final hasNextEp = cols.any((c) => c['name'] == 'next_airing_episode');
+      final hasNextUntil = cols.any(
+        (c) => c['name'] == 'next_airing_time_until',
+      );
+      if (!hasNextAt) {
+        await db.execute(
+          'ALTER TABLE $table ADD COLUMN next_airing_at INTEGER',
+        );
+      }
+      if (!hasNextEp) {
+        await db.execute(
+          'ALTER TABLE $table ADD COLUMN next_airing_episode INTEGER',
+        );
+      }
+      if (!hasNextUntil) {
+        await db.execute(
+          'ALTER TABLE $table ADD COLUMN next_airing_time_until INTEGER',
+        );
+      }
     }
   }
 

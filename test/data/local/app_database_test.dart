@@ -24,7 +24,7 @@ void main() {
       addTearDown(db.close);
 
       final version = await db.raw.getVersion();
-      expect(version, 2);
+      expect(version, 3);
     });
 
     test('foreign keys are enabled', () async {

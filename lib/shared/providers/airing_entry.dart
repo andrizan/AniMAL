@@ -31,6 +31,9 @@ class AiringEntry {
     this.format,
     this.status,
     this.myListStatus,
+    this.nextAiringAt,
+    this.nextEpisode,
+    this.nextTimeUntilAiring,
   });
 
   final int anilistId;
@@ -48,6 +51,9 @@ class AiringEntry {
   final String? format;
   final String? status;
   final MyListStatus? myListStatus;
+  final DateTime? nextAiringAt;
+  final int? nextEpisode;
+  final int? nextTimeUntilAiring;
 
   String? get countdown {
     if (timeUntilAiring <= 0) return null;
@@ -131,12 +137,28 @@ class AiringRepository {
               e.status == 'finished_airing' ||
               e.status == 'CANCELLED';
           if (!isFinished) {
-            final nextAiringAt = e.airingAt.toUtc().add(
-              const Duration(days: 7),
-            );
-            final nextRemaining = nextAiringAt.difference(now).inSeconds;
+            DateTime? accurateNextAt = e.nextAiringAt?.toUtc();
+            int? accurateNextEp = e.nextEpisode;
+            int? accurateNextUntil = e.nextTimeUntilAiring;
+            late final DateTime nextAiringAt;
+            late final int nextEpisode;
+            late final int nextRemaining;
+            if (accurateNextAt != null &&
+                accurateNextEp != null &&
+                accurateNextAt.isAfter(now)) {
+              nextAiringAt = accurateNextAt;
+              nextEpisode = accurateNextEp;
+              nextRemaining =
+                  accurateNextUntil ?? nextAiringAt.difference(now).inSeconds;
+            } else {
+              nextAiringAt = e.airingAt.toUtc().add(
+                const Duration(days: 7),
+              );
+              nextEpisode = e.episode + 1;
+              nextRemaining = nextAiringAt.difference(now).inSeconds;
+            }
             if (nextRemaining > 0) {
-              final syntheticKey = '${e.anilistId}_${e.episode + 1}';
+              final syntheticKey = '${e.anilistId}_$nextEpisode';
               if (!seenSynthetic.contains(syntheticKey)) {
                 seenSynthetic.add(syntheticKey);
                 final syntheticDay = _dayName(nextAiringAt.toUtc().weekday);
@@ -148,7 +170,7 @@ class AiringRepository {
                   titleNative: e.titleNative,
                   imageUrl: e.imageUrl,
                   airingAt: nextAiringAt,
-                  episode: e.episode + 1,
+                  episode: nextEpisode,
                   timeUntilAiring: nextRemaining,
                   malScore: e.malScore,
                   genres: e.genres,
@@ -180,6 +202,9 @@ class AiringRepository {
             format: e.format,
             status: e.status,
             myListStatus: e.myListStatus,
+            nextAiringAt: e.nextAiringAt?.toUtc(),
+            nextEpisode: e.nextEpisode,
+            nextTimeUntilAiring: e.nextTimeUntilAiring,
           ),
         );
       }
@@ -253,6 +278,9 @@ class AiringRepository {
             format: entry.format,
             status: entry.status,
             myListStatus: malAnime?.myListStatus,
+            nextAiringAt: entry.nextAiringAt?.toUtc(),
+            nextEpisode: entry.nextEpisode,
+            nextTimeUntilAiring: entry.nextTimeUntilAiring,
           ),
         );
       }

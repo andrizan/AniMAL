@@ -156,6 +156,9 @@ class AniListScheduleEntry {
     this.description,
     this.episode,
     this.timeUntilAiring,
+    this.nextAiringAt,
+    this.nextEpisode,
+    this.nextTimeUntilAiring,
   });
   final int anilistId;
   final int? malId;
@@ -173,6 +176,9 @@ class AniListScheduleEntry {
   final DateTime airingAt;
   final int? episode;
   final int? timeUntilAiring;
+  final DateTime? nextAiringAt;
+  final int? nextEpisode;
+  final int? nextTimeUntilAiring;
 }
 
 class AniListNextAiring {

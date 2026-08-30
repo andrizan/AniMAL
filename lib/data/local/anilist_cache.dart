@@ -162,6 +162,11 @@ class SqliteAniListCache implements AniListCache {
       'format': e.format,
       'description': e.description,
       'time_until_airing': e.timeUntilAiring,
+      'next_airing_at': e.nextAiringAt == null
+          ? null
+          : e.nextAiringAt!.toUtc().millisecondsSinceEpoch ~/ 1000,
+      'next_airing_episode': e.nextEpisode,
+      'next_airing_time_until': e.nextTimeUntilAiring,
     };
   }
 
@@ -173,6 +178,14 @@ class SqliteAniListCache implements AniListCache {
         (row['airing_at']! as int) * 1000,
         isUtc: true,
       ),
+      nextAiringAt: row['next_airing_at'] == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(
+              (row['next_airing_at']! as int) * 1000,
+              isUtc: true,
+            ),
+      nextEpisode: row['next_airing_episode'] as int?,
+      nextTimeUntilAiring: row['next_airing_time_until'] as int?,
       malId: row['mal_id'] as int?,
       titleEnglish: row['title_english'] as String?,
       titleNative: row['title_native'] as String?,
@@ -316,6 +329,7 @@ class SqliteAniListCache implements AniListCache {
         nextAiring = AniListNextAiring(
           airingAt: DateTime.fromMillisecondsSinceEpoch(
             (row['next_airing_at']! as int) * 1000,
+            isUtc: true,
           ),
           episode: row['next_airing_episode']! as int,
           timeUntilAiring: row['next_airing_time_until']! as int,

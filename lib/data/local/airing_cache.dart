@@ -108,6 +108,11 @@ class SqliteAiringCache implements AiringCache {
             'airing_at': e.airingAt.toUtc().millisecondsSinceEpoch ~/ 1000,
             'episode': e.episode,
             'time_until_airing': e.timeUntilAiring,
+            'next_airing_at': e.nextAiringAt == null
+                ? null
+                : e.nextAiringAt!.toUtc().millisecondsSinceEpoch ~/ 1000,
+            'next_airing_episode': e.nextEpisode,
+            'next_airing_time_until': e.nextTimeUntilAiring,
             'mal_score': e.malScore,
             'genres_json': e.genres.isEmpty ? null : jsonEncode(e.genres),
             'episodes': e.episodes,
@@ -157,6 +162,14 @@ class SqliteAiringCache implements AiringCache {
         (row['airing_at']! as int) * 1000,
         isUtc: true,
       ),
+      nextAiringAt: row['next_airing_at'] == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(
+              (row['next_airing_at']! as int) * 1000,
+              isUtc: true,
+            ),
+      nextEpisode: row['next_airing_episode'] as int?,
+      nextTimeUntilAiring: row['next_airing_time_until'] as int?,
       episode: row['episode']! as int,
       timeUntilAiring: row['time_until_airing']! as int,
       malId: row['mal_id'] as int?,

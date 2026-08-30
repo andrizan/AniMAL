@@ -201,6 +201,9 @@ class AniListClient {
     var finalAiringAt = airingDate;
     var finalEpisode = schedule['episode'] as int?;
     var finalTimeUntil = schedule['timeUntilAiring'] as int?;
+    DateTime? parsedNextAt;
+    int? parsedNextEp;
+    int? parsedNextUntil;
     final nextRaw = media['nextAiringEpisode'] as Map<String, dynamic>?;
     if (nextRaw != null) {
       final nextAiringAt = nextRaw['airingAt'] as int?;
@@ -211,6 +214,9 @@ class AniListClient {
           nextAiringAt * 1000,
           isUtc: true,
         );
+        parsedNextAt = nextDate;
+        parsedNextEp = nextEpisode;
+        parsedNextUntil = nextTimeUntil;
         final now = DateTime.now().toUtc();
         final isExpired =
             (finalTimeUntil != null && finalTimeUntil <= 0) ||
@@ -241,6 +247,9 @@ class AniListClient {
       airingAt: finalAiringAt,
       episode: finalEpisode,
       timeUntilAiring: finalTimeUntil,
+      nextAiringAt: parsedNextAt,
+      nextEpisode: parsedNextEp,
+      nextTimeUntilAiring: parsedNextUntil,
     );
   }
 
