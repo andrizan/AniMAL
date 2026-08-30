@@ -337,35 +337,33 @@ class AnimeRepository {
   // ---------- Batch helper ----------
 
   Future<List<Anime>> getAnimeList(List<int> malIds) async {
-    final results = <Anime>[];
-    for (final id in malIds) {
+    if (malIds.isEmpty) return <Anime>[];
+    final futures = malIds.map((id) async {
       try {
         final detail = await getAnimeDetail(id);
-        if (detail != null) {
-          results.add(
-            Anime(
-              id: detail.id,
-              title: detail.title,
-              mainPicture: detail.mainPicture,
-              mean: detail.mean,
-              rank: detail.rank,
-              popularity: detail.popularity,
-              numEpisodes: detail.numEpisodes,
-              status: detail.status,
-              rating: detail.rating,
-              mediaType: detail.mediaType,
-              broadcast: detail.broadcast,
-              alternativeTitles: detail.alternativeTitles,
-              genres: detail.genres,
-              myListStatus: detail.myListStatus,
-            ),
-          );
-        }
+        if (detail == null) return null;
+        return Anime(
+          id: detail.id,
+          title: detail.title,
+          mainPicture: detail.mainPicture,
+          mean: detail.mean,
+          rank: detail.rank,
+          popularity: detail.popularity,
+          numEpisodes: detail.numEpisodes,
+          status: detail.status,
+          rating: detail.rating,
+          mediaType: detail.mediaType,
+          broadcast: detail.broadcast,
+          alternativeTitles: detail.alternativeTitles,
+          genres: detail.genres,
+          myListStatus: detail.myListStatus,
+        );
       } on Object catch (_) {
-        // skip individual failures
+        return null;
       }
-    }
-    return results;
+    }).toList();
+    final settled = await Future.wait(futures);
+    return settled.whereType<Anime>().toList();
   }
 
   // ---------- Generic helpers ----------
