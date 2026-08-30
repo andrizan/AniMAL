@@ -151,6 +151,11 @@ class AiringRepository {
               nextRemaining =
                   accurateNextUntil ?? nextAiringAt.difference(now).inSeconds;
             } else {
+              final isReleasing =
+                  e.status == 'RELEASING' || e.status == 'currently_airing';
+              if (!isReleasing) {
+                continue;
+              }
               nextAiringAt = e.airingAt.toUtc().add(
                 const Duration(days: 7),
               );

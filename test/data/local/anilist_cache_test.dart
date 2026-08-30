@@ -195,5 +195,51 @@ void main() {
       expect(out.externalLinks.length, 1);
       expect(out.studios.first.name, 'MAPPA');
     });
+
+    test('save and read preserves characters and staff via JSON', () async {
+      await appDb.raw.insert('anime', {'mal_id': 124, 'title': 'Stub2'});
+      final extra = AniListAnimeExtra(
+        people: AniListAnimePeople(
+          characters: [
+            AniListCharacter(
+              id: 101,
+              name: 'Test Char',
+              nativeName: 'テスト',
+              imageUrl: 'https://example.com/char.jpg',
+              role: 'MAIN',
+              voiceActors: [
+                AniListVoiceActor(
+                  id: 201,
+                  name: 'VA Name',
+                  nativeName: 'VA Native',
+                  imageUrl: 'https://example.com/va.jpg',
+                  language: 'JAPANESE',
+                ),
+              ],
+            ),
+          ],
+          staff: [
+            AniListStaff(
+              id: 301,
+              name: 'Staff Name',
+              nativeName: 'スタッフ',
+              imageUrl: 'https://example.com/staff.jpg',
+              role: 'Director',
+            ),
+          ],
+        ),
+      );
+      await cache.saveAnimeExtra(124, extra);
+      final out = await cache.getAnimeExtra(124);
+      expect(out, isNotNull);
+      expect(out!.people.characters.length, 1);
+      expect(out.people.characters.first.name, 'Test Char');
+      expect(out.people.characters.first.nativeName, 'テスト');
+      expect(out.people.characters.first.role, 'MAIN');
+      expect(out.people.characters.first.voiceActors.first.name, 'VA Name');
+      expect(out.people.staff.length, 1);
+      expect(out.people.staff.first.name, 'Staff Name');
+      expect(out.people.staff.first.role, 'Director');
+    });
   });
 }
