@@ -126,6 +126,22 @@ Single `animal_cache.db` (SQLite). No raw JSON blobs — typed tables only.
 - **Rate limit** `429` → `ApiException.rateLimited` (no auto-retry), health tracked in `ApiHealthTracker`.
 - **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update the embedded `my_list_status` in the shared `anime` row and bump `animeListVersionProvider`.
 
+**Physical retention** (`app_database.dart::_runStartupCleanup` on `AppDatabase.open`):
+
+| Scope | Condition | Retention |
+|---|---|---|
+| `cache_meta` `search_%` | `fetched_at < now-1h` | 1 hour |
+| `cache_meta` `ranking_%` | `fetched_at < now-1d` | 1 day |
+| `cache_meta` `seasonal_%` | `fetched_at < now-90d` | 90 days |
+| `cache_meta` `userlist_%` | `fetched_at < now-1d` | 1 day |
+| `cache_meta` `userInfo` | `fetched_at < now-1d` | 1 day |
+| `cache_meta` `detail_%` | `fetched_at < now-30d` | 30 days |
+| `cache_meta` `weeklyAiringSchedule:%` | `fetched_at < now-14d` | 14 days |
+| `cache_meta` `animeExtra_%` | `fetched_at < now-30d` | 30 days |
+| `cache_meta` `character_%`/`staff_%`/`studio_%` | `fetched_at < now-90d` | 90 days |
+| `airing_schedule` rows | `airing_at < now-7d` (epoch sec) | 7 days |
+| `anime_query_item` / `user_anime_list_item` / `anime` | orphan (`cache_key` not in `cache_meta` / `mal_id` not referenced) | on next startup |
+
 ---
 
 ## Getting Started
