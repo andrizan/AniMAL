@@ -27,12 +27,12 @@ class _CountdownBadgeState extends State<CountdownBadge> {
   @override
   void initState() {
     super.initState();
-    _now = DateTime.now();
+    _now = DateTime.now().toUtc();
     _timer = Timer.periodic(
       const Duration(seconds: 30),
       (_) {
         if (mounted) {
-          setState(() => _now = DateTime.now());
+          setState(() => _now = DateTime.now().toUtc());
         }
       },
     );
@@ -46,7 +46,7 @@ class _CountdownBadgeState extends State<CountdownBadge> {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = widget.airingAt.difference(_now).inSeconds;
+    final remaining = widget.airingAt.toUtc().difference(_now).inSeconds;
     final theme = Theme.of(context);
 
     if (remaining <= 0) {

@@ -47,7 +47,7 @@ List<Anime> _sortAnimeList(
   ListSort sortBy,
   bool ascending,
 ) {
-  final now = DateTime.now();
+  final now = DateTime.now().toUtc();
   final sorted = List<Anime>.from(list)
     ..sort((a, b) {
       int cmp;
@@ -74,8 +74,8 @@ List<Anime> _sortAnimeList(
           } else if (!bHas) {
             return -1;
           } else {
-            final aTime = aEntry.airingAt.difference(now).inSeconds;
-            final bTime = bEntry.airingAt.difference(now).inSeconds;
+            final aTime = aEntry.airingAt.toUtc().difference(now).inSeconds;
+            final bTime = bEntry.airingAt.toUtc().difference(now).inSeconds;
             cmp = aTime.compareTo(bTime);
           }
       }

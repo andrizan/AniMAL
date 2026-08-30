@@ -114,9 +114,9 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                 controller: _tabController,
                 children: _days.map((day) {
                   final allForDay = grouped[day] ?? [];
-                  final now = DateTime.now();
+                  final now = DateTime.now().toUtc();
                   final animeForDay = allForDay
-                      .where((e) => e.airingAt.isAfter(now))
+                      .where((e) => e.airingAt.toUtc().isAfter(now))
                       .toList();
 
                   if (animeForDay.isEmpty) {

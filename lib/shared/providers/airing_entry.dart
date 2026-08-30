@@ -117,26 +117,28 @@ class AiringRepository {
   Map<String, List<AiringEntry>> _filterExpired(
     Map<String, List<AiringEntry>> week,
   ) {
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final result = <String, List<AiringEntry>>{};
     final seenSynthetic = <String>{};
     for (final entry in week.entries) {
       final filtered = <AiringEntry>[];
       for (final e in entry.value) {
-        final remaining = e.airingAt.difference(now).inSeconds;
+        final remaining = e.airingAt.toUtc().difference(now).inSeconds;
         if (remaining <= 0) {
           final isFinished =
               e.status == 'FINISHED' ||
               e.status == 'finished_airing' ||
               e.status == 'CANCELLED';
           if (!isFinished) {
-            final nextAiringAt = e.airingAt.add(const Duration(days: 7));
+            final nextAiringAt = e.airingAt.toUtc().add(
+              const Duration(days: 7),
+            );
             final nextRemaining = nextAiringAt.difference(now).inSeconds;
             if (nextRemaining > 0) {
               final syntheticKey = '${e.anilistId}_${e.episode + 1}';
               if (!seenSynthetic.contains(syntheticKey)) {
                 seenSynthetic.add(syntheticKey);
-                final syntheticDay = _dayName(nextAiringAt.weekday);
+                final syntheticDay = _dayName(nextAiringAt.toUtc().weekday);
                 final synthetic = AiringEntry(
                   anilistId: e.anilistId,
                   malId: e.malId,
@@ -168,7 +170,7 @@ class AiringRepository {
             titleEnglish: e.titleEnglish,
             titleNative: e.titleNative,
             imageUrl: e.imageUrl,
-            airingAt: e.airingAt,
+            airingAt: e.airingAt.toUtc(),
             episode: e.episode,
             timeUntilAiring: remaining,
             malScore: e.malScore,
@@ -217,14 +219,14 @@ class AiringRepository {
 
     final merged = <String, List<AiringEntry>>{};
     var matchedCount = 0;
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final seen = <String>{};
     for (final day in anilistSchedule.keys) {
       final list = <AiringEntry>[];
       for (final entry in anilistSchedule[day]!) {
-        final remaining = entry.airingAt.difference(now).inSeconds;
+        final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
         final effectiveRemaining = entry.timeUntilAiring ?? remaining;
-        if (effectiveRemaining <= 0 && entry.airingAt.isBefore(now)) {
+        if (effectiveRemaining <= 0 && entry.airingAt.toUtc().isBefore(now)) {
           continue;
         }
         final dedupKey = '${entry.anilistId}_${entry.episode}';
@@ -232,7 +234,7 @@ class AiringRepository {
         seen.add(dedupKey);
         final malAnime = entry.malId != null ? malAnimeMap[entry.malId!] : null;
         if (malAnime != null) matchedCount++;
-        final liveRemaining = entry.airingAt.difference(now).inSeconds;
+        final liveRemaining = entry.airingAt.toUtc().difference(now).inSeconds;
         list.add(
           AiringEntry(
             anilistId: entry.anilistId,
@@ -241,7 +243,7 @@ class AiringRepository {
             titleEnglish: entry.titleEnglish,
             titleNative: entry.titleNative,
             imageUrl: entry.imageUrl,
-            airingAt: entry.airingAt,
+            airingAt: entry.airingAt.toUtc(),
             episode: entry.episode ?? 0,
             timeUntilAiring: liveRemaining > 0 ? liveRemaining : 0,
             malScore: malAnime?.mean ?? entry.meanScore,
@@ -341,17 +343,17 @@ final airingByMalIdProvider = FutureProvider<Map<int, AiringEntry>>((
 ) async {
   ref.watch(animeListVersionProvider);
   final schedule = await ref.watch(weeklyAiringProvider.future);
-  final now = DateTime.now();
+  final now = DateTime.now().toUtc();
   final map = <int, AiringEntry>{};
   for (final entries in schedule.values) {
     for (final entry in entries) {
       if (entry.malId == null) continue;
-      final remaining = entry.airingAt.difference(now).inSeconds;
+      final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
       if (remaining <= 0) continue;
       final existing = map[entry.malId!];
       final entryRemaining = remaining;
       final existingRemaining =
-          existing?.airingAt.difference(now).inSeconds ?? 999999999;
+          existing?.airingAt.toUtc().difference(now).inSeconds ?? 999999999;
       if (existing == null || entryRemaining < existingRemaining) {
         map[entry.malId!] = entry;
       }

@@ -140,13 +140,13 @@ class AniListClient {
       }
       page++;
     }
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final filtered = <AniListScheduleEntry>[];
     final seen = <String>{};
     for (final entry in allEntries) {
-      final remaining = entry.airingAt.difference(now).inSeconds;
+      final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
       final effectiveRemaining = entry.timeUntilAiring ?? remaining;
-      if (effectiveRemaining <= 0 && entry.airingAt.isBefore(now)) {
+      if (effectiveRemaining <= 0 && entry.airingAt.toUtc().isBefore(now)) {
         continue;
       }
       final dedupKey = '${entry.anilistId}_${entry.episode}';
@@ -164,7 +164,7 @@ class AniListClient {
       'sunday': [],
     };
     for (final entry in filtered) {
-      final day = _dayName(entry.airingAt.weekday);
+      final day = _dayName(entry.airingAt.toUtc().weekday);
       if (grouped.containsKey(day)) grouped[day]!.add(entry);
     }
     for (final entry in grouped.entries) {
@@ -191,7 +191,10 @@ class AniListClient {
     final title = media['title'] as Map<String, dynamic>;
     final cover = media['coverImage'] as Map<String, dynamic>?;
     final airingAt = schedule['airingAt'] as int;
-    final airingDate = DateTime.fromMillisecondsSinceEpoch(airingAt * 1000);
+    final airingDate = DateTime.fromMillisecondsSinceEpoch(
+      airingAt * 1000,
+      isUtc: true,
+    );
     final genres =
         (media['genres'] as List<dynamic>?)?.map((g) => g as String).toList() ??
         [];
@@ -206,14 +209,15 @@ class AniListClient {
       if (nextAiringAt != null && nextEpisode != null) {
         final nextDate = DateTime.fromMillisecondsSinceEpoch(
           nextAiringAt * 1000,
+          isUtc: true,
         );
-        final now = DateTime.now();
+        final now = DateTime.now().toUtc();
         final isExpired =
             (finalTimeUntil != null && finalTimeUntil <= 0) ||
-            finalAiringAt.isBefore(now);
+            finalAiringAt.toUtc().isBefore(now);
         final nextRemaining =
-            nextTimeUntil ?? nextDate.difference(now).inSeconds;
-        if (isExpired && nextRemaining > 0 && nextDate.isAfter(now)) {
+            nextTimeUntil ?? nextDate.toUtc().difference(now).inSeconds;
+        if (isExpired && nextRemaining > 0 && nextDate.toUtc().isAfter(now)) {
           finalAiringAt = nextDate;
           finalEpisode = nextEpisode;
           finalTimeUntil = nextTimeUntil ?? nextRemaining;
@@ -273,6 +277,7 @@ class AniListClient {
       nextAiring = AniListNextAiring(
         airingAt: DateTime.fromMillisecondsSinceEpoch(
           (nextRaw['airingAt'] as int) * 1000,
+          isUtc: true,
         ),
         episode: nextRaw['episode'] as int,
         timeUntilAiring: nextRaw['timeUntilAiring'] as int,

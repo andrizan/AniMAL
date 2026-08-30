@@ -105,7 +105,7 @@ class SqliteAiringCache implements AiringCache {
             'title_english': e.titleEnglish,
             'title_native': e.titleNative,
             'image_url': e.imageUrl,
-            'airing_at': e.airingAt.millisecondsSinceEpoch ~/ 1000,
+            'airing_at': e.airingAt.toUtc().millisecondsSinceEpoch ~/ 1000,
             'episode': e.episode,
             'time_until_airing': e.timeUntilAiring,
             'mal_score': e.malScore,
@@ -155,6 +155,7 @@ class SqliteAiringCache implements AiringCache {
       title: row['title']! as String,
       airingAt: DateTime.fromMillisecondsSinceEpoch(
         (row['airing_at']! as int) * 1000,
+        isUtc: true,
       ),
       episode: row['episode']! as int,
       timeUntilAiring: row['time_until_airing']! as int,
