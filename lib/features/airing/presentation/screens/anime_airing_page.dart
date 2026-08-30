@@ -45,7 +45,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
   @override
   void initState() {
     super.initState();
-    final today = DateTime.now().weekday - 1;
+    final today = DateTime.now().toUtc().weekday - 1;
     _tabController = TabController(
       length: _days.length,
       vsync: this,
