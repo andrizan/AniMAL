@@ -48,7 +48,6 @@ class AppDatabase {
     final now = DateTime.now();
     final oneHourAgo = now.subtract(const Duration(hours: 1));
     final oneDayAgo = now.subtract(const Duration(days: 1));
-    final sevenDaysAgo = now.subtract(const Duration(days: 7));
     final thirtyDaysAgo = now.subtract(const Duration(days: 30));
     final ninetyDaysAgo = now.subtract(const Duration(days: 90));
     final fourteenDaysAgo = now.subtract(const Duration(days: 14));
@@ -112,11 +111,12 @@ class AppDatabase {
         where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['studio_%', ninetyDaysAgo.millisecondsSinceEpoch],
       );
-      final sevenDaysEpochSec = sevenDaysAgo.millisecondsSinceEpoch ~/ 1000;
+      final fourteenDaysEpochSec =
+          fourteenDaysAgo.millisecondsSinceEpoch ~/ 1000;
       await txn.delete(
         'airing_schedule',
         where: 'airing_at < ?',
-        whereArgs: [sevenDaysEpochSec],
+        whereArgs: [fourteenDaysEpochSec],
       );
       await txn.delete(
         'anime_query_item',
