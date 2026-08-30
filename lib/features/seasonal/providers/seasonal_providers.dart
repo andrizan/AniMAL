@@ -73,6 +73,27 @@ final groupedSeasonalAnimeProvider =
     FutureProvider.family<GroupedSeasonalAnime, ScheduleParams>(
       (ref, params) async {
         final animeList = await ref.watch(animeScheduleProvider(params).future);
+        if (animeList.isEmpty) {
+          final now = DateTime.now();
+          final curSeason = Season.fromDate(now);
+          final curYear = now.year;
+          if (params.season == curSeason && params.year == curYear) {
+            final prevSeason = switch (curSeason) {
+              Season.winter => Season.fall,
+              Season.spring => Season.winter,
+              Season.summer => Season.spring,
+              Season.fall => Season.summer,
+            };
+            final prevYear = curSeason == Season.winter ? curYear - 1 : curYear;
+            try {
+              final fallback = await ref.watch(
+                animeScheduleProvider((year: prevYear, season: prevSeason))
+                    .future,
+              );
+              if (fallback.isNotEmpty) return _groupAnimeByDay(fallback);
+            } catch (_) {}
+          }
+        }
         return _groupAnimeByDay(animeList);
       },
     );

@@ -223,6 +223,44 @@ class AiringRepository {
     for (final day in result.keys) {
       result[day]!.sort((a, b) => a.airingAt.compareTo(b.airingAt));
     }
+    final total = result.values.fold<int>(0, (s, l) => s + l.length);
+    final originalTotal = week.values.fold<int>(0, (s, l) => s + l.length);
+    if (total == 0 && originalTotal > 0) {
+      final fallback = <String, List<AiringEntry>>{};
+      for (final e in week.entries) {
+        final list =
+            e.value
+                .map(
+                  (a) => AiringEntry(
+                    anilistId: a.anilistId,
+                    malId: a.malId,
+                    title: a.title,
+                    titleEnglish: a.titleEnglish,
+                    titleNative: a.titleNative,
+                    imageUrl: a.imageUrl,
+                    airingAt: a.airingAt.toUtc(),
+                    episode: a.episode,
+                    timeUntilAiring: a.airingAt
+                        .toUtc()
+                        .difference(now)
+                        .inSeconds,
+                    malScore: a.malScore,
+                    genres: a.genres,
+                    episodes: a.episodes,
+                    format: a.format,
+                    status: a.status,
+                    myListStatus: a.myListStatus,
+                    nextAiringAt: a.nextAiringAt?.toUtc(),
+                    nextEpisode: a.nextEpisode,
+                    nextTimeUntilAiring: a.nextTimeUntilAiring,
+                  ),
+                )
+                .toList()
+              ..sort((a, b) => a.airingAt.compareTo(b.airingAt));
+        fallback[e.key] = list;
+      }
+      return fallback;
+    }
     return result;
   }
 
@@ -314,6 +352,44 @@ class AiringRepository {
       }
       list.sort((a, b) => a.airingAt.compareTo(b.airingAt));
       merged[day] = list;
+    }
+    final totalMerged = merged.values.fold<int>(0, (s, l) => s + l.length);
+    final totalAnilist = anilistSchedule.values.fold<int>(
+      0,
+      (s, l) => s + l.length,
+    );
+    if (totalMerged == 0 && totalAnilist > 0) {
+      _logger.w('Merged empty but anilist had data — fallback to raw');
+      for (final day in anilistSchedule.keys) {
+        merged[day] =
+            anilistSchedule[day]!
+                .map(
+                  (e) => AiringEntry(
+                    anilistId: e.anilistId,
+                    malId: e.malId,
+                    title: e.titleEnglish ?? e.title,
+                    titleEnglish: e.titleEnglish,
+                    titleNative: e.titleNative,
+                    imageUrl: e.imageUrl,
+                    airingAt: e.airingAt.toUtc(),
+                    episode: e.episode ?? 0,
+                    timeUntilAiring: e.airingAt
+                        .toUtc()
+                        .difference(now)
+                        .inSeconds,
+                    malScore: e.meanScore,
+                    genres: e.genres,
+                    episodes: e.episodes,
+                    format: e.format,
+                    status: e.status,
+                    nextAiringAt: e.nextAiringAt?.toUtc(),
+                    nextEpisode: e.nextEpisode,
+                    nextTimeUntilAiring: e.nextTimeUntilAiring,
+                  ),
+                )
+                .toList()
+              ..sort((a, b) => a.airingAt.compareTo(b.airingAt));
+      }
     }
     _logger.d('Merge: $matchedCount entries matched with MAL scores');
 

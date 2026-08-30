@@ -225,6 +225,25 @@ class AniListClient {
       filtered.add(entry);
     }
     filtered.addAll(synthetics);
+    if (filtered.isEmpty && allEntries.isNotEmpty) {
+      final fallback = <String, List<AniListScheduleEntry>>{
+        'monday': [],
+        'tuesday': [],
+        'wednesday': [],
+        'thursday': [],
+        'friday': [],
+        'saturday': [],
+        'sunday': [],
+      };
+      for (final entry in allEntries) {
+        final day = _dayName(entry.airingAt.toUtc().weekday);
+        if (fallback.containsKey(day)) fallback[day]!.add(entry);
+      }
+      for (final e in fallback.entries) {
+        e.value.sort((a, b) => a.airingAt.compareTo(b.airingAt));
+      }
+      return fallback;
+    }
     final grouped = <String, List<AniListScheduleEntry>>{
       'monday': [],
       'tuesday': [],
