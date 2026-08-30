@@ -8,7 +8,7 @@ class AppDatabase {
 
   Database get raw => _db;
 
-  static const _schemaVersion = 1;
+  static const _schemaVersion = 2;
   static const _fileName = 'animal_cache.db';
 
   static Future<AppDatabase> open({
@@ -25,6 +25,9 @@ class AppDatabase {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await _createV1(db);
+        if (oldVersion < 2) {
+          await _migrateV1ToV2(db);
+        }
       },
     );
     final appDb = AppDatabase._(db);
@@ -246,6 +249,8 @@ class AppDatabase {
         next_airing_at        INTEGER,
         next_airing_episode   INTEGER,
         next_airing_time_until INTEGER,
+        characters_json       TEXT,
+        staff_json            TEXT,
         FOREIGN KEY (mal_id) REFERENCES anime(mal_id) ON DELETE CASCADE
       );
     ''');
@@ -456,6 +461,24 @@ class AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_merged_airing_entry_week '
       'ON merged_airing_entry(week_key);',
     );
+  }
+
+  static Future<void> _migrateV1ToV2(Database db) async {
+    final columns = await db.rawQuery(
+      'PRAGMA table_info(anilist_anime_extra)',
+    );
+    final hasChars = columns.any((c) => c['name'] == 'characters_json');
+    final hasStaff = columns.any((c) => c['name'] == 'staff_json');
+    if (!hasChars) {
+      await db.execute(
+        'ALTER TABLE anilist_anime_extra ADD COLUMN characters_json TEXT',
+      );
+    }
+    if (!hasStaff) {
+      await db.execute(
+        'ALTER TABLE anilist_anime_extra ADD COLUMN staff_json TEXT',
+      );
+    }
   }
 
   Future<void> close() => _db.close();

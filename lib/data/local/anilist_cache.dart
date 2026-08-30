@@ -213,6 +213,120 @@ class SqliteAniListCache implements AniListCache {
       where: 'mal_id = ?',
       whereArgs: [malId],
     );
+    final charactersJson = row['characters_json'] as String?;
+    final staffJson = row['staff_json'] as String?;
+    if (charactersJson != null || staffJson != null) {
+      final characters = <AniListCharacter>[];
+      final staff = <AniListStaff>[];
+      if (charactersJson != null) {
+        final decoded = jsonDecode(charactersJson) as List<dynamic>;
+        for (final c in decoded) {
+          final m = c as Map<String, dynamic>;
+          final vas = (m['voiceActors'] as List<dynamic>? ?? [])
+              .map(
+                (v) => AniListVoiceActor(
+                  id: v['id'] as int,
+                  name: v['name'] as String,
+                  nativeName: v['nativeName'] as String?,
+                  imageUrl: v['imageUrl'] as String?,
+                  language: v['language'] as String?,
+                ),
+              )
+              .toList();
+          characters.add(
+            AniListCharacter(
+              id: m['id'] as int,
+              name: m['name'] as String,
+              nativeName: m['nativeName'] as String?,
+              imageUrl: m['imageUrl'] as String?,
+              role: m['role'] as String?,
+              voiceActors: vas,
+            ),
+          );
+        }
+      }
+      if (staffJson != null) {
+        final decoded = jsonDecode(staffJson) as List<dynamic>;
+        for (final s in decoded) {
+          final m = s as Map<String, dynamic>;
+          staff.add(
+            AniListStaff(
+              id: m['id'] as int,
+              name: m['name'] as String,
+              nativeName: m['nativeName'] as String?,
+              imageUrl: m['imageUrl'] as String?,
+              role: m['role'] as String?,
+            ),
+          );
+        }
+      }
+      final vaRows = await _db.query(
+        'anilist_anime_extra_voice_actor',
+        where: 'anime_mal_id = ?',
+        whereArgs: [malId],
+      );
+      if (characters.isEmpty && vaRows.isNotEmpty) {
+        final vasByChar = <int, List<AniListVoiceActor>>{};
+        for (final v in vaRows) {
+          final va = AniListVoiceActor(
+            id: v['va_id']! as int,
+            name: v['name']! as String,
+            nativeName: v['native_name'] as String?,
+            imageUrl: v['image_url'] as String?,
+            language: v['language'] as String?,
+          );
+          vasByChar.putIfAbsent(v['character_id']! as int, () => []).add(va);
+        }
+        for (final cid in vasByChar.keys) {
+          characters.add(
+            AniListCharacter(
+              id: cid,
+              name: 'Unknown',
+              voiceActors: vasByChar[cid]!,
+            ),
+          );
+        }
+      }
+      final links = linkRows
+          .map(
+            (l) => AniListExternalLink(
+              id: l['id']! as int,
+              url: l['url']! as String,
+              site: l['site'] as String?,
+              type: l['type'] as String?,
+              language: l['language'] as String?,
+              icon: l['icon'] as String?,
+            ),
+          )
+          .toList();
+      final studios = studioRows
+          .map(
+            (s) => AniListStudio(
+              id: s['studio_id']! as int,
+              name: s['name']! as String,
+              isAnimationStudio: (s['is_animation_studio']! as int) == 1,
+              siteUrl: s['site_url'] as String?,
+              isMain: (s['is_main']! as int) == 1,
+            ),
+          )
+          .toList();
+      AniListNextAiring? nextAiring;
+      if (row['next_airing_at'] != null) {
+        nextAiring = AniListNextAiring(
+          airingAt: DateTime.fromMillisecondsSinceEpoch(
+            (row['next_airing_at']! as int) * 1000,
+          ),
+          episode: row['next_airing_episode']! as int,
+          timeUntilAiring: row['next_airing_time_until']! as int,
+        );
+      }
+      return AniListAnimeExtra(
+        people: AniListAnimePeople(characters: characters, staff: staff),
+        nextAiring: nextAiring,
+        externalLinks: links,
+        studios: studios,
+      );
+    }
     final vaRows = await _db.query(
       'anilist_anime_extra_voice_actor',
       where: 'anime_mal_id = ?',
@@ -232,18 +346,7 @@ class SqliteAniListCache implements AniListCache {
     }
     final characters = <AniListCharacter>[];
     final staff = <AniListStaff>[];
-    // Re-parse by walking the character/staff relations stored only as voice-actor grouping
-    // We need the full character list. Since we did not persist a separate
-    // character_staff_relation table, recover what we can: characters whose
-    // voice-actor rows exist are characters; staff with no VA entries are
-    // not recoverable as separate rows. For correctness, persist
-    // characters + staff via distinct tables.
-    // To keep this implementation self-contained, store them via JSON on
-    // the anilist_anime_extra row in a follow-up; for now we reconstruct
-    // a minimal result.
     for (final cid in vasByChar.keys) {
-      // We did not store character name/native/image per-character; fall back
-      // to empty defaults. Studios and links are fully recovered below.
       characters.add(
         AniListCharacter(
           id: cid,
@@ -302,6 +405,43 @@ class SqliteAniListCache implements AniListCache {
         where: 'mal_id = ?',
         whereArgs: [malId],
       );
+      final charactersJson = jsonEncode(
+        extra.people.characters
+            .map(
+              (c) => {
+                'id': c.id,
+                'name': c.name,
+                'nativeName': c.nativeName,
+                'imageUrl': c.imageUrl,
+                'role': c.role,
+                'voiceActors': c.voiceActors
+                    .map(
+                      (va) => {
+                        'id': va.id,
+                        'name': va.name,
+                        'nativeName': va.nativeName,
+                        'imageUrl': va.imageUrl,
+                        'language': va.language,
+                      },
+                    )
+                    .toList(),
+              },
+            )
+            .toList(),
+      );
+      final staffJson = jsonEncode(
+        extra.people.staff
+            .map(
+              (s) => {
+                'id': s.id,
+                'name': s.name,
+                'nativeName': s.nativeName,
+                'imageUrl': s.imageUrl,
+                'role': s.role,
+              },
+            )
+            .toList(),
+      );
       await txn.insert('anilist_anime_extra', {
         'mal_id': malId,
         'next_airing_at': extra.nextAiring == null
@@ -309,6 +449,8 @@ class SqliteAniListCache implements AniListCache {
             : extra.nextAiring!.airingAt.millisecondsSinceEpoch ~/ 1000,
         'next_airing_episode': extra.nextAiring?.episode,
         'next_airing_time_until': extra.nextAiring?.timeUntilAiring,
+        'characters_json': charactersJson,
+        'staff_json': staffJson,
       });
       await txn.delete(
         'anilist_anime_extra_link',
