@@ -507,6 +507,9 @@ class AnimeRepository {
     }
   }
 
+  /// Background refresh for a stale detail. On success the provider's
+  /// future has already resolved with the stale value, so notify listeners
+  /// to rebuild with the fresh data.
   Future<void> _refreshNullable<T>(
     String key,
     Future<T?> Function() networkFetch,
@@ -515,6 +518,7 @@ class AnimeRepository {
     try {
       final fresh = await networkFetch();
       await writeCache(fresh);
+      _bumpListVersion();
     } on Object catch (_) {
       // best-effort
     }
@@ -568,10 +572,13 @@ final animeRepositoryProvider = Provider<AnimeRepository>((ref) {
   );
 });
 
-/// FutureProvider family for anime detail by ID.
+/// FutureProvider family for anime detail by ID. Listens to
+/// [animeListVersionProvider] so background detail refreshes (which bump the
+/// version after merging fresh data) propagate to open pages.
 // ignore: specify_nonobvious_property_types
 final animeDetailProvider = FutureProvider.autoDispose
     .family<AnimeDetail?, int>((ref, animeId) async {
+      ref.watch(animeListVersionProvider);
       final repo = ref.watch(animeRepositoryProvider);
       return repo.getAnimeDetail(animeId);
     });

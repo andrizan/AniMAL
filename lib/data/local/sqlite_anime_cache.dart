@@ -77,8 +77,10 @@ class SqliteAnimeCache implements AnimeCache {
 
   @override
   Future<AnimeDetail?> getAnimeDetail(int malId) async {
-    final key = detailKey(malId);
-    if (await getFetchedAt(key) == null) return null;
+    // Serve whatever rows we have even when `cache_meta` is gone (e.g. after
+    // invalidateAnimeDetail from a list mutation): the SWR layer refreshes in
+    // the background, and a failed refetch now falls back to stored data
+    // instead of showing an error or an empty page.
     final row = await _db.query(
       'anime',
       columns: ['*'],
@@ -93,6 +95,11 @@ class SqliteAnimeCache implements AnimeCache {
       whereArgs: [malId],
       limit: 1,
     );
+    // A stub row (created by the AniList cache before the MAL detail was
+    // ever fetched) carries no useful data: treat it as a cache miss.
+    final isStub =
+        detailRow.isEmpty && ((row.first['title'] as String?)?.isEmpty ?? true);
+    if (isStub) return null;
     final merged = <String, Object?>{...row.first};
     if (detailRow.isNotEmpty) {
       merged.addAll(detailRow.first);
@@ -242,7 +249,6 @@ class SqliteAnimeCache implements AnimeCache {
     String key, {
     String relation = 'search',
   }) async {
-    if (await getFetchedAt(key) == null) return null;
     final itemsTable = relation == 'userlist'
         ? 'user_anime_list_item'
         : 'anime_query_item';
@@ -256,7 +262,12 @@ class SqliteAnimeCache implements AnimeCache {
       ''',
       [key],
     );
-    if (rows.isEmpty) return <Anime>[];
+    if (rows.isEmpty) {
+      // Keep the "cached empty result" contract only when the key was
+      // actually fetched before; otherwise it is a genuine miss.
+      if (await getFetchedAt(key) == null) return null;
+      return <Anime>[];
+    }
     final malIds = rows.map((r) => r['mal_id']! as int).toList();
     final genreMap = await _loadGenresForMany(malIds);
     return rows.map((r) {
