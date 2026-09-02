@@ -14,7 +14,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.andrizan.animal"
-    compileSdk = 36
+    // flutter_secure_storage 11.x requires compiling against Android 37.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
