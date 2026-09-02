@@ -29,16 +29,21 @@ $BroadcastCopyWith<Broadcast> get copyWith => _$BroadcastCopyWithImpl<Broadcast>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Broadcast&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.startTime, startTime) || other.startTime == startTime));
+  final _this = this as Broadcast;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Broadcast&&(identical(other.dayOfWeek, _this.dayOfWeek) || other.dayOfWeek == _this.dayOfWeek)&&(identical(other.startTime, _this.startTime) || other.startTime == _this.startTime));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dayOfWeek,startTime);
+int get hashCode {
+  final _this = this as Broadcast;
+  return Object.hash(runtimeType,_this.dayOfWeek,_this.startTime);
+}
 
 @override
 String toString() {
-  return 'Broadcast(dayOfWeek: $dayOfWeek, startTime: $startTime)';
+  final _this = this as Broadcast;
+  return 'Broadcast(dayOfWeek: ${_this.dayOfWeek}, startTime: ${_this.startTime})';
 }
 
 
@@ -224,16 +229,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Broadcast&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.startTime, startTime) || other.startTime == startTime));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Broadcast&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.startTime, startTime) || other.startTime == startTime));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dayOfWeek,startTime);
+int get hashCode {
+    return Object.hash(runtimeType,dayOfWeek,startTime);
+}
 
 @override
 String toString() {
-  return 'Broadcast(dayOfWeek: $dayOfWeek, startTime: $startTime)';
+    return 'Broadcast(dayOfWeek: $dayOfWeek, startTime: $startTime)';
 }
 
 

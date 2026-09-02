@@ -29,16 +29,21 @@ $AnimeCopyWith<Anime> get copyWith => _$AnimeCopyWithImpl<Anime>(this as Anime, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Anime&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other.genres, genres)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus));
+  final _this = this as Anime;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Anime&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.mainPicture, _this.mainPicture) || other.mainPicture == _this.mainPicture)&&(identical(other.mean, _this.mean) || other.mean == _this.mean)&&(identical(other.rank, _this.rank) || other.rank == _this.rank)&&(identical(other.popularity, _this.popularity) || other.popularity == _this.popularity)&&(identical(other.numEpisodes, _this.numEpisodes) || other.numEpisodes == _this.numEpisodes)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.mediaType, _this.mediaType) || other.mediaType == _this.mediaType)&&(identical(other.broadcast, _this.broadcast) || other.broadcast == _this.broadcast)&&(identical(other.alternativeTitles, _this.alternativeTitles) || other.alternativeTitles == _this.alternativeTitles)&&const DeepCollectionEquality().equals(other.genres, _this.genres)&&(identical(other.myListStatus, _this.myListStatus) || other.myListStatus == _this.myListStatus));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,mediaType,broadcast,alternativeTitles,const DeepCollectionEquality().hash(genres),myListStatus);
+int get hashCode {
+  final _this = this as Anime;
+  return Object.hash(runtimeType,_this.id,_this.title,_this.mainPicture,_this.mean,_this.rank,_this.popularity,_this.numEpisodes,_this.status,_this.rating,_this.mediaType,_this.broadcast,_this.alternativeTitles,const DeepCollectionEquality().hash(_this.genres),_this.myListStatus);
+}
 
 @override
 String toString() {
-  return 'Anime(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, mediaType: $mediaType, broadcast: $broadcast, alternativeTitles: $alternativeTitles, genres: $genres, myListStatus: $myListStatus)';
+  final _this = this as Anime;
+  return 'Anime(id: ${_this.id}, title: ${_this.title}, mainPicture: ${_this.mainPicture}, mean: ${_this.mean}, rank: ${_this.rank}, popularity: ${_this.popularity}, numEpisodes: ${_this.numEpisodes}, status: ${_this.status}, rating: ${_this.rating}, mediaType: ${_this.mediaType}, broadcast: ${_this.broadcast}, alternativeTitles: ${_this.alternativeTitles}, genres: ${_this.genres}, myListStatus: ${_this.myListStatus})';
 }
 
 
@@ -302,16 +307,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Anime&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other._genres, _genres)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Anime&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other.genres, _genres)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,mediaType,broadcast,alternativeTitles,const DeepCollectionEquality().hash(_genres),myListStatus);
+int get hashCode {
+    return Object.hash(runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,mediaType,broadcast,alternativeTitles,const DeepCollectionEquality().hash(_genres),myListStatus);
+}
 
 @override
 String toString() {
-  return 'Anime(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, mediaType: $mediaType, broadcast: $broadcast, alternativeTitles: $alternativeTitles, genres: $genres, myListStatus: $myListStatus)';
+    return 'Anime(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, mediaType: $mediaType, broadcast: $broadcast, alternativeTitles: $alternativeTitles, genres: $genres, myListStatus: $myListStatus)';
 }
 
 
@@ -427,16 +434,21 @@ $MainPictureCopyWith<MainPicture> get copyWith => _$MainPictureCopyWithImpl<Main
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MainPicture&&(identical(other.medium, medium) || other.medium == medium)&&(identical(other.large, large) || other.large == large));
+  final _this = this as MainPicture;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MainPicture&&(identical(other.medium, _this.medium) || other.medium == _this.medium)&&(identical(other.large, _this.large) || other.large == _this.large));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,medium,large);
+int get hashCode {
+  final _this = this as MainPicture;
+  return Object.hash(runtimeType,_this.medium,_this.large);
+}
 
 @override
 String toString() {
-  return 'MainPicture(medium: $medium, large: $large)';
+  final _this = this as MainPicture;
+  return 'MainPicture(medium: ${_this.medium}, large: ${_this.large})';
 }
 
 
@@ -622,16 +634,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MainPicture&&(identical(other.medium, medium) || other.medium == medium)&&(identical(other.large, large) || other.large == large));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MainPicture&&(identical(other.medium, medium) || other.medium == medium)&&(identical(other.large, large) || other.large == large));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,medium,large);
+int get hashCode {
+    return Object.hash(runtimeType,medium,large);
+}
 
 @override
 String toString() {
-  return 'MainPicture(medium: $medium, large: $large)';
+    return 'MainPicture(medium: $medium, large: $large)';
 }
 
 
@@ -687,16 +701,21 @@ $AlternativeTitlesCopyWith<AlternativeTitles> get copyWith => _$AlternativeTitle
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlternativeTitles&&(identical(other.en, en) || other.en == en)&&(identical(other.ja, ja) || other.ja == ja)&&const DeepCollectionEquality().equals(other.synonyms, synonyms));
+  final _this = this as AlternativeTitles;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlternativeTitles&&(identical(other.en, _this.en) || other.en == _this.en)&&(identical(other.ja, _this.ja) || other.ja == _this.ja)&&const DeepCollectionEquality().equals(other.synonyms, _this.synonyms));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,en,ja,const DeepCollectionEquality().hash(synonyms));
+int get hashCode {
+  final _this = this as AlternativeTitles;
+  return Object.hash(runtimeType,_this.en,_this.ja,const DeepCollectionEquality().hash(_this.synonyms));
+}
 
 @override
 String toString() {
-  return 'AlternativeTitles(en: $en, ja: $ja, synonyms: $synonyms)';
+  final _this = this as AlternativeTitles;
+  return 'AlternativeTitles(en: ${_this.en}, ja: ${_this.ja}, synonyms: ${_this.synonyms})';
 }
 
 
@@ -890,16 +909,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AlternativeTitles&&(identical(other.en, en) || other.en == en)&&(identical(other.ja, ja) || other.ja == ja)&&const DeepCollectionEquality().equals(other._synonyms, _synonyms));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AlternativeTitles&&(identical(other.en, en) || other.en == en)&&(identical(other.ja, ja) || other.ja == ja)&&const DeepCollectionEquality().equals(other.synonyms, _synonyms));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,en,ja,const DeepCollectionEquality().hash(_synonyms));
+int get hashCode {
+    return Object.hash(runtimeType,en,ja,const DeepCollectionEquality().hash(_synonyms));
+}
 
 @override
 String toString() {
-  return 'AlternativeTitles(en: $en, ja: $ja, synonyms: $synonyms)';
+    return 'AlternativeTitles(en: $en, ja: $ja, synonyms: $synonyms)';
 }
 
 

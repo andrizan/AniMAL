@@ -29,16 +29,21 @@ $MalUserCopyWith<MalUser> get copyWith => _$MalUserCopyWithImpl<MalUser>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MalUser&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.picture, picture) || other.picture == picture)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.birthday, birthday) || other.birthday == birthday)&&(identical(other.location, location) || other.location == location)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.animeStatistics, animeStatistics) || other.animeStatistics == animeStatistics));
+  final _this = this as MalUser;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MalUser&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.picture, _this.picture) || other.picture == _this.picture)&&(identical(other.gender, _this.gender) || other.gender == _this.gender)&&(identical(other.birthday, _this.birthday) || other.birthday == _this.birthday)&&(identical(other.location, _this.location) || other.location == _this.location)&&(identical(other.joinedAt, _this.joinedAt) || other.joinedAt == _this.joinedAt)&&(identical(other.animeStatistics, _this.animeStatistics) || other.animeStatistics == _this.animeStatistics));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,picture,gender,birthday,location,joinedAt,animeStatistics);
+int get hashCode {
+  final _this = this as MalUser;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.picture,_this.gender,_this.birthday,_this.location,_this.joinedAt,_this.animeStatistics);
+}
 
 @override
 String toString() {
-  return 'MalUser(id: $id, name: $name, picture: $picture, gender: $gender, birthday: $birthday, location: $location, joinedAt: $joinedAt, animeStatistics: $animeStatistics)';
+  final _this = this as MalUser;
+  return 'MalUser(id: ${_this.id}, name: ${_this.name}, picture: ${_this.picture}, gender: ${_this.gender}, birthday: ${_this.birthday}, location: ${_this.location}, joinedAt: ${_this.joinedAt}, animeStatistics: ${_this.animeStatistics})';
 }
 
 
@@ -248,16 +253,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MalUser&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.picture, picture) || other.picture == picture)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.birthday, birthday) || other.birthday == birthday)&&(identical(other.location, location) || other.location == location)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.animeStatistics, animeStatistics) || other.animeStatistics == animeStatistics));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MalUser&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.picture, picture) || other.picture == picture)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.birthday, birthday) || other.birthday == birthday)&&(identical(other.location, location) || other.location == location)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.animeStatistics, animeStatistics) || other.animeStatistics == animeStatistics));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,picture,gender,birthday,location,joinedAt,animeStatistics);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,picture,gender,birthday,location,joinedAt,animeStatistics);
+}
 
 @override
 String toString() {
-  return 'MalUser(id: $id, name: $name, picture: $picture, gender: $gender, birthday: $birthday, location: $location, joinedAt: $joinedAt, animeStatistics: $animeStatistics)';
+    return 'MalUser(id: $id, name: $name, picture: $picture, gender: $gender, birthday: $birthday, location: $location, joinedAt: $joinedAt, animeStatistics: $animeStatistics)';
 }
 
 
@@ -331,16 +338,21 @@ $AnimeStatisticsCopyWith<AnimeStatistics> get copyWith => _$AnimeStatisticsCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeStatistics&&(identical(other.numItemsWatching, numItemsWatching) || other.numItemsWatching == numItemsWatching)&&(identical(other.numItemsCompleted, numItemsCompleted) || other.numItemsCompleted == numItemsCompleted)&&(identical(other.numItemsOnHold, numItemsOnHold) || other.numItemsOnHold == numItemsOnHold)&&(identical(other.numItemsDropped, numItemsDropped) || other.numItemsDropped == numItemsDropped)&&(identical(other.numItemsPlanToWatch, numItemsPlanToWatch) || other.numItemsPlanToWatch == numItemsPlanToWatch)&&(identical(other.numItems, numItems) || other.numItems == numItems)&&(identical(other.numDaysWatched, numDaysWatched) || other.numDaysWatched == numDaysWatched)&&(identical(other.numDaysWatching, numDaysWatching) || other.numDaysWatching == numDaysWatching)&&(identical(other.numDaysCompleted, numDaysCompleted) || other.numDaysCompleted == numDaysCompleted)&&(identical(other.numDaysOnHold, numDaysOnHold) || other.numDaysOnHold == numDaysOnHold)&&(identical(other.numDaysDropped, numDaysDropped) || other.numDaysDropped == numDaysDropped)&&(identical(other.numDays, numDays) || other.numDays == numDays)&&(identical(other.meanScore, meanScore) || other.meanScore == meanScore)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes));
+  final _this = this as AnimeStatistics;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeStatistics&&(identical(other.numItemsWatching, _this.numItemsWatching) || other.numItemsWatching == _this.numItemsWatching)&&(identical(other.numItemsCompleted, _this.numItemsCompleted) || other.numItemsCompleted == _this.numItemsCompleted)&&(identical(other.numItemsOnHold, _this.numItemsOnHold) || other.numItemsOnHold == _this.numItemsOnHold)&&(identical(other.numItemsDropped, _this.numItemsDropped) || other.numItemsDropped == _this.numItemsDropped)&&(identical(other.numItemsPlanToWatch, _this.numItemsPlanToWatch) || other.numItemsPlanToWatch == _this.numItemsPlanToWatch)&&(identical(other.numItems, _this.numItems) || other.numItems == _this.numItems)&&(identical(other.numDaysWatched, _this.numDaysWatched) || other.numDaysWatched == _this.numDaysWatched)&&(identical(other.numDaysWatching, _this.numDaysWatching) || other.numDaysWatching == _this.numDaysWatching)&&(identical(other.numDaysCompleted, _this.numDaysCompleted) || other.numDaysCompleted == _this.numDaysCompleted)&&(identical(other.numDaysOnHold, _this.numDaysOnHold) || other.numDaysOnHold == _this.numDaysOnHold)&&(identical(other.numDaysDropped, _this.numDaysDropped) || other.numDaysDropped == _this.numDaysDropped)&&(identical(other.numDays, _this.numDays) || other.numDays == _this.numDays)&&(identical(other.meanScore, _this.meanScore) || other.meanScore == _this.meanScore)&&(identical(other.numEpisodes, _this.numEpisodes) || other.numEpisodes == _this.numEpisodes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,numItemsWatching,numItemsCompleted,numItemsOnHold,numItemsDropped,numItemsPlanToWatch,numItems,numDaysWatched,numDaysWatching,numDaysCompleted,numDaysOnHold,numDaysDropped,numDays,meanScore,numEpisodes);
+int get hashCode {
+  final _this = this as AnimeStatistics;
+  return Object.hash(runtimeType,_this.numItemsWatching,_this.numItemsCompleted,_this.numItemsOnHold,_this.numItemsDropped,_this.numItemsPlanToWatch,_this.numItems,_this.numDaysWatched,_this.numDaysWatching,_this.numDaysCompleted,_this.numDaysOnHold,_this.numDaysDropped,_this.numDays,_this.meanScore,_this.numEpisodes);
+}
 
 @override
 String toString() {
-  return 'AnimeStatistics(numItemsWatching: $numItemsWatching, numItemsCompleted: $numItemsCompleted, numItemsOnHold: $numItemsOnHold, numItemsDropped: $numItemsDropped, numItemsPlanToWatch: $numItemsPlanToWatch, numItems: $numItems, numDaysWatched: $numDaysWatched, numDaysWatching: $numDaysWatching, numDaysCompleted: $numDaysCompleted, numDaysOnHold: $numDaysOnHold, numDaysDropped: $numDaysDropped, numDays: $numDays, meanScore: $meanScore, numEpisodes: $numEpisodes)';
+  final _this = this as AnimeStatistics;
+  return 'AnimeStatistics(numItemsWatching: ${_this.numItemsWatching}, numItemsCompleted: ${_this.numItemsCompleted}, numItemsOnHold: ${_this.numItemsOnHold}, numItemsDropped: ${_this.numItemsDropped}, numItemsPlanToWatch: ${_this.numItemsPlanToWatch}, numItems: ${_this.numItems}, numDaysWatched: ${_this.numDaysWatched}, numDaysWatching: ${_this.numDaysWatching}, numDaysCompleted: ${_this.numDaysCompleted}, numDaysOnHold: ${_this.numDaysOnHold}, numDaysDropped: ${_this.numDaysDropped}, numDays: ${_this.numDays}, meanScore: ${_this.meanScore}, numEpisodes: ${_this.numEpisodes})';
 }
 
 
@@ -550,16 +562,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeStatistics&&(identical(other.numItemsWatching, numItemsWatching) || other.numItemsWatching == numItemsWatching)&&(identical(other.numItemsCompleted, numItemsCompleted) || other.numItemsCompleted == numItemsCompleted)&&(identical(other.numItemsOnHold, numItemsOnHold) || other.numItemsOnHold == numItemsOnHold)&&(identical(other.numItemsDropped, numItemsDropped) || other.numItemsDropped == numItemsDropped)&&(identical(other.numItemsPlanToWatch, numItemsPlanToWatch) || other.numItemsPlanToWatch == numItemsPlanToWatch)&&(identical(other.numItems, numItems) || other.numItems == numItems)&&(identical(other.numDaysWatched, numDaysWatched) || other.numDaysWatched == numDaysWatched)&&(identical(other.numDaysWatching, numDaysWatching) || other.numDaysWatching == numDaysWatching)&&(identical(other.numDaysCompleted, numDaysCompleted) || other.numDaysCompleted == numDaysCompleted)&&(identical(other.numDaysOnHold, numDaysOnHold) || other.numDaysOnHold == numDaysOnHold)&&(identical(other.numDaysDropped, numDaysDropped) || other.numDaysDropped == numDaysDropped)&&(identical(other.numDays, numDays) || other.numDays == numDays)&&(identical(other.meanScore, meanScore) || other.meanScore == meanScore)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeStatistics&&(identical(other.numItemsWatching, numItemsWatching) || other.numItemsWatching == numItemsWatching)&&(identical(other.numItemsCompleted, numItemsCompleted) || other.numItemsCompleted == numItemsCompleted)&&(identical(other.numItemsOnHold, numItemsOnHold) || other.numItemsOnHold == numItemsOnHold)&&(identical(other.numItemsDropped, numItemsDropped) || other.numItemsDropped == numItemsDropped)&&(identical(other.numItemsPlanToWatch, numItemsPlanToWatch) || other.numItemsPlanToWatch == numItemsPlanToWatch)&&(identical(other.numItems, numItems) || other.numItems == numItems)&&(identical(other.numDaysWatched, numDaysWatched) || other.numDaysWatched == numDaysWatched)&&(identical(other.numDaysWatching, numDaysWatching) || other.numDaysWatching == numDaysWatching)&&(identical(other.numDaysCompleted, numDaysCompleted) || other.numDaysCompleted == numDaysCompleted)&&(identical(other.numDaysOnHold, numDaysOnHold) || other.numDaysOnHold == numDaysOnHold)&&(identical(other.numDaysDropped, numDaysDropped) || other.numDaysDropped == numDaysDropped)&&(identical(other.numDays, numDays) || other.numDays == numDays)&&(identical(other.meanScore, meanScore) || other.meanScore == meanScore)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,numItemsWatching,numItemsCompleted,numItemsOnHold,numItemsDropped,numItemsPlanToWatch,numItems,numDaysWatched,numDaysWatching,numDaysCompleted,numDaysOnHold,numDaysDropped,numDays,meanScore,numEpisodes);
+int get hashCode {
+    return Object.hash(runtimeType,numItemsWatching,numItemsCompleted,numItemsOnHold,numItemsDropped,numItemsPlanToWatch,numItems,numDaysWatched,numDaysWatching,numDaysCompleted,numDaysOnHold,numDaysDropped,numDays,meanScore,numEpisodes);
+}
 
 @override
 String toString() {
-  return 'AnimeStatistics(numItemsWatching: $numItemsWatching, numItemsCompleted: $numItemsCompleted, numItemsOnHold: $numItemsOnHold, numItemsDropped: $numItemsDropped, numItemsPlanToWatch: $numItemsPlanToWatch, numItems: $numItems, numDaysWatched: $numDaysWatched, numDaysWatching: $numDaysWatching, numDaysCompleted: $numDaysCompleted, numDaysOnHold: $numDaysOnHold, numDaysDropped: $numDaysDropped, numDays: $numDays, meanScore: $meanScore, numEpisodes: $numEpisodes)';
+    return 'AnimeStatistics(numItemsWatching: $numItemsWatching, numItemsCompleted: $numItemsCompleted, numItemsOnHold: $numItemsOnHold, numItemsDropped: $numItemsDropped, numItemsPlanToWatch: $numItemsPlanToWatch, numItems: $numItems, numDaysWatched: $numDaysWatched, numDaysWatching: $numDaysWatching, numDaysCompleted: $numDaysCompleted, numDaysOnHold: $numDaysOnHold, numDaysDropped: $numDaysDropped, numDays: $numDays, meanScore: $meanScore, numEpisodes: $numEpisodes)';
 }
 
 

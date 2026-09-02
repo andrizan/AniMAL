@@ -29,16 +29,21 @@ $AnimeDetailCopyWith<AnimeDetail> get copyWith => _$AnimeDetailCopyWithImpl<Anim
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.source, source) || other.source == source)&&(identical(other.synopsis, synopsis) || other.synopsis == synopsis)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.numScoringUsers, numScoringUsers) || other.numScoringUsers == numScoringUsers)&&const DeepCollectionEquality().equals(other.genres, genres)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other.relatedAnime, relatedAnime)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus)&&(identical(other.startSeason, startSeason) || other.startSeason == startSeason)&&(identical(other.averageEpisodeDuration, averageEpisodeDuration) || other.averageEpisodeDuration == averageEpisodeDuration));
+  final _this = this as AnimeDetail;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeDetail&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.mainPicture, _this.mainPicture) || other.mainPicture == _this.mainPicture)&&(identical(other.mean, _this.mean) || other.mean == _this.mean)&&(identical(other.rank, _this.rank) || other.rank == _this.rank)&&(identical(other.popularity, _this.popularity) || other.popularity == _this.popularity)&&(identical(other.numEpisodes, _this.numEpisodes) || other.numEpisodes == _this.numEpisodes)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.synopsis, _this.synopsis) || other.synopsis == _this.synopsis)&&(identical(other.startDate, _this.startDate) || other.startDate == _this.startDate)&&(identical(other.endDate, _this.endDate) || other.endDate == _this.endDate)&&(identical(other.mediaType, _this.mediaType) || other.mediaType == _this.mediaType)&&(identical(other.numScoringUsers, _this.numScoringUsers) || other.numScoringUsers == _this.numScoringUsers)&&const DeepCollectionEquality().equals(other.genres, _this.genres)&&(identical(other.broadcast, _this.broadcast) || other.broadcast == _this.broadcast)&&(identical(other.alternativeTitles, _this.alternativeTitles) || other.alternativeTitles == _this.alternativeTitles)&&const DeepCollectionEquality().equals(other.relatedAnime, _this.relatedAnime)&&(identical(other.myListStatus, _this.myListStatus) || other.myListStatus == _this.myListStatus)&&(identical(other.startSeason, _this.startSeason) || other.startSeason == _this.startSeason)&&(identical(other.averageEpisodeDuration, _this.averageEpisodeDuration) || other.averageEpisodeDuration == _this.averageEpisodeDuration));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,source,synopsis,startDate,endDate,mediaType,numScoringUsers,const DeepCollectionEquality().hash(genres),broadcast,alternativeTitles,const DeepCollectionEquality().hash(relatedAnime),myListStatus,startSeason,averageEpisodeDuration]);
+int get hashCode {
+  final _this = this as AnimeDetail;
+  return Object.hashAll([runtimeType,_this.id,_this.title,_this.mainPicture,_this.mean,_this.rank,_this.popularity,_this.numEpisodes,_this.status,_this.rating,_this.source,_this.synopsis,_this.startDate,_this.endDate,_this.mediaType,_this.numScoringUsers,const DeepCollectionEquality().hash(_this.genres),_this.broadcast,_this.alternativeTitles,const DeepCollectionEquality().hash(_this.relatedAnime),_this.myListStatus,_this.startSeason,_this.averageEpisodeDuration]);
+}
 
 @override
 String toString() {
-  return 'AnimeDetail(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, source: $source, synopsis: $synopsis, startDate: $startDate, endDate: $endDate, mediaType: $mediaType, numScoringUsers: $numScoringUsers, genres: $genres, broadcast: $broadcast, alternativeTitles: $alternativeTitles, relatedAnime: $relatedAnime, myListStatus: $myListStatus, startSeason: $startSeason, averageEpisodeDuration: $averageEpisodeDuration)';
+  final _this = this as AnimeDetail;
+  return 'AnimeDetail(id: ${_this.id}, title: ${_this.title}, mainPicture: ${_this.mainPicture}, mean: ${_this.mean}, rank: ${_this.rank}, popularity: ${_this.popularity}, numEpisodes: ${_this.numEpisodes}, status: ${_this.status}, rating: ${_this.rating}, source: ${_this.source}, synopsis: ${_this.synopsis}, startDate: ${_this.startDate}, endDate: ${_this.endDate}, mediaType: ${_this.mediaType}, numScoringUsers: ${_this.numScoringUsers}, genres: ${_this.genres}, broadcast: ${_this.broadcast}, alternativeTitles: ${_this.alternativeTitles}, relatedAnime: ${_this.relatedAnime}, myListStatus: ${_this.myListStatus}, startSeason: ${_this.startSeason}, averageEpisodeDuration: ${_this.averageEpisodeDuration})';
 }
 
 
@@ -336,16 +341,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.source, source) || other.source == source)&&(identical(other.synopsis, synopsis) || other.synopsis == synopsis)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.numScoringUsers, numScoringUsers) || other.numScoringUsers == numScoringUsers)&&const DeepCollectionEquality().equals(other._genres, _genres)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other._relatedAnime, _relatedAnime)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus)&&(identical(other.startSeason, startSeason) || other.startSeason == startSeason)&&(identical(other.averageEpisodeDuration, averageEpisodeDuration) || other.averageEpisodeDuration == averageEpisodeDuration));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.source, source) || other.source == source)&&(identical(other.synopsis, synopsis) || other.synopsis == synopsis)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.numScoringUsers, numScoringUsers) || other.numScoringUsers == numScoringUsers)&&const DeepCollectionEquality().equals(other.genres, _genres)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other.relatedAnime, _relatedAnime)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus)&&(identical(other.startSeason, startSeason) || other.startSeason == startSeason)&&(identical(other.averageEpisodeDuration, averageEpisodeDuration) || other.averageEpisodeDuration == averageEpisodeDuration));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,source,synopsis,startDate,endDate,mediaType,numScoringUsers,const DeepCollectionEquality().hash(_genres),broadcast,alternativeTitles,const DeepCollectionEquality().hash(_relatedAnime),myListStatus,startSeason,averageEpisodeDuration]);
+int get hashCode {
+    return Object.hashAll([runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,source,synopsis,startDate,endDate,mediaType,numScoringUsers,const DeepCollectionEquality().hash(_genres),broadcast,alternativeTitles,const DeepCollectionEquality().hash(_relatedAnime),myListStatus,startSeason,averageEpisodeDuration]);
+}
 
 @override
 String toString() {
-  return 'AnimeDetail(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, source: $source, synopsis: $synopsis, startDate: $startDate, endDate: $endDate, mediaType: $mediaType, numScoringUsers: $numScoringUsers, genres: $genres, broadcast: $broadcast, alternativeTitles: $alternativeTitles, relatedAnime: $relatedAnime, myListStatus: $myListStatus, startSeason: $startSeason, averageEpisodeDuration: $averageEpisodeDuration)';
+    return 'AnimeDetail(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, source: $source, synopsis: $synopsis, startDate: $startDate, endDate: $endDate, mediaType: $mediaType, numScoringUsers: $numScoringUsers, genres: $genres, broadcast: $broadcast, alternativeTitles: $alternativeTitles, relatedAnime: $relatedAnime, myListStatus: $myListStatus, startSeason: $startSeason, averageEpisodeDuration: $averageEpisodeDuration)';
 }
 
 
@@ -481,16 +488,21 @@ $GenreCopyWith<Genre> get copyWith => _$GenreCopyWithImpl<Genre>(this as Genre, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Genre&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name));
+  final _this = this as Genre;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Genre&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name);
+int get hashCode {
+  final _this = this as Genre;
+  return Object.hash(runtimeType,_this.id,_this.name);
+}
 
 @override
 String toString() {
-  return 'Genre(id: $id, name: $name)';
+  final _this = this as Genre;
+  return 'Genre(id: ${_this.id}, name: ${_this.name})';
 }
 
 
@@ -676,16 +688,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Genre&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Genre&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name);
+int get hashCode {
+    return Object.hash(runtimeType,id,name);
+}
 
 @override
 String toString() {
-  return 'Genre(id: $id, name: $name)';
+    return 'Genre(id: $id, name: $name)';
 }
 
 
@@ -741,16 +755,21 @@ $RelatedAnimeCopyWith<RelatedAnime> get copyWith => _$RelatedAnimeCopyWithImpl<R
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RelatedAnime&&(identical(other.node, node) || other.node == node)&&(identical(other.relationType, relationType) || other.relationType == relationType)&&(identical(other.relationTypeFormatted, relationTypeFormatted) || other.relationTypeFormatted == relationTypeFormatted));
+  final _this = this as RelatedAnime;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RelatedAnime&&(identical(other.node, _this.node) || other.node == _this.node)&&(identical(other.relationType, _this.relationType) || other.relationType == _this.relationType)&&(identical(other.relationTypeFormatted, _this.relationTypeFormatted) || other.relationTypeFormatted == _this.relationTypeFormatted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,node,relationType,relationTypeFormatted);
+int get hashCode {
+  final _this = this as RelatedAnime;
+  return Object.hash(runtimeType,_this.node,_this.relationType,_this.relationTypeFormatted);
+}
 
 @override
 String toString() {
-  return 'RelatedAnime(node: $node, relationType: $relationType, relationTypeFormatted: $relationTypeFormatted)';
+  final _this = this as RelatedAnime;
+  return 'RelatedAnime(node: ${_this.node}, relationType: ${_this.relationType}, relationTypeFormatted: ${_this.relationTypeFormatted})';
 }
 
 
@@ -947,16 +966,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RelatedAnime&&(identical(other.node, node) || other.node == node)&&(identical(other.relationType, relationType) || other.relationType == relationType)&&(identical(other.relationTypeFormatted, relationTypeFormatted) || other.relationTypeFormatted == relationTypeFormatted));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RelatedAnime&&(identical(other.node, node) || other.node == node)&&(identical(other.relationType, relationType) || other.relationType == relationType)&&(identical(other.relationTypeFormatted, relationTypeFormatted) || other.relationTypeFormatted == relationTypeFormatted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,node,relationType,relationTypeFormatted);
+int get hashCode {
+    return Object.hash(runtimeType,node,relationType,relationTypeFormatted);
+}
 
 @override
 String toString() {
-  return 'RelatedAnime(node: $node, relationType: $relationType, relationTypeFormatted: $relationTypeFormatted)';
+    return 'RelatedAnime(node: $node, relationType: $relationType, relationTypeFormatted: $relationTypeFormatted)';
 }
 
 
@@ -1022,16 +1043,21 @@ $AnimeNodeCopyWith<AnimeNode> get copyWith => _$AnimeNodeCopyWithImpl<AnimeNode>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeNode&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture));
+  final _this = this as AnimeNode;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeNode&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.mainPicture, _this.mainPicture) || other.mainPicture == _this.mainPicture));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,mainPicture);
+int get hashCode {
+  final _this = this as AnimeNode;
+  return Object.hash(runtimeType,_this.id,_this.title,_this.mainPicture);
+}
 
 @override
 String toString() {
-  return 'AnimeNode(id: $id, title: $title, mainPicture: $mainPicture)';
+  final _this = this as AnimeNode;
+  return 'AnimeNode(id: ${_this.id}, title: ${_this.title}, mainPicture: ${_this.mainPicture})';
 }
 
 
@@ -1231,16 +1257,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeNode&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeNode&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,mainPicture);
+int get hashCode {
+    return Object.hash(runtimeType,id,title,mainPicture);
+}
 
 @override
 String toString() {
-  return 'AnimeNode(id: $id, title: $title, mainPicture: $mainPicture)';
+    return 'AnimeNode(id: $id, title: $title, mainPicture: $mainPicture)';
 }
 
 
@@ -1309,16 +1337,21 @@ $StartSeasonCopyWith<StartSeason> get copyWith => _$StartSeasonCopyWithImpl<Star
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StartSeason&&(identical(other.year, year) || other.year == year)&&(identical(other.season, season) || other.season == season));
+  final _this = this as StartSeason;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StartSeason&&(identical(other.year, _this.year) || other.year == _this.year)&&(identical(other.season, _this.season) || other.season == _this.season));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,year,season);
+int get hashCode {
+  final _this = this as StartSeason;
+  return Object.hash(runtimeType,_this.year,_this.season);
+}
 
 @override
 String toString() {
-  return 'StartSeason(year: $year, season: $season)';
+  final _this = this as StartSeason;
+  return 'StartSeason(year: ${_this.year}, season: ${_this.season})';
 }
 
 
@@ -1504,16 +1537,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StartSeason&&(identical(other.year, year) || other.year == year)&&(identical(other.season, season) || other.season == season));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _StartSeason&&(identical(other.year, year) || other.year == year)&&(identical(other.season, season) || other.season == season));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,year,season);
+int get hashCode {
+    return Object.hash(runtimeType,year,season);
+}
 
 @override
 String toString() {
-  return 'StartSeason(year: $year, season: $season)';
+    return 'StartSeason(year: $year, season: $season)';
 }
 
 

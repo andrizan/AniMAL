@@ -29,16 +29,21 @@ $MyListStatusCopyWith<MyListStatus> get copyWith => _$MyListStatusCopyWithImpl<M
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MyListStatus&&(identical(other.status, status) || other.status == status)&&(identical(other.numEpisodesWatched, numEpisodesWatched) || other.numEpisodesWatched == numEpisodesWatched)&&(identical(other.score, score) || other.score == score)&&(identical(other.isRewatching, isRewatching) || other.isRewatching == isRewatching)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.numTimesRewatched, numTimesRewatched) || other.numTimesRewatched == numTimesRewatched)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.rewatchValue, rewatchValue) || other.rewatchValue == rewatchValue)&&(identical(other.comments, comments) || other.comments == comments));
+  final _this = this as MyListStatus;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MyListStatus&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.numEpisodesWatched, _this.numEpisodesWatched) || other.numEpisodesWatched == _this.numEpisodesWatched)&&(identical(other.score, _this.score) || other.score == _this.score)&&(identical(other.isRewatching, _this.isRewatching) || other.isRewatching == _this.isRewatching)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt)&&(identical(other.numTimesRewatched, _this.numTimesRewatched) || other.numTimesRewatched == _this.numTimesRewatched)&&(identical(other.priority, _this.priority) || other.priority == _this.priority)&&(identical(other.rewatchValue, _this.rewatchValue) || other.rewatchValue == _this.rewatchValue)&&(identical(other.comments, _this.comments) || other.comments == _this.comments));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,numEpisodesWatched,score,isRewatching,updatedAt,numTimesRewatched,priority,rewatchValue,comments);
+int get hashCode {
+  final _this = this as MyListStatus;
+  return Object.hash(runtimeType,_this.status,_this.numEpisodesWatched,_this.score,_this.isRewatching,_this.updatedAt,_this.numTimesRewatched,_this.priority,_this.rewatchValue,_this.comments);
+}
 
 @override
 String toString() {
-  return 'MyListStatus(status: $status, numEpisodesWatched: $numEpisodesWatched, score: $score, isRewatching: $isRewatching, updatedAt: $updatedAt, numTimesRewatched: $numTimesRewatched, priority: $priority, rewatchValue: $rewatchValue, comments: $comments)';
+  final _this = this as MyListStatus;
+  return 'MyListStatus(status: ${_this.status}, numEpisodesWatched: ${_this.numEpisodesWatched}, score: ${_this.score}, isRewatching: ${_this.isRewatching}, updatedAt: ${_this.updatedAt}, numTimesRewatched: ${_this.numTimesRewatched}, priority: ${_this.priority}, rewatchValue: ${_this.rewatchValue}, comments: ${_this.comments})';
 }
 
 
@@ -238,16 +243,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MyListStatus&&(identical(other.status, status) || other.status == status)&&(identical(other.numEpisodesWatched, numEpisodesWatched) || other.numEpisodesWatched == numEpisodesWatched)&&(identical(other.score, score) || other.score == score)&&(identical(other.isRewatching, isRewatching) || other.isRewatching == isRewatching)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.numTimesRewatched, numTimesRewatched) || other.numTimesRewatched == numTimesRewatched)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.rewatchValue, rewatchValue) || other.rewatchValue == rewatchValue)&&(identical(other.comments, comments) || other.comments == comments));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MyListStatus&&(identical(other.status, status) || other.status == status)&&(identical(other.numEpisodesWatched, numEpisodesWatched) || other.numEpisodesWatched == numEpisodesWatched)&&(identical(other.score, score) || other.score == score)&&(identical(other.isRewatching, isRewatching) || other.isRewatching == isRewatching)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.numTimesRewatched, numTimesRewatched) || other.numTimesRewatched == numTimesRewatched)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.rewatchValue, rewatchValue) || other.rewatchValue == rewatchValue)&&(identical(other.comments, comments) || other.comments == comments));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,numEpisodesWatched,score,isRewatching,updatedAt,numTimesRewatched,priority,rewatchValue,comments);
+int get hashCode {
+    return Object.hash(runtimeType,status,numEpisodesWatched,score,isRewatching,updatedAt,numTimesRewatched,priority,rewatchValue,comments);
+}
 
 @override
 String toString() {
-  return 'MyListStatus(status: $status, numEpisodesWatched: $numEpisodesWatched, score: $score, isRewatching: $isRewatching, updatedAt: $updatedAt, numTimesRewatched: $numTimesRewatched, priority: $priority, rewatchValue: $rewatchValue, comments: $comments)';
+    return 'MyListStatus(status: $status, numEpisodesWatched: $numEpisodesWatched, score: $score, isRewatching: $isRewatching, updatedAt: $updatedAt, numTimesRewatched: $numTimesRewatched, priority: $priority, rewatchValue: $rewatchValue, comments: $comments)';
 }
 
 
