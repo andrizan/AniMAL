@@ -96,9 +96,10 @@ class _AppState extends ConsumerState<App> {
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) =>
-          // ignore: deprecated_member_use
           // Bridges legacy package:flutter/material.dart imports in transitive
-          // plugins (cached_network_image, google_fonts, etc.) to material_ui.
+          // plugins (octo_image, google_fonts) to material_ui. Re-evaluate when
+          // octo_image publishes a material_ui-compatible release.
+          // ignore: deprecated_member_use
           MaterialUiCompatibilityBridge(
             child: child ?? const SizedBox.shrink(),
           ),
