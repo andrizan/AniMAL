@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/core/providers.dart';
+import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/local/anime_cache.dart';
 import 'package:animal/data/local/app_database.dart';
 import 'package:animal/data/local/sqlite_anime_cache.dart';
@@ -12,6 +13,8 @@ import 'package:animal/data/models/mal_user.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
+import 'package:animal/shared/providers/anilist_providers.dart'
+    show anilistApiProvider;
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
@@ -42,12 +45,19 @@ final malAnimeApiProvider = Provider<MalApiClient>((ref) {
 /// High-level repository that wraps [MalApiClient] with error handling,
 /// persistent caching, stale-while-revalidate, and in-flight deduplication.
 class AnimeRepository {
-  AnimeRepository(this._ref, this._api, this._cache, [this._logger]);
+  AnimeRepository(
+    this._ref,
+    this._api,
+    this._cache, [
+    this._logger,
+    this._anilistApi,
+  ]);
 
   final Ref _ref;
   final MalApiClient _api;
   final AnimeCache _cache;
   final Logger? _logger;
+  final AniListClient? _anilistApi;
 
   static const _ttlShort = Duration(minutes: 1);
   static const _ttlUserList = Duration(minutes: 3);
@@ -124,21 +134,68 @@ class AnimeRepository {
       ttl: _ttlLong,
       readFresh: () => _cache.getAnimeDetail(animeId),
       networkFetch: () async {
-        try {
-          return await _api.getAnimeDetail(animeId);
-        } on DioException catch (e) {
-          if (e.response?.statusCode == 404) {
-            _logger?.i('Anime $animeId not found on MAL');
-            return null;
-          }
-          rethrow;
+        final detail = await _fetchAnimeDetailNetwork(animeId);
+        if (detail != null) {
+          // MAL + AniList are one unit: every detail fetch also syncs the
+          // AniList side (characters, staff, studios, next airing).
+          unawaited(_syncAniListExtra(animeId));
         }
+        return detail;
       },
       writeCache: (d) async {
         if (d != null) await _cache.saveAnimeDetail(d);
       },
       isMissingNetworkValue: (v) => v == null,
     );
+  }
+
+  Future<AnimeDetail?> _fetchAnimeDetailNetwork(int animeId) async {
+    try {
+      return await _api.getAnimeDetail(animeId);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        _logger?.i('Anime $animeId not found on MAL');
+        return null;
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _syncAniListExtra(int malId) async {
+    final api = _anilistApi;
+    if (api == null) return;
+    try {
+      await api.getAnimeExtraInfo(malId);
+    } on Exception catch (e) {
+      _logger?.w('AniList extra sync failed for $malId', error: e);
+    }
+  }
+
+  /// Force refresh of a single anime across BOTH sources at once: MAL detail
+  /// and AniList extra are fetched in parallel and merged into SQLite.
+  /// Partial responses never erase existing cached data (merge-on-save).
+  /// Throws when the MAL fetch fails; AniList failures are best-effort.
+  Future<AnimeDetail?> refreshAnimeDetail(int animeId) async {
+    final results = await Future.wait<Object?>([
+      _fetchAnimeDetailNetwork(animeId),
+      _refreshAniListExtra(animeId),
+    ]);
+    final detail = results[0] as AnimeDetail?;
+    if (detail != null) {
+      await _cache.saveAnimeDetail(detail);
+    }
+    return detail;
+  }
+
+  Future<Object?> _refreshAniListExtra(int malId) async {
+    final api = _anilistApi;
+    if (api == null) return null;
+    try {
+      return await api.refreshAnimeExtra(malId);
+    } on Exception catch (e) {
+      _logger?.w('AniList extra refresh failed for $malId', error: e);
+      return null;
+    }
   }
 
   // ---------- User list / User info (SWR with stale fallback) ----------
@@ -507,6 +564,7 @@ final animeRepositoryProvider = Provider<AnimeRepository>((ref) {
     ref.watch(malAnimeApiProvider),
     ref.watch(animeCacheProvider),
     ref.watch(loggerProvider),
+    ref.watch(anilistApiProvider),
   );
 });
 

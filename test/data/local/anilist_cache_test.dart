@@ -241,5 +241,50 @@ void main() {
       expect(out.people.staff.first.name, 'Staff Name');
       expect(out.people.staff.first.role, 'Director');
     });
+
+    test(
+      'saveAnimeExtra works without a MAL anime row (stub created)',
+      () async {
+        final extra = AniListAnimeExtra(
+          people: AniListAnimePeople(
+            characters: [
+              AniListCharacter(id: 1, name: 'C'),
+            ],
+          ),
+        );
+        // No anime row exists for 999 — the FK used to fail the transaction.
+        await cache.saveAnimeExtra(999, extra);
+        final out = await cache.getAnimeExtra(999);
+        expect(out!.people.characters.length, 1);
+      },
+    );
+
+    test('partial extra refresh preserves cached characters/staff', () async {
+      final full = AniListAnimeExtra(
+        people: AniListAnimePeople(
+          characters: [AniListCharacter(id: 1, name: 'Char A')],
+          staff: [AniListStaff(id: 2, name: 'Staff B')],
+        ),
+        externalLinks: [
+          AniListExternalLink(id: 3, url: 'https://x.com', site: 'X'),
+        ],
+      );
+      await cache.saveAnimeExtra(55, full);
+
+      // Refresh returns only links (characters/staff missing).
+      await cache.saveAnimeExtra(
+        55,
+        AniListAnimeExtra(
+          externalLinks: [
+            AniListExternalLink(id: 4, url: 'https://y.com', site: 'Y'),
+          ],
+        ),
+      );
+
+      final out = await cache.getAnimeExtra(55);
+      expect(out!.people.characters.first.name, 'Char A');
+      expect(out.people.staff.first.name, 'Staff B');
+      expect(out.externalLinks.map((l) => l.site), ['Y']);
+    });
   });
 }

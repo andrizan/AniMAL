@@ -305,30 +305,8 @@ class SqliteAnimeCache implements AnimeCache {
         : 'anime_query_item';
     await _db.transaction((txn) async {
       for (final a in results) {
-        final row = _mappers.animeToRow(a);
-        // INSERT OR REPLACE keeps the row single; preserves FK target.
-        await txn.insert(
-          'anime',
-          row,
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        // Refresh genre rows
-        await txn.delete(
-          'anime_genre',
-          where: 'mal_id = ?',
-          whereArgs: [a.id],
-        );
-        for (final g in a.genres) {
-          await txn.insert(
-            'genre',
-            {'id': g.id, 'name': g.name},
-            conflictAlgorithm: ConflictAlgorithm.ignore,
-          );
-          await txn.insert('anime_genre', {
-            'mal_id': a.id,
-            'genre_id': g.id,
-          });
-        }
+        await _upsertAnime(txn, a);
+        await _upsertGenres(txn, a.id, a.genres);
       }
       await txn.delete(
         itemsTable,
@@ -365,36 +343,78 @@ class SqliteAnimeCache implements AnimeCache {
         genres: detail.genres,
         myListStatus: detail.myListStatus,
       );
-      await txn.insert(
-        'anime',
-        _mappers.animeToRow(baseAnime),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-      // Refresh genres
-      await txn.delete(
-        'anime_genre',
-        where: 'mal_id = ?',
-        whereArgs: [detail.id],
-      );
-      for (final g in detail.genres) {
-        await txn.insert(
-          'genre',
-          {'id': g.id, 'name': g.name},
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
-        await txn.insert('anime_genre', {
-          'mal_id': detail.id,
-          'genre_id': g.id,
-        });
-      }
-      // Upsert detail row
-      await txn.insert(
-        'anime_detail',
-        _mappers.animeDetailToExtraRow(detail),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await _upsertAnime(txn, baseAnime);
+      await _upsertGenres(txn, detail.id, detail.genres);
+      await _upsertAnimeDetail(txn, detail);
       await _upsertCacheMeta(txn, key);
     });
+  }
+
+  /// Merge-based upsert. Never deletes the existing `anime` row (REPLACE
+  /// would cascade-wipe anime_query_item / user_anime_list_item entries and
+  /// anime_detail for this anime). Null incoming fields keep the old value so
+  /// partial responses never erase richer cached data.
+  Future<void> _upsertAnime(DatabaseExecutor txn, Anime a) async {
+    final row = _mappers.animeToRow(a);
+    final existing = await txn.query(
+      'anime',
+      where: 'mal_id = ?',
+      whereArgs: [a.id],
+      limit: 1,
+    );
+    if (existing.isEmpty) {
+      await txn.insert('anime', row);
+      return;
+    }
+    final merged = <String, Object?>{...existing.first};
+    row.forEach((k, v) {
+      if (v != null) merged[k] = v;
+    });
+    await txn.update('anime', merged, where: 'mal_id = ?', whereArgs: [a.id]);
+  }
+
+  /// Merge-based upsert for `anime_detail`. Null incoming fields keep old.
+  Future<void> _upsertAnimeDetail(DatabaseExecutor txn, AnimeDetail d) async {
+    final row = _mappers.animeDetailToExtraRow(d);
+    final existing = await txn.query(
+      'anime_detail',
+      where: 'mal_id = ?',
+      whereArgs: [d.id],
+      limit: 1,
+    );
+    if (existing.isEmpty) {
+      await txn.insert('anime_detail', row);
+      return;
+    }
+    final merged = <String, Object?>{...existing.first};
+    row.forEach((k, v) {
+      if (v != null) merged[k] = v;
+    });
+    await txn.update(
+      'anime_detail',
+      merged,
+      where: 'mal_id = ?',
+      whereArgs: [d.id],
+    );
+  }
+
+  /// Only replaces genre links when the incoming list is non-empty, so a
+  /// partial response cannot wipe previously cached genres.
+  Future<void> _upsertGenres(
+    DatabaseExecutor txn,
+    int malId,
+    List<Genre> genres,
+  ) async {
+    if (genres.isEmpty) return;
+    await txn.delete('anime_genre', where: 'mal_id = ?', whereArgs: [malId]);
+    for (final g in genres) {
+      await txn.insert(
+        'genre',
+        {'id': g.id, 'name': g.name},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+      await txn.insert('anime_genre', {'mal_id': malId, 'genre_id': g.id});
+    }
   }
 
   Future<void> _upsertCacheMeta(DatabaseExecutor txn, String key) async {

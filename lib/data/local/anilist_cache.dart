@@ -412,109 +412,196 @@ class SqliteAniListCache implements AniListCache {
     );
   }
 
+  Map<String, dynamic> _characterToJson(AniListCharacter c) {
+    return {
+      'id': c.id,
+      'name': c.name,
+      'nativeName': c.nativeName,
+      'imageUrl': c.imageUrl,
+      'role': c.role,
+      'voiceActors': c.voiceActors
+          .map(
+            (va) => {
+              'id': va.id,
+              'name': va.name,
+              'nativeName': va.nativeName,
+              'imageUrl': va.imageUrl,
+              'language': va.language,
+            },
+          )
+          .toList(),
+    };
+  }
+
+  List<AniListCharacter> _decodeCharacters(String? raw) {
+    if (raw == null) return const <AniListCharacter>[];
+    final decoded = jsonDecode(raw) as List<dynamic>;
+    return decoded.map((c) {
+      final m = c as Map<String, dynamic>;
+      final vas = (m['voiceActors'] as List<dynamic>? ?? []).map(
+        (v) {
+          final vm = v as Map<String, dynamic>;
+          return AniListVoiceActor(
+            id: vm['id'] as int,
+            name: vm['name'] as String,
+            nativeName: vm['nativeName'] as String?,
+            imageUrl: vm['imageUrl'] as String?,
+            language: vm['language'] as String?,
+          );
+        },
+      ).toList();
+      return AniListCharacter(
+        id: m['id'] as int,
+        name: m['name'] as String,
+        nativeName: m['nativeName'] as String?,
+        imageUrl: m['imageUrl'] as String?,
+        role: m['role'] as String?,
+        voiceActors: vas,
+      );
+    }).toList();
+  }
+
+  Map<String, dynamic> _staffToJson(AniListStaff s) {
+    return {
+      'id': s.id,
+      'name': s.name,
+      'nativeName': s.nativeName,
+      'imageUrl': s.imageUrl,
+      'role': s.role,
+    };
+  }
+
+  List<AniListStaff> _decodeStaff(String? raw) {
+    if (raw == null) return const <AniListStaff>[];
+    final decoded = jsonDecode(raw) as List<dynamic>;
+    return decoded.map((s) {
+      final m = s as Map<String, dynamic>;
+      return AniListStaff(
+        id: m['id'] as int,
+        name: m['name'] as String,
+        nativeName: m['nativeName'] as String?,
+        imageUrl: m['imageUrl'] as String?,
+        role: m['role'] as String?,
+      );
+    }).toList();
+  }
+
   @override
   Future<void> saveAnimeExtra(int malId, AniListAnimeExtra extra) async {
     final key = _animeExtraKey(malId);
     await _db.transaction((txn) async {
-      await txn.delete(
+      // Ensure the FK target exists: the AniList extra can be cached before
+      // the MAL detail has ever been fetched (parallel loads on the detail
+      // page). A stub row is later enriched by the MAL detail save.
+      final animeRow = await txn.query(
+        'anime',
+        columns: ['mal_id'],
+        where: 'mal_id = ?',
+        whereArgs: [malId],
+        limit: 1,
+      );
+      if (animeRow.isEmpty) {
+        await txn.insert('anime', {'mal_id': malId, 'title': ''});
+      }
+
+      final existingRows = await txn.query(
         'anilist_anime_extra',
         where: 'mal_id = ?',
         whereArgs: [malId],
+        limit: 1,
       );
-      final charactersJson = jsonEncode(
-        extra.people.characters
-            .map(
-              (c) => {
-                'id': c.id,
-                'name': c.name,
-                'nativeName': c.nativeName,
-                'imageUrl': c.imageUrl,
-                'role': c.role,
-                'voiceActors': c.voiceActors
-                    .map(
-                      (va) => {
-                        'id': va.id,
-                        'name': va.name,
-                        'nativeName': va.nativeName,
-                        'imageUrl': va.imageUrl,
-                        'language': va.language,
-                      },
-                    )
-                    .toList(),
-              },
-            )
-            .toList(),
-      );
-      final staffJson = jsonEncode(
-        extra.people.staff
-            .map(
-              (s) => {
-                'id': s.id,
-                'name': s.name,
-                'nativeName': s.nativeName,
-                'imageUrl': s.imageUrl,
-                'role': s.role,
-              },
-            )
-            .toList(),
-      );
-      await txn.insert('anilist_anime_extra', {
+      final existing = existingRows.isEmpty ? null : existingRows.first;
+
+      // Merge per section: a partial refresh (e.g. empty characters) must
+      // not wipe previously cached data. nextAiring always takes the new
+      // value because it is time-sensitive.
+      final characters = extra.people.characters.isNotEmpty
+          ? extra.people.characters
+          : _decodeCharacters(existing?['characters_json'] as String?);
+      final staff = extra.people.staff.isNotEmpty
+          ? extra.people.staff
+          : _decodeStaff(existing?['staff_json'] as String?);
+
+      final row = <String, Object?>{
         'mal_id': malId,
         'next_airing_at': extra.nextAiring == null
             ? null
             : extra.nextAiring!.airingAt.toUtc().millisecondsSinceEpoch ~/ 1000,
         'next_airing_episode': extra.nextAiring?.episode,
         'next_airing_time_until': extra.nextAiring?.timeUntilAiring,
-        'characters_json': charactersJson,
-        'staff_json': staffJson,
-      });
-      await txn.delete(
-        'anilist_anime_extra_link',
-        where: 'mal_id = ?',
-        whereArgs: [malId],
-      );
-      for (final l in extra.externalLinks) {
-        await txn.insert('anilist_anime_extra_link', {
-          'mal_id': malId,
-          'id': l.id,
-          'url': l.url,
-          'site': l.site,
-          'type': l.type,
-          'language': l.language,
-          'icon': l.icon,
-        });
+        'characters_json': characters.isEmpty
+            ? null
+            : jsonEncode(characters.map(_characterToJson).toList()),
+        'staff_json': staff.isEmpty
+            ? null
+            : jsonEncode(staff.map(_staffToJson).toList()),
+      };
+      if (existing == null) {
+        await txn.insert('anilist_anime_extra', row);
+      } else {
+        // Update instead of REPLACE: REPLACE would cascade-delete the child
+        // link/studio/voice-actor rows before we can decide to keep them.
+        await txn.update(
+          'anilist_anime_extra',
+          row,
+          where: 'mal_id = ?',
+          whereArgs: [malId],
+        );
       }
-      await txn.delete(
-        'anilist_anime_extra_studio',
-        where: 'mal_id = ?',
-        whereArgs: [malId],
-      );
-      for (final s in extra.studios) {
-        await txn.insert('anilist_anime_extra_studio', {
-          'mal_id': malId,
-          'studio_id': s.id,
-          'name': s.name,
-          'is_animation_studio': s.isAnimationStudio ? 1 : 0,
-          'site_url': s.siteUrl,
-          'is_main': s.isMain ? 1 : 0,
-        });
-      }
-      await txn.delete(
-        'anilist_anime_extra_voice_actor',
-        where: 'anime_mal_id = ?',
-        whereArgs: [malId],
-      );
-      for (final c in extra.people.characters) {
-        for (final va in c.voiceActors) {
-          await txn.insert('anilist_anime_extra_voice_actor', {
-            'anime_mal_id': malId,
-            'character_id': c.id,
-            'va_id': va.id,
-            'name': va.name,
-            'native_name': va.nativeName,
-            'image_url': va.imageUrl,
-            'language': va.language,
+
+      if (extra.externalLinks.isNotEmpty) {
+        await txn.delete(
+          'anilist_anime_extra_link',
+          where: 'mal_id = ?',
+          whereArgs: [malId],
+        );
+        for (final l in extra.externalLinks) {
+          await txn.insert('anilist_anime_extra_link', {
+            'mal_id': malId,
+            'id': l.id,
+            'url': l.url,
+            'site': l.site,
+            'type': l.type,
+            'language': l.language,
+            'icon': l.icon,
           });
+        }
+      }
+      if (extra.studios.isNotEmpty) {
+        await txn.delete(
+          'anilist_anime_extra_studio',
+          where: 'mal_id = ?',
+          whereArgs: [malId],
+        );
+        for (final s in extra.studios) {
+          await txn.insert('anilist_anime_extra_studio', {
+            'mal_id': malId,
+            'studio_id': s.id,
+            'name': s.name,
+            'is_animation_studio': s.isAnimationStudio ? 1 : 0,
+            'site_url': s.siteUrl,
+            'is_main': s.isMain ? 1 : 0,
+          });
+        }
+      }
+      if (characters.isNotEmpty) {
+        await txn.delete(
+          'anilist_anime_extra_voice_actor',
+          where: 'anime_mal_id = ?',
+          whereArgs: [malId],
+        );
+        for (final c in characters) {
+          for (final va in c.voiceActors) {
+            await txn.insert('anilist_anime_extra_voice_actor', {
+              'anime_mal_id': malId,
+              'character_id': c.id,
+              'va_id': va.id,
+              'name': va.name,
+              'native_name': va.nativeName,
+              'image_url': va.imageUrl,
+              'language': va.language,
+            });
+          }
         }
       }
       await _upsertMeta(txn, key);

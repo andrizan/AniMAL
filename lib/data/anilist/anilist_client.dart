@@ -631,6 +631,49 @@ class AniListClient {
     );
   }
 
+  // ---------- Force refresh (bypass TTL, merge into cache) ----------
+
+  Future<T> _runDeduped<T>(String key, Future<T> Function() run) {
+    final existing = _inFlight[key];
+    if (existing != null) return existing as Future<T>;
+    final fut = run();
+    unawaited(fut.whenComplete(() => _inFlight.remove(key)));
+    _inFlight[key] = fut;
+    return fut;
+  }
+
+  /// Force-fetches the AniList extra for [malId] and merges it into the
+  /// cache (partial responses never wipe existing sections). Throws on
+  /// network failure; cached data remains intact.
+  Future<AniListAnimeExtra> refreshAnimeExtra(int malId) {
+    return _runDeduped('animeExtra_$malId', () async {
+      final extra = await _fetchAnimeExtra(malId);
+      final isMissing =
+          extra.people.characters.isEmpty &&
+          extra.people.staff.isEmpty &&
+          extra.studios.isEmpty &&
+          extra.externalLinks.isEmpty &&
+          extra.nextAiring == null;
+      if (!isMissing) {
+        await cache.saveAnimeExtra(malId, extra);
+      }
+      return extra;
+    });
+  }
+
+  /// Force-fetches the weekly schedule from the network and saves it.
+  Future<Map<String, List<AniListScheduleEntry>>> refreshWeeklySchedule() {
+    final now = DateTime.now().toUtc();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+    final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+    return _runDeduped(SqliteAniListCache.weeklyKey(weekStartSec), () async {
+      final data = await _fetchWeeklySchedule(weekStartSec);
+      await cache.saveWeeklySchedule(weekStartSec, data);
+      return data;
+    });
+  }
+
   // ---------- SWR helper ----------
 
   Future<T> _swr<T>({

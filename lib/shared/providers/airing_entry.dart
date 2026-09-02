@@ -279,9 +279,12 @@ class AiringRepository {
     };
   }
 
-  Future<Map<String, List<AiringEntry>>> _buildAndSave(int weekStartSec) async {
+  Future<Map<String, List<AiringEntry>>> _buildAndSave(
+    int weekStartSec, {
+    bool force = false,
+  }) async {
     final results = await Future.wait([
-      _fetchAniListSchedule(),
+      _fetchAniListSchedule(force: force),
       _fetchMalSeasonal(),
       _fetchUserWatchingMap(),
     ]);
@@ -419,9 +422,23 @@ class AiringRepository {
     unawaited(cache.invalidateMergedWeek(_currentWeekStartEpochSec()));
   }
 
-  Future<Map<String, List<AniListScheduleEntry>>>
-  _fetchAniListSchedule() async {
+  /// Force refresh: bypasses all TTLs, refetches AniList schedule + MAL
+  /// data, and merges into SQLite (merge-on-save keeps existing rows).
+  Future<Map<String, List<AiringEntry>>> refreshWeeklySchedule() async {
+    final weekStartSec = _currentWeekStartEpochSec();
+    final existing = _inFlight[_weekKey(weekStartSec)];
+    if (existing != null) return existing;
+    final fut = _buildAndSave(weekStartSec, force: true);
+    _inFlight[_weekKey(weekStartSec)] = fut;
+    unawaited(fut.whenComplete(() => _inFlight.remove(_weekKey(weekStartSec))));
+    return fut;
+  }
+
+  Future<Map<String, List<AniListScheduleEntry>>> _fetchAniListSchedule({
+    bool force = false,
+  }) async {
     try {
+      if (force) return await _anilistApi.refreshWeeklySchedule();
       return await _anilistApi.getWeeklyAiringSchedule();
     } on Object catch (e) {
       _logger.e('AniList schedule fetch failed', error: e);

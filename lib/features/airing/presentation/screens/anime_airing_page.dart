@@ -81,7 +81,12 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
               const Text('Failed to load airing schedule'),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(weeklyAiringProvider),
+                onPressed: () async {
+                  await ref
+                      .read(airingRepositoryProvider)
+                      .refreshWeeklySchedule();
+                  ref.invalidate(weeklyAiringProvider);
+                },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -142,7 +147,15 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                   }
 
                   return RefreshIndicator(
-                    onRefresh: () async => ref.invalidate(weeklyAiringProvider),
+                    onRefresh: () async {
+                      try {
+                        await ref
+                            .read(airingRepositoryProvider)
+                            .refreshWeeklySchedule();
+                      } finally {
+                        ref.invalidate(weeklyAiringProvider);
+                      }
+                    },
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemCount: animeForDay.length,

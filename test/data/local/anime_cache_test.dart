@@ -201,5 +201,69 @@ void main() {
       expect(out, isNotNull);
       expect(out!.length, 1);
     });
+
+    test(
+      'saving detail does not remove anime from other cached lists',
+      () async {
+        await cache.saveSearchResults('q', 20, [makeAnime(1), makeAnime(2)]);
+        await cache.saveUserAnimeList('watching', 100, 0, [makeAnime(1)]);
+
+        await cache.saveAnimeDetail(
+          AnimeDetail(id: 1, title: 'Updated', synopsis: 'New synopsis'),
+        );
+
+        // REPLACE on the anime row used to cascade-delete the list memberships.
+        final search = await cache.getSearchResults('q', 20);
+        expect(search!.map((a) => a.id).toList(), [1, 2]);
+        final userlist = await cache.getUserAnimeList('watching', 100, 0);
+        expect(userlist!.map((a) => a.id).toList(), [1]);
+      },
+    );
+
+    test('partial detail save preserves existing detail fields', () async {
+      await cache.saveAnimeDetail(
+        AnimeDetail(
+          id: 5,
+          title: 'Full',
+          synopsis: 'Long synopsis',
+          startDate: '2020-01-01',
+          mean: 8.2,
+          genres: const [Genre(id: 1, name: 'Action')],
+        ),
+      );
+
+      await cache.saveAnimeDetail(AnimeDetail(id: 5, title: 'Full'));
+
+      final out = await cache.getAnimeDetail(5);
+      expect(out, isNotNull);
+      expect(out!.synopsis, 'Long synopsis');
+      expect(out.startDate, '2020-01-01');
+      expect(out.mean, 8.2);
+      expect(out.genres.map((g) => g.name), ['Action']);
+    });
+
+    test('empty genres in new data do not wipe cached genres', () async {
+      await cache.saveSearchResults('q', 20, [
+        makeAnime(1, genres: const [Genre(id: 2, name: 'Comedy')]),
+      ]);
+      await cache.saveSearchResults('q2', 20, [makeAnime(1)]);
+
+      final out = await cache.getSearchResults('q', 20);
+      expect(out![0].genres.map((g) => g.name), ['Comedy']);
+    });
+
+    test('null myListStatus in new data keeps cached status', () async {
+      await cache.saveSearchResults('q', 20, [
+        makeAnime(
+          1,
+          myListStatus: MyListStatus(status: WatchStatus.watching, score: 7),
+        ),
+      ]);
+      await cache.saveSearchResults('q2', 20, [makeAnime(1)]);
+
+      final out = await cache.getSearchResults('q', 20);
+      expect(out![0].myListStatus?.status, WatchStatus.watching);
+      expect(out[0].myListStatus?.score, 7);
+    });
   });
 }
