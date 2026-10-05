@@ -182,16 +182,32 @@ jobs:
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate release notes with git-cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip all
+        env:
+          OUTPUT: CHANGES.md
+
+      - name: Regenerate CHANGELOG.md
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --strip all
+        env:
+          OUTPUT: CHANGELOG.md
+
       - name: Create release and upload APK
         uses: softprops/action-gh-release@v3
         with:
           name: AniMAL ${{ github.ref_name }}
           files: dist/animal-*.apk
           fail_on_unmatched_files: true
-          generate_release_notes: true
+          body_path: CHANGES.md
           prerelease: ${{ steps.release-metadata.outputs.prerelease }}
 
-      - name: Commit version bump back to main
+      - name: Commit version bump and changelog back to main
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
@@ -207,7 +223,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pubspec.yaml
-          git diff --cached --quiet && echo "No version change to commit" && exit 0
+          git add pubspec.yaml CHANGELOG.md
+          git diff --cached --quiet && echo "Nothing to commit" && exit 0
           git commit -m "chore: bump version to ${VERSION}+${NEW_BUILD} [skip ci]"
           git push origin main
