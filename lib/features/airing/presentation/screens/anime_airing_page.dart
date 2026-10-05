@@ -2,6 +2,7 @@ import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/features/airing/providers/airing_providers.dart';
+import 'package:animal/shared/providers/clock_provider.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/countdown_badge.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,6 +122,9 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
         ),
       ),
       data: (grouped) {
+        final now = ref
+            .watch(clockProvider)
+            .maybeWhen(data: (t) => t.toUtc(), orElse: DateTime.now().toUtc);
         final isWeekEmpty = grouped.values.every((l) => l.isEmpty);
         return Column(
           children: [
@@ -201,7 +205,6 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                   controller: _tabController,
                   children: _days.map((day) {
                     final allForDay = grouped[day] ?? [];
-                    final now = DateTime.now().toUtc();
                     final animeForDay = allForDay
                         .where((e) => e.airingAt.toUtc().isAfter(now))
                         .toList();

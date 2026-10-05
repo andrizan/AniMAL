@@ -65,6 +65,7 @@ class AnimeRepository {
   static const _ttlLong = Duration(minutes: 15);
 
   final Map<String, Future<dynamic>> _inFlight = <String, Future<dynamic>>{};
+  final Set<String> _refreshing = <String>{};
 
   // ---------- Search / Seasonal / Ranking (SWR over List<Anime>) ----------
 
@@ -496,11 +497,13 @@ class AnimeRepository {
     Future<List<T>> Function() networkFetch,
     Future<void> Function(List<T>) writeCache,
   ) async {
+    if (!_refreshing.add(key)) return;
     try {
       final fresh = await networkFetch();
       await writeCache(fresh);
     } on Object catch (_) {
-      // best-effort
+    } finally {
+      _refreshing.remove(key);
     }
   }
 
@@ -512,12 +515,14 @@ class AnimeRepository {
     Future<T?> Function() networkFetch,
     Future<void> Function(T?) writeCache,
   ) async {
+    if (!_refreshing.add(key)) return;
     try {
       final fresh = await networkFetch();
       await writeCache(fresh);
       _bumpListVersion();
     } on Object catch (_) {
-      // best-effort
+    } finally {
+      _refreshing.remove(key);
     }
   }
 

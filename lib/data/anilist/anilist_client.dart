@@ -44,6 +44,7 @@ class AniListClient {
   static const _ttlDetail = Duration(minutes: 30);
 
   final Map<String, Future<dynamic>> _inFlight = <String, Future<dynamic>>{};
+  final Set<String> _refreshing = <String>{};
 
   // ---------- Internal: GraphQL with 429 handling ----------
 
@@ -739,11 +740,13 @@ class AniListClient {
     Future<T> Function() networkFetch,
     Future<void> Function(T) writeCache,
   ) async {
+    if (!_refreshing.add(key)) return;
     try {
       final fresh = await networkFetch();
       await writeCache(fresh);
     } on Object catch (_) {
-      // best-effort; stale data remains visible
+    } finally {
+      _refreshing.remove(key);
     }
   }
 }

@@ -9,10 +9,8 @@ import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
-import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart'
     show AnimeRepository, animeListVersionProvider, animeRepositoryProvider;
-import 'package:animal/shared/providers/clock_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -88,6 +86,9 @@ class AiringRepository {
   static const _ttlMerged = Duration(minutes: 15);
 
   final Map<String, Future<Map<String, List<AiringEntry>>>> _inFlight = {};
+
+  DateTime? _lastRefreshAttempt;
+  static const _minRefreshInterval = Duration(minutes: 5);
 
   int _currentWeekStartEpochSec() {
     final now = DateTime.now().toUtc();
@@ -417,10 +418,22 @@ class AiringRepository {
   }
 
   Future<void> _refreshMerged(int weekStartSec) async {
+    final now = DateTime.now();
+    if (_lastRefreshAttempt != null &&
+        now.difference(_lastRefreshAttempt!) < _minRefreshInterval) {
+      return;
+    }
+    _lastRefreshAttempt = now;
+    final key = _weekKey(weekStartSec);
+    if (_inFlight.containsKey(key)) return;
+    final fut = _buildAndSave(weekStartSec);
+    _inFlight[key] = fut;
     try {
-      await _buildAndSave(weekStartSec);
+      await fut;
     } on Object catch (e) {
       _logger.e('Background refresh failed', error: e);
+    } finally {
+      _inFlight.remove(key);
     }
   }
 
@@ -510,17 +523,14 @@ final airingRepositoryProvider = Provider<AiringRepository>((ref) {
 final weeklyAiringProvider =
     FutureProvider.autoDispose<Map<String, List<AiringEntry>>>((ref) async {
       ref.watch(animeListVersionProvider);
-      ref.watch(clockProvider);
       final repo = ref.watch(airingRepositoryProvider);
       return repo.getWeeklySchedule();
     });
 
 /// Map of MAL ID to next AiringEntry for quick lookup.
-/// Mandatory for all `currently_airing` anime unless truly not scheduled in AniList.
 final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
   (ref) async {
     ref.watch(animeListVersionProvider);
-    ref.watch(clockProvider);
     final schedule = await ref.watch(weeklyAiringProvider.future);
     final now = DateTime.now().toUtc();
     final map = <int, AiringEntry>{};
@@ -530,54 +540,13 @@ final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
         final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
         if (remaining <= 0) continue;
         final existing = map[entry.malId!];
-        final entryRemaining = remaining;
         final existingRemaining =
             existing?.airingAt.toUtc().difference(now).inSeconds ?? 999999999;
-        if (existing == null || entryRemaining < existingRemaining) {
+        if (existing == null || remaining < existingRemaining) {
           map[entry.malId!] = entry;
         }
       }
     }
-    // Fallback for currently_airing anime not in weekly schedule
-    // (outside window or null idMal) using AniList extra nextAiring
-    // to keep countdown mandatory.
-    try {
-      final watching = await ref.watch(
-        userAnimeListProvider(WatchStatus.watching).future,
-      );
-      for (final anime in watching) {
-        if (anime.status != 'currently_airing') continue;
-        if (map.containsKey(anime.id)) continue;
-        try {
-          final AniListAnimeExtra extra = await ref.watch(
-            anilistAnimeExtraProvider(anime.id).future,
-          );
-          final AniListNextAiring? next = extra.nextAiring;
-          if (next == null) continue;
-          final int remaining = next.airingAt.toUtc().difference(now).inSeconds;
-          if (remaining <= 0) continue;
-          map[anime.id] = AiringEntry(
-            anilistId: anime.id,
-            malId: anime.id,
-            title: anime.title,
-            titleEnglish: anime.alternativeTitles?.en,
-            titleNative: anime.alternativeTitles?.ja,
-            imageUrl: anime.mainPicture?.medium,
-            airingAt: next.airingAt.toUtc(),
-            episode: next.episode,
-            timeUntilAiring: remaining,
-            malScore: anime.mean,
-            genres: anime.genres.map((g) => g.name).toList(),
-            episodes: anime.numEpisodes,
-            status: anime.status,
-            myListStatus: anime.myListStatus,
-            nextAiringAt: next.airingAt.toUtc(),
-            nextEpisode: next.episode,
-            nextTimeUntilAiring: next.timeUntilAiring,
-          );
-        } catch (_) {}
-      }
-    } catch (_) {}
     return map;
   },
 );
