@@ -75,10 +75,7 @@ class _AppState extends ConsumerState<App> {
       unawaited(
         ref
             .read(routerProvider)
-            .pushNamed(
-              'animeDetail',
-              pathParameters: {'id': '$animeId'},
-            ),
+            .pushNamed('animeDetail', pathParameters: {'id': '$animeId'}),
       );
     });
   }
@@ -95,14 +92,6 @@ class _AppState extends ConsumerState<App> {
       darkTheme: buildDarkTheme(),
       themeMode: themeMode,
       routerConfig: router,
-      builder: (context, child) =>
-          // Bridges legacy package:flutter/material.dart imports in transitive
-          // plugins (octo_image, google_fonts) to material_ui. Re-evaluate when
-          // octo_image publishes a material_ui-compatible release.
-          // ignore: deprecated_member_use
-          MaterialUiCompatibilityBridge(
-            child: child ?? const SizedBox.shrink(),
-          ),
     );
   }
 }
