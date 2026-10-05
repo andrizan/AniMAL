@@ -1,8 +1,13 @@
-## [Unreleased]
+## [2.7.1] - 2026-10-05
+
+### Chores
+
+- Bump version to 2.7.0+8 [skip ci]
 
 ### Other
 
 - Align analyze flags between quality and release workflows
+- Fix AniList rate limit from repeated fetching on home and airing pages
 ## [2.7.0] - 2026-10-05
 
 ### Bug Fixes
