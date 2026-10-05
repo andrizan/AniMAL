@@ -1,7 +1,9 @@
+import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
+import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart'
-    show AiringFilter, ListSort;
+    show AiringFilter, ListSort, userAnimeListProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,6 +33,16 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
     Tab(text: 'Completed'),
     Tab(text: 'Dropped'),
   ];
+
+  static const List<WatchStatus> _statuses = [
+    WatchStatus.watching,
+    WatchStatus.planToWatch,
+    WatchStatus.onHold,
+    WatchStatus.completed,
+    WatchStatus.dropped,
+  ];
+
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -81,6 +93,29 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
     super.dispose();
   }
 
+  Future<void> _handleRefresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    try {
+      final status = _statuses[_tabController.index];
+      await ref
+          .read(animeCacheProvider)
+          .invalidateUserAnimeList(status.value, 100, 0);
+      ref
+        ..invalidate(userAnimeListProvider(status))
+        ..invalidate(weeklyAiringProvider)
+        ..invalidate(airingByMalIdProvider);
+      try {
+        await Future.wait([
+          ref.read(userAnimeListProvider(status).future),
+          ref.read(weeklyAiringProvider.future),
+        ]);
+      } on Object catch (_) {}
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -88,19 +123,36 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
     return Column(
       children: [
         // Tab bar
-        TabBar(
-          controller: _tabController,
-          tabs: _tabs,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w400,
-            fontSize: 13,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: TabBar(
+                controller: _tabController,
+                tabs: _tabs,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: _isRefreshing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+              tooltip: 'Refresh',
+              onPressed: _isRefreshing ? null : _handleRefresh,
+            ),
+          ],
         ),
 
         // Filter bar
@@ -115,10 +167,7 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                 style: theme.textTheme.bodySmall,
                 items: ListSort.values
                     .map(
-                      (s) => DropdownMenuItem(
-                        value: s,
-                        child: Text(s.label),
-                      ),
+                      (s) => DropdownMenuItem(value: s, child: Text(s.label)),
                     )
                     .toList(),
                 onChanged: (value) {
@@ -143,10 +192,7 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                 style: theme.textTheme.bodySmall,
                 items: AiringFilter.values
                     .map(
-                      (f) => DropdownMenuItem(
-                        value: f,
-                        child: Text(f.label),
-                      ),
+                      (f) => DropdownMenuItem(value: f, child: Text(f.label)),
                     )
                     .toList(),
                 onChanged: (value) {
