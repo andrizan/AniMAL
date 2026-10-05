@@ -363,6 +363,14 @@ class AiringRepository {
       0,
       (s, l) => s + l.length,
     );
+    if (totalAnilist == 0) {
+      final cached = await cache.getMergedWeek(weekStartSec);
+      if (cached != null) {
+        _logger.w('AniList schedule empty — keeping cached week');
+        return _filterExpired(cached);
+      }
+      throw Exception('Airing schedule unavailable');
+    }
     if (totalMerged == 0 && totalAnilist > 0) {
       _logger.w('Merged empty but anilist had data — fallback to raw');
       for (final day in anilistSchedule.keys) {
@@ -397,6 +405,16 @@ class AiringRepository {
       }
     }
     _logger.d('Merge: $matchedCount entries matched with MAL scores');
+
+    final finalTotal = merged.values.fold<int>(0, (s, l) => s + l.length);
+    if (finalTotal == 0) {
+      final cached = await cache.getMergedWeek(weekStartSec);
+      if (cached != null) {
+        _logger.w('Merged schedule empty — keeping cached week');
+        return _filterExpired(cached);
+      }
+      throw Exception('Airing schedule unavailable');
+    }
 
     await cache.saveMergedWeek(weekStartSec, merged);
     return merged;

@@ -669,7 +669,12 @@ class AniListClient {
     final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
     return _runDeduped(SqliteAniListCache.weeklyKey(weekStartSec), () async {
       final data = await _fetchWeeklySchedule(weekStartSec);
-      await cache.saveWeeklySchedule(weekStartSec, data);
+      final total = data.values.fold<int>(0, (s, l) => s + l.length);
+      if (total > 0) {
+        await cache.saveWeeklySchedule(weekStartSec, data);
+      } else {
+        _logger.w('AniList refresh returned empty — keeping cached schedule');
+      }
       return data;
     });
   }

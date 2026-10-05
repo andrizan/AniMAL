@@ -21,6 +21,7 @@ class AnimeAiringPage extends ConsumerStatefulWidget {
 class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  bool _isRefreshing = false;
 
   static const _days = [
     'monday',
@@ -59,6 +60,44 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
     super.dispose();
   }
 
+  Future<void> _handleRefresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    try {
+      final result = await ref
+          .read(airingRepositoryProvider)
+          .refreshWeeklySchedule();
+      ref.invalidate(weeklyAiringProvider);
+      if (mounted && result.values.every((l) => l.isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Airing schedule is empty, try again later'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Refresh failed, showing cached schedule'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  Future<void> _handleRetry() async {
+    try {
+      await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
+      // ignore: empty_catches
+    } on Object {}
+    ref.invalidate(weeklyAiringProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncSchedule = ref.watch(weeklyAiringProvider);
@@ -81,12 +120,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
               const Text('Failed to load airing schedule'),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () async {
-                  await ref
-                      .read(airingRepositoryProvider)
-                      .refreshWeeklySchedule();
-                  ref.invalidate(weeklyAiringProvider);
-                },
+                onPressed: _handleRetry,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -95,82 +129,141 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
         ),
       ),
       data: (grouped) {
+        final isWeekEmpty = grouped.values.every((l) => l.isEmpty);
         return Column(
           children: [
-            // Scrollable day tabs
-            TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelStyle: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: 13,
-              ),
-              tabs: _dayLabels.map((d) => Tab(text: d)).toList(),
+            Row(
+              children: [
+                Expanded(
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                    ),
+                    tabs: _dayLabels.map((d) => Tab(text: d)).toList(),
+                  ),
+                ),
+                IconButton(
+                  icon: _isRefreshing
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  tooltip: 'Refresh',
+                  onPressed: _isRefreshing ? null : _handleRefresh,
+                ),
+              ],
             ),
-
-            // Day content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: _days.map((day) {
-                  final allForDay = grouped[day] ?? [];
-                  final now = DateTime.now().toUtc();
-                  final animeForDay = allForDay
-                      .where((e) => e.airingAt.toUtc().isAfter(now))
-                      .toList();
-
-                  if (animeForDay.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.tv_off,
-                            size: 48,
-                            color: theme.colorScheme.onSurfaceVariant,
+            if (isWeekEmpty)
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: MediaQuery.sizeOf(context).height * 0.6,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tv_off,
+                                size: 48,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No airing schedule yet',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              FilledButton.icon(
+                                onPressed: _handleRetry,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'No anime on ${_dayLabels[_days.indexOf(day)]}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: _days.map((day) {
+                    final allForDay = grouped[day] ?? [];
+                    final now = DateTime.now().toUtc();
+                    final animeForDay = allForDay
+                        .where((e) => e.airingAt.toUtc().isAfter(now))
+                        .toList();
+
+                    if (animeForDay.isEmpty) {
+                      return RefreshIndicator(
+                        onRefresh: _handleRefresh,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(
+                            height: MediaQuery.sizeOf(context).height * 0.5,
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.tv_off,
+                                    size: 48,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No anime on ${_dayLabels[_days.indexOf(day)]}',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: animeForDay.length,
+                        itemBuilder: (context, index) {
+                          final entry = animeForDay[index];
+                          return _AiringCard(
+                            key: ValueKey(
+                              '${entry.anilistId}_${entry.episode}',
+                            ),
+                            entry: entry,
+                          );
+                        },
                       ),
                     );
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      try {
-                        await ref
-                            .read(airingRepositoryProvider)
-                            .refreshWeeklySchedule();
-                      } finally {
-                        ref.invalidate(weeklyAiringProvider);
-                      }
-                    },
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: animeForDay.length,
-                      itemBuilder: (context, index) {
-                        final entry = animeForDay[index];
-                        return _AiringCard(
-                          key: ValueKey('${entry.anilistId}_${entry.episode}'),
-                          entry: entry,
-                        );
-                      },
-                    ),
-                  );
-                }).toList(),
+                  }).toList(),
+                ),
               ),
-            ),
           ],
         );
       },
