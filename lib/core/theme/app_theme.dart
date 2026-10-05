@@ -33,9 +33,7 @@ ThemeData buildLightTheme() {
       backgroundColor: scheme.surfaceContainerLow,
       indicatorColor: scheme.primaryContainer,
     ),
-    dialogTheme: DialogThemeData(
-      backgroundColor: scheme.surfaceContainerLow,
-    ),
+    dialogTheme: DialogThemeData(backgroundColor: scheme.surfaceContainerLow),
   );
 }
 
@@ -69,8 +67,6 @@ ThemeData buildDarkTheme() {
       backgroundColor: scheme.surfaceContainerLow,
       indicatorColor: scheme.primaryContainer,
     ),
-    dialogTheme: DialogThemeData(
-      backgroundColor: scheme.surfaceContainerLow,
-    ),
+    dialogTheme: DialogThemeData(backgroundColor: scheme.surfaceContainerLow),
   );
 }

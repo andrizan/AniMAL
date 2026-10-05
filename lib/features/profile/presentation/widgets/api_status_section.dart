@@ -17,10 +17,7 @@ class ApiStatusSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'API Status',
-          style: theme.textTheme.titleMedium,
-        ),
+        Text('API Status', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         Card(
           child: Column(
@@ -53,10 +50,7 @@ class ApiStatusSection extends ConsumerWidget {
 
     Future<void> pingMal() async {
       try {
-        await dio.get<dynamic>(
-          '/anime/1',
-          queryParameters: {'fields': 'id'},
-        );
+        await dio.get<dynamic>('/anime/1', queryParameters: {'fields': 'id'});
       } on DioException {
         // Health tracker already records the error.
       }
@@ -66,9 +60,7 @@ class ApiStatusSection extends ConsumerWidget {
       try {
         await anilist.dio.post<dynamic>(
           '',
-          data: {
-            'query': '{ Media(id: 1) { id } }',
-          },
+          data: {'query': '{ Media(id: 1) { id } }'},
         );
       } on DioException {
         // Health tracker already records the error.
@@ -89,10 +81,7 @@ class _ApiStatusRow extends ConsumerWidget {
     final theme = Theme.of(context);
     final status = _resolveStatus(health);
     return ListTile(
-      leading: Icon(
-        _iconFor(status),
-        color: _colorFor(status, theme),
-      ),
+      leading: Icon(_iconFor(status), color: _colorFor(status, theme)),
       title: Text(apiSourceLabel(health.source)),
       subtitle: Text(
         _subtitleFor(health),
@@ -148,10 +137,7 @@ class _ApiStatusRow extends ConsumerWidget {
       case ApiSource.mal:
         final dio = ref.read(dioProvider);
         try {
-          await dio.get<dynamic>(
-            '/anime/1',
-            queryParameters: {'fields': 'id'},
-          );
+          await dio.get<dynamic>('/anime/1', queryParameters: {'fields': 'id'});
         } on DioException {
           // Already recorded.
         }
@@ -160,9 +146,7 @@ class _ApiStatusRow extends ConsumerWidget {
         try {
           await anilist.dio.post<dynamic>(
             '',
-            data: {
-              'query': '{ Media(id: 1) { id } }',
-            },
+            data: {'query': '{ Media(id: 1) { id } }'},
           );
         } on DioException {
           // Already recorded.

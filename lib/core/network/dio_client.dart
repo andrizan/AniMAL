@@ -19,9 +19,7 @@ class DioClient {
            baseUrl: Env.malBaseUrl,
            connectTimeout: const Duration(seconds: 15),
            receiveTimeout: const Duration(seconds: 15),
-           headers: {
-             'X-MAL-CLIENT-ID': Env.malClientId,
-           },
+           headers: {'X-MAL-CLIENT-ID': Env.malClientId},
          ),
        ) {
     _dio.interceptors.addAll([

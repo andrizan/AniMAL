@@ -210,11 +210,8 @@ class AnimeRepository {
       key: key,
       ttl: _ttlUserList,
       readFresh: () => _cache.getUserAnimeList(status.value, limit, offset),
-      networkFetch: () => _api.getUserAnimeList(
-        status: status,
-        limit: limit,
-        offset: offset,
-      ),
+      networkFetch: () =>
+          _api.getUserAnimeList(status: status, limit: limit, offset: offset),
       writeCache: (list) =>
           _cache.saveUserAnimeList(status.value, limit, offset, list),
     );

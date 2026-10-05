@@ -104,10 +104,7 @@ class CacheMappers {
         .toList(growable: false);
   }
 
-  List<Genre> genresFromIds(
-    List<int> ids,
-    Map<int, Genre> idToGenre,
-  ) {
+  List<Genre> genresFromIds(List<int> ids, Map<int, Genre> idToGenre) {
     return ids
         .map((id) => idToGenre[id])
         .whereType<Genre>()

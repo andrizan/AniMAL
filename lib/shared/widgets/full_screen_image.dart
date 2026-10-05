@@ -25,10 +25,8 @@ class FullScreenImageViewer extends StatelessWidget {
           opaque: false,
           barrierDismissible: true,
           barrierColor: AppColors.barrier,
-          pageBuilder: (_, _, _) => FullScreenImageViewer(
-            imageUrl: imageUrl,
-            heroTag: heroTag,
-          ),
+          pageBuilder: (_, _, _) =>
+              FullScreenImageViewer(imageUrl: imageUrl, heroTag: heroTag),
           transitionsBuilder: (_, animation, _, child) {
             return FadeTransition(opacity: animation, child: child);
           },

@@ -159,9 +159,7 @@ class AiringRepository {
               if (!isReleasing) {
                 continue;
               }
-              nextAiringAt = e.airingAt.toUtc().add(
-                const Duration(days: 7),
-              );
+              nextAiringAt = e.airingAt.toUtc().add(const Duration(days: 7));
               nextEpisode = e.episode + 1;
               nextRemaining = nextAiringAt.difference(now).inSeconds;
             }
@@ -218,9 +216,7 @@ class AiringRepository {
       }
       filtered.sort((a, b) => a.airingAt.compareTo(b.airingAt));
       result[entry.key] = [...?result[entry.key], ...filtered]
-        ..sort(
-          (a, b) => a.airingAt.compareTo(b.airingAt),
-        );
+        ..sort((a, b) => a.airingAt.compareTo(b.airingAt));
     }
     for (final day in result.keys) {
       result[day]!.sort((a, b) => a.airingAt.compareTo(b.airingAt));

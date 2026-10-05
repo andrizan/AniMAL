@@ -23,9 +23,8 @@ class CharacterProfilePage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return asyncChar.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(),
         body: Center(
@@ -41,9 +40,8 @@ class CharacterProfilePage extends ConsumerWidget {
               const Text('Failed to load character'),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(
-                  anilistCharacterDetailProvider(characterId),
-                ),
+                onPressed: () =>
+                    ref.invalidate(anilistCharacterDetailProvider(characterId)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -78,14 +76,9 @@ class CharacterProfilePage extends ConsumerWidget {
                 flexibleSpace: FlexibleSpaceBar(
                   title: SelectableText(
                     character.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  titlePadding: const EdgeInsets.only(
-                    left: 16,
-                    bottom: 16,
-                  ),
+                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
                   background: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: () {
@@ -100,9 +93,7 @@ class CharacterProfilePage extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        AppCachedImage(
-                          imageUrl: character.imageUrl ?? '',
-                        ),
+                        AppCachedImage(imageUrl: character.imageUrl ?? ''),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -234,9 +225,8 @@ class StaffProfilePage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return asyncStaff.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(),
         body: Center(
@@ -252,9 +242,8 @@ class StaffProfilePage extends ConsumerWidget {
               const Text('Failed to load staff info'),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(
-                  anilistStaffDetailProvider(staffId),
-                ),
+                onPressed: () =>
+                    ref.invalidate(anilistStaffDetailProvider(staffId)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -289,14 +278,9 @@ class StaffProfilePage extends ConsumerWidget {
                 flexibleSpace: FlexibleSpaceBar(
                   title: SelectableText(
                     staff.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  titlePadding: const EdgeInsets.only(
-                    left: 16,
-                    bottom: 16,
-                  ),
+                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
                   background: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: () {
@@ -311,9 +295,7 @@ class StaffProfilePage extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        AppCachedImage(
-                          imageUrl: staff.imageUrl ?? '',
-                        ),
+                        AppCachedImage(imageUrl: staff.imageUrl ?? ''),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -362,10 +344,7 @@ class StaffProfilePage extends ConsumerWidget {
                           if (staff.occupations != null &&
                               staff.occupations!.isNotEmpty)
                             for (final occ in staff.occupations!)
-                              InfoChip(
-                                icon: Icons.work_outline,
-                                label: occ,
-                              ),
+                              InfoChip(icon: Icons.work_outline, label: occ),
                           if (staff.gender != null)
                             InfoChip(
                               icon: Icons.person_outline,

@@ -111,10 +111,7 @@ class MalAuthRepository {
         contentType: Headers.formUrlEncodedContentType,
         headers: {'Authorization': _basicAuthHeader()},
       ),
-      data: {
-        'grant_type': 'refresh_token',
-        'refresh_token': currentRefresh,
-      },
+      data: {'grant_type': 'refresh_token', 'refresh_token': currentRefresh},
     );
     final token = AuthToken.fromJson(
       jsonDecode(response.data ?? '') as Map<String, dynamic>,

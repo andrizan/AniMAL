@@ -81,14 +81,10 @@ class SqliteAniListCache implements AniListCache {
   }
 
   Future<void> _upsertMeta(DatabaseExecutor txn, String key) async {
-    await txn.insert(
-      'cache_meta',
-      {
-        'cache_key': key,
-        'fetched_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await txn.insert('cache_meta', {
+      'cache_key': key,
+      'fetched_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // ---------- Weekly schedule ----------
@@ -438,18 +434,16 @@ class SqliteAniListCache implements AniListCache {
     final decoded = jsonDecode(raw) as List<dynamic>;
     return decoded.map((c) {
       final m = c as Map<String, dynamic>;
-      final vas = (m['voiceActors'] as List<dynamic>? ?? []).map(
-        (v) {
-          final vm = v as Map<String, dynamic>;
-          return AniListVoiceActor(
-            id: vm['id'] as int,
-            name: vm['name'] as String,
-            nativeName: vm['nativeName'] as String?,
-            imageUrl: vm['imageUrl'] as String?,
-            language: vm['language'] as String?,
-          );
-        },
-      ).toList();
+      final vas = (m['voiceActors'] as List<dynamic>? ?? []).map((v) {
+        final vm = v as Map<String, dynamic>;
+        return AniListVoiceActor(
+          id: vm['id'] as int,
+          name: vm['name'] as String,
+          nativeName: vm['nativeName'] as String?,
+          imageUrl: vm['imageUrl'] as String?,
+          language: vm['language'] as String?,
+        );
+      }).toList();
       return AniListCharacter(
         id: m['id'] as int,
         name: m['name'] as String,

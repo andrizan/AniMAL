@@ -15,20 +15,17 @@ import 'package:logger/logger.dart';
 export 'package:animal/data/models/anilist/anilist_models.dart';
 
 class AniListClient {
-  AniListClient({
-    required this.cache,
-    Ref? ref,
-    Logger? logger,
-  }) : _logger = logger ?? appLogger,
-       _dio = Dio(
-         BaseOptions(
-           baseUrl: Env.anilistBaseUrl,
-           connectTimeout: const Duration(seconds: 15),
-           receiveTimeout: const Duration(seconds: 15),
-           contentType: 'application/json',
-           headers: {'Accept': 'application/json'},
-         ),
-       ) {
+  AniListClient({required this.cache, Ref? ref, Logger? logger})
+    : _logger = logger ?? appLogger,
+      _dio = Dio(
+        BaseOptions(
+          baseUrl: Env.anilistBaseUrl,
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+          contentType: 'application/json',
+          headers: {'Accept': 'application/json'},
+        ),
+      ) {
     if (ref != null) {
       _dio.interceptors.add(ApiHealthInterceptor(ref));
     }

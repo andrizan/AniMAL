@@ -477,9 +477,7 @@ class AppDatabase {
   }
 
   static Future<void> _migrateV1ToV2(Database db) async {
-    final columns = await db.rawQuery(
-      'PRAGMA table_info(anilist_anime_extra)',
-    );
+    final columns = await db.rawQuery('PRAGMA table_info(anilist_anime_extra)');
     final hasChars = columns.any((c) => c['name'] == 'characters_json');
     final hasStaff = columns.any((c) => c['name'] == 'staff_json');
     if (!hasChars) {

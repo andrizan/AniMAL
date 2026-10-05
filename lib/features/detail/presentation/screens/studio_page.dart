@@ -17,9 +17,8 @@ class StudioProfilePage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return asyncStudio.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(),
         body: Center(
@@ -35,9 +34,8 @@ class StudioProfilePage extends ConsumerWidget {
               const Text('Failed to load studio info'),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(
-                  anilistStudioDetailProvider(studioId),
-                ),
+                onPressed: () =>
+                    ref.invalidate(anilistStudioDetailProvider(studioId)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),

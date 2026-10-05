@@ -69,9 +69,7 @@ class LoginPage extends ConsumerWidget {
                       final url = await controller.getAuthorizationUrl();
 
                       try {
-                        final launched = await launchUrl(
-                          url,
-                        );
+                        final launched = await launchUrl(url);
                         if (!launched && context.mounted) {
                           _showUrlDialog(context, url.toString());
                         }
@@ -173,16 +171,14 @@ class LoginPage extends ConsumerWidget {
                       .exchangeCode(code);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Login successful!'),
-                      ),
+                      const SnackBar(content: Text('Login successful!')),
                     );
                   }
                 } on Exception catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Login failed: $e')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Login failed: $e')));
                   }
                 }
               }

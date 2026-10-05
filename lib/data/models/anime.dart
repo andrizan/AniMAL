@@ -30,10 +30,7 @@ sealed class Anime with _$Anime {
 
 @freezed
 sealed class MainPicture with _$MainPicture {
-  const factory MainPicture({
-    String? medium,
-    String? large,
-  }) = _MainPicture;
+  const factory MainPicture({String? medium, String? large}) = _MainPicture;
 
   factory MainPicture.fromJson(Map<String, dynamic> json) =>
       _$MainPictureFromJson(json);

@@ -99,33 +99,32 @@ List<Anime> _filterAnimeList(List<Anime> list, AiringFilter airingFilter) {
 
 /// Fetches the current user's anime list filtered by [WatchStatus].
 // ignore: specify_nonobvious_property_types
-final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>(
-  (ref, status) async {
-    ref.watch(animeListVersionProvider);
-    final repo = ref.watch(animeRepositoryProvider);
-    return repo.getUserAnimeList(status: status);
-  },
-);
+final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>((
+  ref,
+  status,
+) async {
+  ref.watch(animeListVersionProvider);
+  final repo = ref.watch(animeRepositoryProvider);
+  return repo.getUserAnimeList(status: status);
+});
 
 /// Memoized, sorted and filtered user anime list together with the airing map.
 // ignore: specify_nonobvious_property_types
 final sortedUserAnimeListProvider = FutureProvider.autoDispose
-    .family<SortedUserAnimeList, AnimeListParams>(
-      (ref, params) async {
-        if (params.sortBy == ListSort.airing) {
-          ref.watch(clockProvider);
-        }
-        final animeList = await ref.watch(
-          userAnimeListProvider(params.status).future,
-        );
-        final airingMap = await ref.watch(airingByMalIdProvider.future);
-        final filtered = _filterAnimeList(animeList, params.airingFilter);
-        final sorted = _sortAnimeList(
-          filtered,
-          airingMap,
-          params.sortBy,
-          params.ascending,
-        );
-        return (anime: sorted, airingMap: airingMap);
-      },
-    );
+    .family<SortedUserAnimeList, AnimeListParams>((ref, params) async {
+      if (params.sortBy == ListSort.airing) {
+        ref.watch(clockProvider);
+      }
+      final animeList = await ref.watch(
+        userAnimeListProvider(params.status).future,
+      );
+      final airingMap = await ref.watch(airingByMalIdProvider.future);
+      final filtered = _filterAnimeList(animeList, params.airingFilter);
+      final sorted = _sortAnimeList(
+        filtered,
+        airingMap,
+        params.sortBy,
+        params.ascending,
+      );
+      return (anime: sorted, airingMap: airingMap);
+    });

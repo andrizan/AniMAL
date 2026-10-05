@@ -13,37 +13,27 @@ import 'package:flutter/src/widget_previews/widget_previews.dart';
 import 'package:material_ui/material_ui.dart';
 
 @Preview(name: 'InfoChip — basic', group: 'shared')
-Widget previewInfoChip() => const InfoChip(
-  label: 'TV',
-  icon: Icons.tv,
-);
+Widget previewInfoChip() => const InfoChip(label: 'TV', icon: Icons.tv);
 
 @Preview(name: 'InfoChip — score', group: 'shared')
-Widget previewInfoChipScore() => const InfoChip(
-  label: '8.74',
-  icon: Icons.star,
-  color: Color(0xFFFFB300),
-);
+Widget previewInfoChipScore() =>
+    const InfoChip(label: '8.74', icon: Icons.star, color: Color(0xFFFFB300));
 
 @Preview(
   name: 'InfoChip — light theme',
   group: 'shared',
   theme: AppPreviewTheme.light,
 )
-Widget previewInfoChipLight() => const InfoChip(
-  label: 'Rank #12',
-  icon: Icons.emoji_events,
-);
+Widget previewInfoChipLight() =>
+    const InfoChip(label: 'Rank #12', icon: Icons.emoji_events);
 
 @Preview(
   name: 'InfoChip — dark theme',
   group: 'shared',
   theme: AppPreviewTheme.dark,
 )
-Widget previewInfoChipDark() => const InfoChip(
-  label: 'Airing',
-  icon: Icons.live_tv,
-);
+Widget previewInfoChipDark() =>
+    const InfoChip(label: 'Airing', icon: Icons.live_tv);
 
 final class AppPreviewTheme extends PreviewThemeData {
   const AppPreviewTheme(this._brightness);

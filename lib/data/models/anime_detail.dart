@@ -41,10 +41,7 @@ sealed class AnimeDetail with _$AnimeDetail {
 
 @freezed
 sealed class Genre with _$Genre {
-  const factory Genre({
-    required int id,
-    required String name,
-  }) = _Genre;
+  const factory Genre({required int id, required String name}) = _Genre;
 
   factory Genre.fromJson(Map<String, dynamic> json) => _$GenreFromJson(json);
 }
@@ -75,10 +72,8 @@ sealed class AnimeNode with _$AnimeNode {
 
 @freezed
 sealed class StartSeason with _$StartSeason {
-  const factory StartSeason({
-    required int year,
-    required String season,
-  }) = _StartSeason;
+  const factory StartSeason({required int year, required String season}) =
+      _StartSeason;
 
   factory StartSeason.fromJson(Map<String, dynamic> json) =>
       _$StartSeasonFromJson(json);

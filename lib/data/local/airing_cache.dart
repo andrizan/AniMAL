@@ -124,14 +124,10 @@ class SqliteAiringCache implements AiringCache {
           }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       }
-      await txn.insert(
-        'cache_meta',
-        {
-          'cache_key': key,
-          'fetched_at': DateTime.now().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('cache_meta', {
+        'cache_key': key,
+        'fetched_at': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     });
   }
 
@@ -139,11 +135,7 @@ class SqliteAiringCache implements AiringCache {
   Future<void> invalidateMergedWeek(int weekStartEpochSec) async {
     final key = _mergedKey(weekStartEpochSec);
     await _db.transaction((txn) async {
-      await txn.delete(
-        'cache_meta',
-        where: 'cache_key = ?',
-        whereArgs: [key],
-      );
+      await txn.delete('cache_meta', where: 'cache_key = ?', whereArgs: [key]);
       await txn.delete(
         'merged_airing_entry',
         where: 'week_key = ?',

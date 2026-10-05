@@ -69,9 +69,8 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
     if (detail == null) {
       return asyncDetail.when(
-        loading: () => const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
+        loading: () =>
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
         error: (error, _) => Scaffold(
           appBar: AppBar(),
           body: Center(
@@ -221,9 +220,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      AppCachedImage(
-                        imageUrl: detail.mainPicture?.large ?? '',
-                      ),
+                      AppCachedImage(imageUrl: detail.mainPicture?.large ?? ''),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -232,9 +229,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                             colors: [
                               AppColors.transparent,
                               AppColors.transparent,
-                              theme.colorScheme.surface.withValues(
-                                alpha: 0.6,
-                              ),
+                              theme.colorScheme.surface.withValues(alpha: 0.6),
                               theme.colorScheme.surface,
                             ],
                             stops: const [0.0, 0.45, 0.8, 1.0],
@@ -317,10 +312,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                         ),
                       for (final synonym in detail.alternativeTitles!.synonyms)
                         if (synonym.isNotEmpty)
-                          _TitleRow(
-                            label: 'Synonym',
-                            title: synonym,
-                          ),
+                          _TitleRow(label: 'Synonym', title: synonym),
                       const SizedBox(height: 20),
                     ],
 
@@ -484,15 +476,10 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Related Anime ──
                     if (detail.relatedAnime.isNotEmpty) ...[
-                      Text(
-                        'Related Anime',
-                        style: theme.textTheme.titleSmall,
-                      ),
+                      Text('Related Anime', style: theme.textTheme.titleSmall),
                       const SizedBox(height: 8),
                       ...detail.relatedAnime.map(
-                        (related) => _RelatedAnimeTile(
-                          related: related,
-                        ),
+                        (related) => _RelatedAnimeTile(related: related),
                       ),
                       const SizedBox(height: 20),
                     ],
@@ -598,10 +585,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 // ═══════════════════════════════════════════════════════════════════
 
 class _MyListStatusCard extends ConsumerStatefulWidget {
-  const _MyListStatusCard({
-    required this.detail,
-    required this.onUpdated,
-  });
+  const _MyListStatusCard({required this.detail, required this.onUpdated});
 
   final AnimeDetail detail;
   final void Function(MyListStatus updatedStatus) onUpdated;
@@ -632,9 +616,8 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -661,9 +644,8 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -693,9 +675,8 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -715,10 +696,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Change Status',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               for (final s in WatchStatus.values)
@@ -821,10 +799,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Episodes',
-                  style: theme.textTheme.bodyLarge,
-                ),
+                Text('Episodes', style: theme.textTheme.bodyLarge),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.remove_circle_outline),
@@ -884,10 +859,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
                   color: AppColors.starColor,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Score',
-                  style: theme.textTheme.bodyLarge,
-                ),
+                Text('Score', style: theme.textTheme.bodyLarge),
                 const Spacer(),
                 DropdownButton<int>(
                   value: score,
@@ -958,15 +930,13 @@ class _ActionButtonsState extends ConsumerState<_ActionButtons> {
       );
       widget.onAdded(updatedStatus);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to Watching')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Added to Watching')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to add: $e')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -1000,15 +970,13 @@ class _ActionButtonsState extends ConsumerState<_ActionButtons> {
       await repo.deleteAnimeFromList(widget.animeId);
       widget.onRemoved();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Removed from list')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Removed from list')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to remove: $e')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -1080,10 +1048,7 @@ class _TitleRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SelectableText(
-              title,
-              style: theme.textTheme.bodyMedium,
-            ),
+            child: SelectableText(title, style: theme.textTheme.bodyMedium),
           ),
         ],
       ),
@@ -1147,10 +1112,7 @@ class _RelatedAnimeTile extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════
 
 class _AniListExtraSection extends StatefulWidget {
-  const _AniListExtraSection({
-    required this.malId,
-    required this.asyncExtra,
-  });
+  const _AniListExtraSection({required this.malId, required this.asyncExtra});
 
   final int malId;
   final AsyncValue<AniListAnimeExtra> asyncExtra;
@@ -1186,14 +1148,10 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
             ],
 
             // ── Next Episode ──
-            if (nextAiring != null) ...[
-              _buildNextEpisode(theme, nextAiring),
-            ],
+            if (nextAiring != null) ...[_buildNextEpisode(theme, nextAiring)],
 
             // ── External Links ──
-            if (links.isNotEmpty) ...[
-              _buildExternalLinks(theme, links),
-            ],
+            if (links.isNotEmpty) ...[_buildExternalLinks(theme, links)],
 
             // ── Characters & Staff ──
             if (people.characters.isNotEmpty || people.staff.isNotEmpty) ...[
@@ -1572,10 +1530,7 @@ class _StaffTile extends StatelessWidget {
         title: SelectableText(
           staff.name,
           maxLines: 1,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
         subtitle: staff.role != null
             ? Text(

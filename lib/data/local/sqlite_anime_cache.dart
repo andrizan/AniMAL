@@ -195,9 +195,7 @@ class SqliteAnimeCache implements AnimeCache {
     await _db.delete(
       'cache_meta',
       where: 'cache_key LIKE ?',
-      whereArgs: [
-        'userlist_%',
-      ],
+      whereArgs: ['userlist_%'],
     );
   }
 
@@ -272,10 +270,7 @@ class SqliteAnimeCache implements AnimeCache {
     final genreMap = await _loadGenresForMany(malIds);
     return rows.map((r) {
       final id = r['mal_id']! as int;
-      return _mappers.animeFromRow(
-        r,
-        genres: genreMap[id] ?? const <Genre>[],
-      );
+      return _mappers.animeFromRow(r, genres: genreMap[id] ?? const <Genre>[]);
     }).toList();
   }
 
@@ -287,16 +282,13 @@ class SqliteAnimeCache implements AnimeCache {
   Future<Map<int, List<Genre>>> _loadGenresForMany(List<int> malIds) async {
     if (malIds.isEmpty) return const <int, List<Genre>>{};
     final placeholders = List.filled(malIds.length, '?').join(',');
-    final rows = await _db.rawQuery(
-      '''
+    final rows = await _db.rawQuery('''
       SELECT ag.mal_id, g.id, g.name
       FROM anime_genre ag
       JOIN genre g ON g.id = ag.genre_id
       WHERE ag.mal_id IN ($placeholders)
       ORDER BY ag.mal_id, g.id
-      ''',
-      malIds,
-    );
+      ''', malIds);
     final result = <int, List<Genre>>{};
     for (final row in rows) {
       final mid = row['mal_id']! as int;
@@ -319,11 +311,7 @@ class SqliteAnimeCache implements AnimeCache {
         await _upsertAnime(txn, a);
         await _upsertGenres(txn, a.id, a.genres);
       }
-      await txn.delete(
-        itemsTable,
-        where: 'cache_key = ?',
-        whereArgs: [key],
-      );
+      await txn.delete(itemsTable, where: 'cache_key = ?', whereArgs: [key]);
       for (var i = 0; i < results.length; i++) {
         await txn.insert(itemsTable, {
           'cache_key': key,
@@ -419,23 +407,18 @@ class SqliteAnimeCache implements AnimeCache {
     if (genres.isEmpty) return;
     await txn.delete('anime_genre', where: 'mal_id = ?', whereArgs: [malId]);
     for (final g in genres) {
-      await txn.insert(
-        'genre',
-        {'id': g.id, 'name': g.name},
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
+      await txn.insert('genre', {
+        'id': g.id,
+        'name': g.name,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
       await txn.insert('anime_genre', {'mal_id': malId, 'genre_id': g.id});
     }
   }
 
   Future<void> _upsertCacheMeta(DatabaseExecutor txn, String key) async {
-    await txn.insert(
-      'cache_meta',
-      {
-        'cache_key': key,
-        'fetched_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await txn.insert('cache_meta', {
+      'cache_key': key,
+      'fetched_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

@@ -22,10 +22,7 @@ class ApiHealthInterceptor extends Interceptor {
     final source = _sourceForUri(response.requestOptions.uri);
     _ref
         .read(apiHealthTrackerProvider.notifier)
-        .recordSuccess(
-          source,
-          headers: response.headers.map,
-        );
+        .recordSuccess(source, headers: response.headers.map);
     _ref
         .read(apiHealthTrackerProvider.notifier)
         .recordRateLimitHeaders(source, response.headers.map);

@@ -80,10 +80,7 @@ class AuthInterceptor extends Interceptor {
           contentType: Headers.formUrlEncodedContentType,
           headers: {'Authorization': _basicAuthHeader()},
         ),
-        data: {
-          'grant_type': 'refresh_token',
-          'refresh_token': refreshToken,
-        },
+        data: {'grant_type': 'refresh_token', 'refresh_token': refreshToken},
       );
       final token = AuthToken.fromJson(
         jsonDecode(response.data ?? '') as Map<String, dynamic>,

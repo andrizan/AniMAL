@@ -47,9 +47,8 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
       await tokenStorage.clearOAuthState();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Login successful!')));
         context.go('/home');
       }
     } on Exception catch (e) {
@@ -66,9 +65,8 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
   }
 
   void _showErrorAndReturn(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
     context.go('/login');
   }
 

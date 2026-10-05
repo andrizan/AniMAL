@@ -73,9 +73,7 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 
 /// Provider for [MalAuthRepository].
 final malAuthRepositoryProvider = Provider<MalAuthRepository>((ref) {
-  return MalAuthRepository(
-    tokenStorage: ref.watch(tokenStorageProvider),
-  );
+  return MalAuthRepository(tokenStorage: ref.watch(tokenStorageProvider));
 });
 
 /// Notifier that manages authentication state.

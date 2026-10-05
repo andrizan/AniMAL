@@ -120,10 +120,7 @@ class AnimeProfilePage extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              user.name,
-                              style: theme.textTheme.titleLarge,
-                            ),
+                            Text(user.name, style: theme.textTheme.titleLarge),
                             const SizedBox(height: 4),
                             Text(
                               'Connected to MyAnimeList',
@@ -167,18 +164,13 @@ class AnimeProfilePage extends ConsumerWidget {
 
           // Statistics section
           if (authStatus == AuthStatus.authenticated) ...[
-            Text(
-              'Statistics',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('Statistics', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             asyncUser.when(
               loading: () => const Card(
                 child: Padding(
                   padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
               ),
               error: (error, _) => const SizedBox.shrink(),
@@ -249,10 +241,7 @@ class AnimeProfilePage extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Settings section
-          Text(
-            'Settings',
-            style: theme.textTheme.titleMedium,
-          ),
+          Text('Settings', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -342,9 +331,9 @@ class AnimeProfilePage extends ConsumerWidget {
                 onPressed: () async {
                   await ref.read(authControllerProvider.notifier).logout();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Logged out')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('Logged out')));
                   }
                 },
                 icon: const Icon(Icons.logout),
@@ -440,18 +429,13 @@ Future<void> _checkForUpdate(BuildContext context) async {
     }
   } on Exception catch (e) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to check update: $e')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Failed to check update: $e')));
   }
 }
 
 class _StatRow extends StatelessWidget {
-  const _StatRow({
-    required this.label,
-    required this.value,
-    this.color,
-  });
+  const _StatRow({required this.label, required this.value, this.color});
 
   final String label;
   final String value;
