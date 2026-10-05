@@ -313,10 +313,7 @@ class AnimeCard extends ConsumerWidget {
         isScrollControlled: true,
         useSafeArea: true,
         builder: (ctx) {
-          return _UpdateListStatusModal(
-            anime: anime,
-            nextAiring: nextAiring,
-          );
+          return _UpdateListStatusModal(anime: anime, nextAiring: nextAiring);
         },
       ),
     );
@@ -333,10 +330,7 @@ class AnimeCard extends ConsumerWidget {
 
 /// Modal content for updating an anime's list status.
 class _UpdateListStatusModal extends ConsumerStatefulWidget {
-  const _UpdateListStatusModal({
-    required this.anime,
-    required this.nextAiring,
-  });
+  const _UpdateListStatusModal({required this.anime, required this.nextAiring});
 
   final Anime anime;
   final AiringEntry? nextAiring;
@@ -367,15 +361,11 @@ class _UpdateListStatusModalState
         if (!mounted) return;
         final enabled = ref
             .read(animeNotificationProvider)
-            .contains(
-              widget.anime.id,
-            );
+            .contains(widget.anime.id);
         if (enabled) {
           ref
               .read(animeNotificationProvider.notifier)
-              .removeAnime(
-                widget.anime.id,
-              );
+              .removeAnime(widget.anime.id);
         }
       });
     }
@@ -406,9 +396,7 @@ class _UpdateListStatusModalState
       if (_selectedStatus != WatchStatus.watching) {
         ref
             .read(animeNotificationProvider.notifier)
-            .removeAnime(
-              widget.anime.id,
-            );
+            .removeAnime(widget.anime.id);
       }
       if (mounted) Navigator.pop(context);
       if (mounted) {
@@ -419,9 +407,8 @@ class _UpdateListStatusModalState
     } on Exception catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to update: $e')));
       }
     }
   }
@@ -433,9 +420,7 @@ class _UpdateListStatusModalState
         ? widget.anime.numEpisodes
         : null;
     final notifEnabled = ref.watch(
-      animeNotificationProvider.select(
-        (s) => s.contains(widget.anime.id),
-      ),
+      animeNotificationProvider.select((s) => s.contains(widget.anime.id)),
     );
 
     return Padding(
@@ -557,10 +542,7 @@ class _UpdateListStatusModalState
             const SizedBox(height: 20),
 
             // Episodes
-            Text(
-              'Episodes Watched',
-              style: theme.textTheme.titleSmall,
-            ),
+            Text('Episodes Watched', style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -683,6 +665,7 @@ class _CoverImage extends StatelessWidget {
             AppCachedImage(
               imageUrl: anime.mainPicture?.medium ?? '',
               fallbackSize: 20,
+              memCacheWidth: 240,
             ),
             // Status badge (top-left)
             if (statusLabel != null)

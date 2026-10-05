@@ -81,6 +81,7 @@ class _AnimeListView extends StatelessWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
+      itemExtent: 126,
       itemCount: anime.length,
       itemBuilder: (context, index) {
         return AnimeCard(anime: anime[index]);

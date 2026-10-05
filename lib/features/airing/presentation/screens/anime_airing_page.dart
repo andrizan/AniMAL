@@ -33,15 +33,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
     'sunday',
   ];
 
-  static const _dayLabels = [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
+  static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   void initState() {
@@ -249,6 +241,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                       onRefresh: _handleRefresh,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemExtent: 126,
                         itemCount: animeForDay.length,
                         itemBuilder: (context, index) {
                           final entry = animeForDay[index];

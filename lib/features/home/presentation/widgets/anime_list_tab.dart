@@ -102,14 +102,12 @@ class AnimeListTab extends ConsumerWidget {
       child: ListView.builder(
         key: PageStorageKey<String>('anime_list_${status.value}'),
         padding: const EdgeInsets.symmetric(vertical: 8),
+        itemExtent: 126,
         itemCount: sorted.length,
         itemBuilder: (context, index) {
           final anime = sorted[index];
           final nextAiring = airingMap[anime.id];
-          return AnimeCard(
-            anime: anime,
-            nextAiring: nextAiring,
-          );
+          return AnimeCard(anime: anime, nextAiring: nextAiring);
         },
       ),
     );
@@ -131,11 +129,7 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             Text(
               message,

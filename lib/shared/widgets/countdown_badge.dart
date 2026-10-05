@@ -1,12 +1,12 @@
-import 'dart:async';
-
+import 'package:animal/shared/providers/clock_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A live countdown badge that ticks every 30 seconds.
+/// A live countdown badge driven by the shared [clockProvider].
 ///
 /// Shows the remaining time until [airingAt] together with the
 /// [episode] number. Once the air time has passed it shows "Aired".
-class CountdownBadge extends StatefulWidget {
+class CountdownBadge extends ConsumerWidget {
   const CountdownBadge({
     required this.airingAt,
     required this.episode,
@@ -17,41 +17,16 @@ class CountdownBadge extends StatefulWidget {
   final int episode;
 
   @override
-  State<CountdownBadge> createState() => _CountdownBadgeState();
-}
-
-class _CountdownBadgeState extends State<CountdownBadge> {
-  late Timer _timer;
-  late DateTime _now;
-
-  @override
-  void initState() {
-    super.initState();
-    _now = DateTime.now().toUtc();
-    _timer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) {
-        if (mounted) {
-          setState(() => _now = DateTime.now().toUtc());
-        }
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final remaining = widget.airingAt.toUtc().difference(_now).inSeconds;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = ref
+        .watch(clockProvider)
+        .maybeWhen(data: (t) => t.toUtc(), orElse: DateTime.now().toUtc);
+    final remaining = airingAt.toUtc().difference(now).inSeconds;
     final theme = Theme.of(context);
 
     if (remaining <= 0) {
       return _Badge(
-        episode: widget.episode,
+        episode: episode,
         label: 'Aired',
         color: theme.colorScheme.secondaryContainer,
         textColor: theme.colorScheme.onSecondaryContainer,
@@ -60,7 +35,7 @@ class _CountdownBadgeState extends State<CountdownBadge> {
 
     final isUrgent = remaining < 21600;
     return _Badge(
-      episode: widget.episode,
+      episode: episode,
       label: _formatCountdown(remaining),
       color: isUrgent
           ? theme.colorScheme.errorContainer

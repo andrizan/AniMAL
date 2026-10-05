@@ -14,6 +14,8 @@ class AppCachedImage extends StatelessWidget {
     this.fallbackColor,
     this.fallbackSize,
     this.loadingWidget,
+    this.memCacheWidth,
+    this.memCacheHeight,
   });
 
   final String imageUrl;
@@ -25,6 +27,8 @@ class AppCachedImage extends StatelessWidget {
   final Color? fallbackColor;
   final double? fallbackSize;
   final Widget? loadingWidget;
+  final int? memCacheWidth;
+  final int? memCacheHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +54,8 @@ class AppCachedImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
+      memCacheWidth: memCacheWidth,
+      memCacheHeight: memCacheHeight,
       placeholder: (context, url) => loadingWidget ?? fallback,
       errorWidget: (context, url, error) => fallback,
     );

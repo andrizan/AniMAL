@@ -27,13 +27,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
     Season.fall,
   ];
 
-  static const _seasonLabels = [
-    'Winter',
-    'Spring',
-    'Summer',
-    'Fall',
-    'Later',
-  ];
+  static const _seasonLabels = ['Winter', 'Spring', 'Summer', 'Fall', 'Later'];
 
   static const List<IconData> _seasonIcons = [
     Icons.ac_unit,
@@ -139,10 +133,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
             controller: _seasonTabController,
             children: [
               ..._seasons.map((season) {
-                return _SeasonAnimeList(
-                  year: _selectedYear,
-                  season: season,
-                );
+                return _SeasonAnimeList(year: _selectedYear, season: season);
               }),
               _LaterAnimeList(year: _selectedYear),
             ],
@@ -210,10 +201,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
 
 /// Displays anime for a specific year/season grouped by broadcast day.
 class _SeasonAnimeList extends ConsumerWidget {
-  const _SeasonAnimeList({
-    required this.year,
-    required this.season,
-  });
+  const _SeasonAnimeList({required this.year, required this.season});
 
   final int year;
   final Season season;
@@ -264,9 +252,8 @@ class _SeasonAnimeList extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(
-                  groupedSeasonalAnimeProvider(params),
-                ),
+                onPressed: () =>
+                    ref.invalidate(groupedSeasonalAnimeProvider(params)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -302,9 +289,8 @@ class _SeasonAnimeList extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(
-            groupedSeasonalAnimeProvider(params),
-          ),
+          onRefresh: () async =>
+              ref.invalidate(groupedSeasonalAnimeProvider(params)),
           child: CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -312,30 +298,24 @@ class _SeasonAnimeList extends ConsumerWidget {
               // Anime grouped by day
               for (int i = 0; i < _days.length; i++) ...[
                 if (grouped[_days[i]]!.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: _DayHeader(day: _dayLabels[i]),
-                  ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final anime = grouped[_days[i]]![index];
-                        return AnimeCard(anime: anime);
-                      },
-                      childCount: grouped[_days[i]]!.length,
-                    ),
+                  SliverToBoxAdapter(child: _DayHeader(day: _dayLabels[i])),
+                  SliverFixedExtentList(
+                    itemExtent: 126,
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final anime = grouped[_days[i]]![index];
+                      return AnimeCard(anime: anime);
+                    }, childCount: grouped[_days[i]]!.length),
                   ),
                 ],
               ],
 
               // Anime without broadcast info
               if (noBroadcast.isNotEmpty) ...[
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      return AnimeCard(anime: noBroadcast[index]);
-                    },
-                    childCount: noBroadcast.length,
-                  ),
+                SliverFixedExtentList(
+                  itemExtent: 126,
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    return AnimeCard(anime: noBroadcast[index]);
+                  }, childCount: noBroadcast.length),
                 ),
               ],
 
@@ -357,10 +337,7 @@ class _LaterAnimeList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
-    final params = (
-      year: year ?? now.year + 1,
-      season: Season.winter,
-    );
+    final params = (year: year ?? now.year + 1, season: Season.winter);
     final asyncAnime = ref.watch(animeScheduleProvider(params));
     final theme = Theme.of(context);
 
@@ -409,6 +386,7 @@ class _LaterAnimeList extends ConsumerWidget {
           onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
+            itemExtent: 126,
             itemCount: animeList.length,
             itemBuilder: (context, index) {
               return AnimeCard(anime: animeList[index]);
