@@ -77,10 +77,7 @@ void main() {
       await cache.saveSearchResults('foo', 10, [makeAnime(1)]);
       final ts = await cache.getFetchedAt('search_foo_10');
       expect(ts, isNotNull);
-      expect(
-        DateTime.now().difference(ts!).inSeconds.abs(),
-        lessThan(5),
-      );
+      expect(DateTime.now().difference(ts!).inSeconds.abs(), lessThan(5));
     });
 
     test('seasonal: round-trip', () async {
@@ -121,19 +118,18 @@ void main() {
     });
 
     test('detail: save then read preserves detail-only fields', () async {
-      final detail = AnimeDetail(
+      const detail = AnimeDetail(
         id: 42,
         title: 'Detail',
-        mainPicture: const MainPicture(medium: 'm', large: 'l'),
-        mean: 8.0,
+        mainPicture: MainPicture(medium: 'm', large: 'l'),
+        mean: 8,
         source: 'manga',
         synopsis: 'A test synopsis.',
         startDate: '2020-01-01',
         endDate: '2020-06-30',
         mediaType: 'tv',
         numScoringUsers: 100,
-        genres: const [],
-        startSeason: const StartSeason(year: 2020, season: 'winter'),
+        startSeason: StartSeason(year: 2020, season: 'winter'),
         averageEpisodeDuration: 1440,
       );
       await cache.saveAnimeDetail(detail);
@@ -150,7 +146,7 @@ void main() {
       await cache.saveSearchResults('q', 10, list);
 
       // Manually craft a status
-      final newStatus = MyListStatus(status: WatchStatus.completed, score: 9);
+      const newStatus = MyListStatus(status: WatchStatus.completed, score: 9);
       await cache.updateCachedAnimeListStatus(1, newStatus);
 
       // Cache is still present
@@ -161,11 +157,7 @@ void main() {
     });
 
     test('invalidateAnimeDetail removes only that detail key', () async {
-      final d = AnimeDetail(
-        id: 1,
-        title: 'T',
-        mainPicture: const MainPicture(),
-      );
+      const d = AnimeDetail(id: 1, title: 'T', mainPicture: MainPicture());
       await cache.saveAnimeDetail(d);
       expect(await cache.getFetchedAt('detail_1'), isNotNull);
       await cache.invalidateAnimeDetail(1);
@@ -184,7 +176,7 @@ void main() {
       final list = [
         makeAnime(
           1,
-          myListStatus: MyListStatus(status: WatchStatus.watching),
+          myListStatus: const MyListStatus(status: WatchStatus.watching),
         ),
       ];
       await cache.saveSearchResults('q', 10, list);
@@ -209,7 +201,7 @@ void main() {
         await cache.saveUserAnimeList('watching', 100, 0, [makeAnime(1)]);
 
         await cache.saveAnimeDetail(
-          AnimeDetail(id: 1, title: 'Updated', synopsis: 'New synopsis'),
+          const AnimeDetail(id: 1, title: 'Updated', synopsis: 'New synopsis'),
         );
 
         // REPLACE on the anime row used to cascade-delete the list memberships.
@@ -222,17 +214,17 @@ void main() {
 
     test('partial detail save preserves existing detail fields', () async {
       await cache.saveAnimeDetail(
-        AnimeDetail(
+        const AnimeDetail(
           id: 5,
           title: 'Full',
           synopsis: 'Long synopsis',
           startDate: '2020-01-01',
           mean: 8.2,
-          genres: const [Genre(id: 1, name: 'Action')],
+          genres: [Genre(id: 1, name: 'Action')],
         ),
       );
 
-      await cache.saveAnimeDetail(AnimeDetail(id: 5, title: 'Full'));
+      await cache.saveAnimeDetail(const AnimeDetail(id: 5, title: 'Full'));
 
       final out = await cache.getAnimeDetail(5);
       expect(out, isNotNull);
@@ -256,7 +248,10 @@ void main() {
       await cache.saveSearchResults('q', 20, [
         makeAnime(
           1,
-          myListStatus: MyListStatus(status: WatchStatus.watching, score: 7),
+          myListStatus: const MyListStatus(
+            status: WatchStatus.watching,
+            score: 7,
+          ),
         ),
       ]);
       await cache.saveSearchResults('q2', 20, [makeAnime(1)]);

@@ -52,7 +52,7 @@ void main() {
         where: 'type = ?',
         whereArgs: ['table'],
       );
-      final names = tables.map((r) => r['name'] as String).toSet();
+      final names = tables.map((r) => r['name']! as String).toSet();
       expect(
         names,
         containsAll([
@@ -137,13 +137,11 @@ void main() {
         });
         await db1.close();
 
-        final db2 = await AppDatabase.open(
-          pathOverride: dbPath,
-        );
+        final db2 = await AppDatabase.open(pathOverride: dbPath);
         final keys = (await db2.raw.query(
           'cache_meta',
           columns: ['cache_key'],
-        )).map((r) => r['cache_key'] as String).toSet();
+        )).map((r) => r['cache_key']! as String).toSet();
 
         expect(keys, isNot(contains('search_stale_20')));
         expect(keys, contains('search_fresh_20'));

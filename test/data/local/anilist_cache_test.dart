@@ -56,7 +56,7 @@ void main() {
       final entry1 = makeEntry(
         anilistId: 1,
         malId: 10,
-        airingAt: weekStart.add(const Duration(days: 0, hours: 10)),
+        airingAt: weekStart.add(const Duration(hours: 10)),
       );
       final entry2 = makeEntry(
         anilistId: 2,
@@ -97,7 +97,7 @@ void main() {
 
   group('AniListCache.character', () {
     test('save and read preserves fields and media order', () async {
-      final c = AniListCharacterDetail(
+      const c = AniListCharacterDetail(
         id: 42,
         name: 'Spike',
         nativeName: 'スパイク',
@@ -114,7 +114,6 @@ void main() {
           ),
           AniListMediaAppearance(
             anilistId: 2,
-            malId: null,
             title: 'Cowboy Bebop: Knockin on Heavens Door',
             role: 'MAIN',
           ),
@@ -132,18 +131,14 @@ void main() {
 
   group('AniListCache.studio', () {
     test('save and read', () async {
-      final s = AniListStudioDetail(
+      const s = AniListStudioDetail(
         id: 7,
         name: 'Sunrise',
         isAnimationStudio: true,
         siteUrl: 'https://sunrise.example',
         favourites: 1000,
         mediaWorks: [
-          AniListMediaAppearance(
-            anilistId: 100,
-            malId: 200,
-            title: 'Gundam',
-          ),
+          AniListMediaAppearance(anilistId: 100, malId: 200, title: 'Gundam'),
         ],
       );
       await cache.saveStudio(s);
@@ -156,12 +151,11 @@ void main() {
 
   group('AniListCache.staff', () {
     test('save and read with years/occupations JSON', () async {
-      final s = AniListStaffDetail(
+      const s = AniListStaffDetail(
         id: 3,
         name: 'Hayao Miyazaki',
         yearsActive: [1971, 1978, 2001, 2013],
         occupations: ['Director', 'Screenwriter', 'Author'],
-        mediaWorks: const [],
       );
       await cache.saveStaff(s);
       final out = await cache.getStaff(3);
@@ -198,7 +192,7 @@ void main() {
 
     test('save and read preserves characters and staff via JSON', () async {
       await appDb.raw.insert('anime', {'mal_id': 124, 'title': 'Stub2'});
-      final extra = AniListAnimeExtra(
+      const extra = AniListAnimeExtra(
         people: AniListAnimePeople(
           characters: [
             AniListCharacter(
@@ -245,11 +239,9 @@ void main() {
     test(
       'saveAnimeExtra works without a MAL anime row (stub created)',
       () async {
-        final extra = AniListAnimeExtra(
+        const extra = AniListAnimeExtra(
           people: AniListAnimePeople(
-            characters: [
-              AniListCharacter(id: 1, name: 'C'),
-            ],
+            characters: [AniListCharacter(id: 1, name: 'C')],
           ),
         );
         // No anime row exists for 999 — the FK used to fail the transaction.
@@ -260,7 +252,7 @@ void main() {
     );
 
     test('partial extra refresh preserves cached characters/staff', () async {
-      final full = AniListAnimeExtra(
+      const full = AniListAnimeExtra(
         people: AniListAnimePeople(
           characters: [AniListCharacter(id: 1, name: 'Char A')],
           staff: [AniListStaff(id: 2, name: 'Staff B')],
@@ -274,7 +266,7 @@ void main() {
       // Refresh returns only links (characters/staff missing).
       await cache.saveAnimeExtra(
         55,
-        AniListAnimeExtra(
+        const AniListAnimeExtra(
           externalLinks: [
             AniListExternalLink(id: 4, url: 'https://y.com', site: 'Y'),
           ],

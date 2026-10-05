@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/local/app_database.dart';
-import 'package:animal/data/models/my_list_status.dart';
-import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -32,9 +30,8 @@ void main() {
 
   AiringEntry makeEntry({
     required int anilistId,
-    int? malId,
     required DateTime airingAt,
-    String day = 'monday',
+    int? malId,
   }) {
     return AiringEntry(
       anilistId: anilistId,
@@ -43,9 +40,6 @@ void main() {
       airingAt: airingAt,
       episode: 1,
       timeUntilAiring: airingAt.difference(DateTime.now()).inSeconds,
-      myListStatus: WatchStatus.watching == WatchStatus.watching
-          ? null
-          : MyListStatus(status: WatchStatus.watching),
     );
   }
 
@@ -59,19 +53,16 @@ void main() {
       anilistId: 1,
       malId: 10,
       airingAt: weekStart.add(const Duration(hours: 9)),
-      day: 'monday',
     );
     final monday2 = makeEntry(
       anilistId: 2,
       malId: 20,
       airingAt: weekStart.add(const Duration(hours: 21)),
-      day: 'monday',
     );
     final thursday = makeEntry(
       anilistId: 3,
       malId: 30,
       airingAt: weekStart.add(const Duration(days: 3, hours: 12)),
-      day: 'thursday',
     );
 
     final week = <String, List<AiringEntry>>{
