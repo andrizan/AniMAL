@@ -28,7 +28,12 @@ class MalApiClient {
   Future<List<Anime>> searchAnime(String query, {int limit = 20}) async {
     final response = await _dio.get<Map<String, dynamic>>(
       MalEndpoints.search(),
-      queryParameters: {'q': query, 'limit': limit, 'fields': _listFields},
+      queryParameters: {
+        'q': query,
+        'limit': limit,
+        'fields': _listFields,
+        'nsfw': true,
+      },
     );
     final data = _extractList(response.data, 'data') ?? [];
     return data
@@ -52,6 +57,7 @@ class MalApiClient {
         'limit': limit,
         'offset': offset,
         'fields': _scheduleFields,
+        'nsfw': true,
       },
     );
     final data = _extractList(response.data, 'data') ?? [];
@@ -67,7 +73,7 @@ class MalApiClient {
   Future<AnimeDetail?> getAnimeDetail(int animeId) async {
     final response = await _dio.get<Map<String, dynamic>>(
       MalEndpoints.animeDetail(animeId),
-      queryParameters: {'fields': _detailFields},
+      queryParameters: {'fields': _detailFields, 'nsfw': true},
     );
     final map = _extractMap(response.data);
     if (map == null) return null;
@@ -84,6 +90,7 @@ class MalApiClient {
         'ranking_type': rankingType,
         'limit': limit,
         'fields': _listFields,
+        'nsfw': true,
       },
     );
     final data = _extractList(response.data, 'data') ?? [];
@@ -108,6 +115,7 @@ class MalApiClient {
         'limit': limit,
         'offset': offset,
         'fields': _userListFields,
+        'nsfw': true,
       },
     );
     final data = _extractList(response.data, 'data') ?? [];
