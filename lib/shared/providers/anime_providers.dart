@@ -65,9 +65,6 @@ class AnimeRepository {
   static const _ttlLong = Duration(minutes: 15);
 
   final Map<String, Future<dynamic>> _inFlight = <String, Future<dynamic>>{};
-  final Set<String> _refreshing = <String>{};
-  final Map<String, DateTime> _lastBackgroundRefresh = <String, DateTime>{};
-  static const _minBackgroundInterval = Duration(minutes: 5);
 
   // ---------- Search / Seasonal / Ranking (SWR over List<Anime>) ----------
 
@@ -414,8 +411,12 @@ class AnimeRepository {
 
   // ---------- Generic helpers ----------
 
-  /// SWR for list-of-T reads. On missing, blocking network. On stale,
-  /// returns stale and kicks off a background refresh.
+  /// Cache-first read. SQLite is the source of truth: any cached rows are
+  /// returned immediately with zero network. The network is hit only on a
+  /// genuine miss (no rows / no `fetchedAt`, e.g. after an explicit
+  /// refresh invalidated the key) or via an explicit `refresh*` method
+  /// wired to a refresh button. There is intentionally no background
+  /// revalidate on stale data.
   Future<List<T>> _swrList<T>({
     required String key,
     required Duration ttl,
@@ -428,9 +429,6 @@ class AnimeRepository {
       final cached = await readFresh();
       final fetchedAt = await _cache.getFetchedAt(key);
       if (cached != null && fetchedAt != null) {
-        final age = DateTime.now().difference(fetchedAt);
-        if (age < ttl) return cached;
-        unawaited(_refreshList(key, networkFetch, writeCache));
         return cached;
       }
       try {
@@ -448,8 +446,8 @@ class AnimeRepository {
     });
   }
 
-  /// SWR for T? reads. [isMissingNetworkValue] decides if a network `null`
-  /// (e.g., 404) is treated as a valid value to cache, or as a real failure.
+  /// Cache-first read for T? (see [_swrList]): cached values are served
+  /// from SQLite without network; only a miss triggers a fetch.
   Future<T?> _swrNullable<T>({
     required String key,
     required Duration ttl,
@@ -462,9 +460,6 @@ class AnimeRepository {
       final cached = await readFresh();
       final fetchedAt = await _cache.getFetchedAt(key);
       if (cached != null && fetchedAt != null) {
-        final age = DateTime.now().difference(fetchedAt);
-        if (age < ttl) return cached;
-        unawaited(_refreshNullable(key, networkFetch, writeCache));
         return cached;
       }
       try {
@@ -480,55 +475,6 @@ class AnimeRepository {
         rethrow;
       }
     });
-  }
-
-  Future<void> _refreshList<T>(
-    String key,
-    Future<List<T>> Function() networkFetch,
-    Future<void> Function(List<T>) writeCache,
-  ) async {
-    if (!_refreshing.add(key)) return;
-    final now = DateTime.now();
-    final last = _lastBackgroundRefresh[key];
-    if (last != null && now.difference(last) < _minBackgroundInterval) {
-      _refreshing.remove(key);
-      return;
-    }
-    _lastBackgroundRefresh[key] = now;
-    try {
-      final fresh = await networkFetch();
-      await writeCache(fresh);
-    } on Object catch (_) {
-    } finally {
-      _refreshing.remove(key);
-    }
-  }
-
-  /// Background refresh for a stale entry. SQLite stays the source of
-  /// truth: the stale value was already returned, the DB is updated quietly.
-  /// No global version bump here — bumping would invalidate the weekly
-  /// airing schedule and every sorted list, fanning out to AniList.
-  /// Fresh data is picked up on the next provider rebuild/explicit refresh.
-  Future<void> _refreshNullable<T>(
-    String key,
-    Future<T?> Function() networkFetch,
-    Future<void> Function(T?) writeCache,
-  ) async {
-    if (!_refreshing.add(key)) return;
-    final now = DateTime.now();
-    final last = _lastBackgroundRefresh[key];
-    if (last != null && now.difference(last) < _minBackgroundInterval) {
-      _refreshing.remove(key);
-      return;
-    }
-    _lastBackgroundRefresh[key] = now;
-    try {
-      final fresh = await networkFetch();
-      await writeCache(fresh);
-    } on Object catch (_) {
-    } finally {
-      _refreshing.remove(key);
-    }
   }
 
   Future<T> _deduped<T>(String key, Future<T> Function() run) {

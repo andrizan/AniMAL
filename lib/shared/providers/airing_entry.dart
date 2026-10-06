@@ -83,12 +83,7 @@ class AiringRepository {
   final AiringCache cache;
   final Logger _logger;
 
-  static const _ttlMerged = Duration(minutes: 15);
-
   final Map<String, Future<Map<String, List<AiringEntry>>>> _inFlight = {};
-
-  DateTime? _lastRefreshAttempt;
-  static const _minRefreshInterval = Duration(minutes: 5);
 
   int _currentWeekStartEpochSec() {
     final now = DateTime.now().toUtc();
@@ -111,15 +106,12 @@ class AiringRepository {
   Future<Map<String, List<AiringEntry>>> _getWeeklyScheduleInner(
     int weekStartSec,
   ) async {
+    // Cache-first: SQLite wins. Network only on a genuine miss or via the
+    // explicit `refreshWeeklySchedule` wired to the refresh button.
     final cached = await cache.getMergedWeek(weekStartSec);
     final fetchedAt = await cache.getFetchedAt(_weekKey(weekStartSec));
     if (cached != null && fetchedAt != null) {
-      final filtered = _filterExpired(cached);
-      if (DateTime.now().difference(fetchedAt) < _ttlMerged) {
-        return filtered;
-      }
-      unawaited(_refreshMerged(weekStartSec));
-      return filtered;
+      return _filterExpired(cached);
     }
     _logger.d('Airing cache miss for week $weekStartSec, building');
     return _buildAndSave(weekStartSec);
@@ -415,26 +407,6 @@ class AiringRepository {
 
     await cache.saveMergedWeek(weekStartSec, merged);
     return merged;
-  }
-
-  Future<void> _refreshMerged(int weekStartSec) async {
-    final now = DateTime.now();
-    if (_lastRefreshAttempt != null &&
-        now.difference(_lastRefreshAttempt!) < _minRefreshInterval) {
-      return;
-    }
-    _lastRefreshAttempt = now;
-    final key = _weekKey(weekStartSec);
-    if (_inFlight.containsKey(key)) return;
-    final fut = _buildAndSave(weekStartSec);
-    _inFlight[key] = fut;
-    try {
-      await fut;
-    } on Object catch (e) {
-      _logger.e('Background refresh failed', error: e);
-    } finally {
-      _inFlight.remove(key);
-    }
   }
 
   String _weekKey(int weekStartSec) {

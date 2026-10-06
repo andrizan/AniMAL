@@ -44,9 +44,6 @@ class AniListClient {
   static const _ttlDetail = Duration(minutes: 30);
 
   final Map<String, Future<dynamic>> _inFlight = <String, Future<dynamic>>{};
-  final Set<String> _refreshing = <String>{};
-  final Map<String, DateTime> _lastRefreshAttempt = <String, DateTime>{};
-  static const _minRefreshInterval = Duration(minutes: 5);
 
   // ---------- Internal: GraphQL with 429 handling ----------
 
@@ -671,7 +668,11 @@ class AniListClient {
     });
   }
 
-  // ---------- SWR helper ----------
+  // ---------- Cache-first helper ----------
+
+  /// SQLite is the source of truth: any cached rows are returned with zero
+  /// network. The network is hit only on a genuine miss or via an explicit
+  /// `refresh*` method wired to a refresh button. No background revalidate.
 
   Future<T> _swr<T>({
     required String key,
@@ -711,10 +712,6 @@ class AniListClient {
     final cached = await readFresh();
     final fetchedAt = await cache.getFetchedAt(key);
     if (cached != null && fetchedAt != null) {
-      if (DateTime.now().difference(fetchedAt) < ttl) {
-        return cached as T;
-      }
-      unawaited(_refresh(key, networkFetch, writeCache));
       return cached as T;
     }
     try {
@@ -726,28 +723,6 @@ class AniListClient {
     } on Object {
       if (cached != null) return cached as T;
       rethrow;
-    }
-  }
-
-  Future<void> _refresh<T>(
-    String key,
-    Future<T> Function() networkFetch,
-    Future<void> Function(T) writeCache,
-  ) async {
-    if (!_refreshing.add(key)) return;
-    final now = DateTime.now();
-    final last = _lastRefreshAttempt[key];
-    if (last != null && now.difference(last) < _minRefreshInterval) {
-      _refreshing.remove(key);
-      return;
-    }
-    _lastRefreshAttempt[key] = now;
-    try {
-      final fresh = await networkFetch();
-      await writeCache(fresh);
-    } on Object catch (_) {
-    } finally {
-      _refreshing.remove(key);
     }
   }
 }
