@@ -45,6 +45,8 @@ class AniListClient {
 
   final Map<String, Future<dynamic>> _inFlight = <String, Future<dynamic>>{};
   final Set<String> _refreshing = <String>{};
+  final Map<String, DateTime> _lastRefreshAttempt = <String, DateTime>{};
+  static const _minRefreshInterval = Duration(minutes: 5);
 
   // ---------- Internal: GraphQL with 429 handling ----------
 
@@ -344,18 +346,15 @@ class AniListClient {
   // ---------- Anime extra ----------
 
   Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) {
+    // Empty extras are cached too (negative cache): otherwise every
+    // provider rebuild for an anime without AniList data would hit
+    // the network again because `fetchedAt` was never written.
     return _swr<AniListAnimeExtra>(
       key: 'animeExtra_$malId',
       ttl: _ttlAnimeExtra,
       readFresh: () => cache.getAnimeExtra(malId),
       networkFetch: () => _fetchAnimeExtra(malId),
       writeCache: (data) => cache.saveAnimeExtra(malId, data),
-      isMissingNetworkValue: (v) =>
-          v.people.characters.isEmpty &&
-          v.people.staff.isEmpty &&
-          v.studios.isEmpty &&
-          v.externalLinks.isEmpty &&
-          v.nextAiring == null,
     );
   }
 
@@ -646,15 +645,10 @@ class AniListClient {
   Future<AniListAnimeExtra> refreshAnimeExtra(int malId) {
     return _runDeduped('animeExtra_$malId', () async {
       final extra = await _fetchAnimeExtra(malId);
-      final isMissing =
-          extra.people.characters.isEmpty &&
-          extra.people.staff.isEmpty &&
-          extra.studios.isEmpty &&
-          extra.externalLinks.isEmpty &&
-          extra.nextAiring == null;
-      if (!isMissing) {
-        await cache.saveAnimeExtra(malId, extra);
-      }
+      // Always save (merge-on-save keeps existing sections): skipping the
+      // save would leave `fetchedAt` empty and cause a network fetch on
+      // every provider rebuild for anime without AniList data.
+      await cache.saveAnimeExtra(malId, extra);
       return extra;
     });
   }
@@ -741,6 +735,13 @@ class AniListClient {
     Future<void> Function(T) writeCache,
   ) async {
     if (!_refreshing.add(key)) return;
+    final now = DateTime.now();
+    final last = _lastRefreshAttempt[key];
+    if (last != null && now.difference(last) < _minRefreshInterval) {
+      _refreshing.remove(key);
+      return;
+    }
+    _lastRefreshAttempt[key] = now;
     try {
       final fresh = await networkFetch();
       await writeCache(fresh);

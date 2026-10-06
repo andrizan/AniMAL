@@ -10,7 +10,7 @@ import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart'
-    show AnimeRepository, animeListVersionProvider, animeRepositoryProvider;
+    show AnimeRepository, animeRepositoryProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -515,22 +515,23 @@ final airingRepositoryProvider = Provider<AiringRepository>((ref) {
     cache: ref.watch(airingCacheProvider),
     logger: ref.watch(loggerProvider),
   );
-  ref.listen(animeListVersionProvider, (_, _) => repo.invalidateCache());
   return repo;
 });
 
 /// Fetches weekly airing schedule (AniList schedule + MAL scores).
+/// SQLite first: no version watch here, so list mutations (score/episode
+/// edits) never trigger an AniList fetch. `myListStatus` inside schedule
+/// refreshes on TTL expiry or explicit airing pull-to-refresh.
 final weeklyAiringProvider =
     FutureProvider.autoDispose<Map<String, List<AiringEntry>>>((ref) async {
-      ref.watch(animeListVersionProvider);
       final repo = ref.watch(airingRepositoryProvider);
       return repo.getWeeklySchedule();
     });
 
 /// Map of MAL ID to next AiringEntry for quick lookup.
+/// No version watch: rebuilt only when the schedule itself changes.
 final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
   (ref) async {
-    ref.watch(animeListVersionProvider);
     final schedule = await ref.watch(weeklyAiringProvider.future);
     final now = DateTime.now().toUtc();
     final map = <int, AiringEntry>{};

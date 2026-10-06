@@ -66,6 +66,8 @@ class AnimeRepository {
 
   final Map<String, Future<dynamic>> _inFlight = <String, Future<dynamic>>{};
   final Set<String> _refreshing = <String>{};
+  final Map<String, DateTime> _lastBackgroundRefresh = <String, DateTime>{};
+  static const _minBackgroundInterval = Duration(minutes: 5);
 
   // ---------- Search / Seasonal / Ranking (SWR over List<Anime>) ----------
 
@@ -86,6 +88,9 @@ class AnimeRepository {
     int limit = 100,
   }) {
     final key = SqliteAnimeCache.seasonalKey(year, season.value, limit);
+    // Empty results are cached too: a future/empty season would otherwise
+    // hit the network on every provider rebuild because `fetchedAt` is
+    // never written.
     return _swrList<Anime>(
       key: key,
       ttl: _ttlLong,
@@ -107,7 +112,6 @@ class AnimeRepository {
       },
       writeCache: (list) =>
           _cache.saveSeasonalAnime(year, season.value, limit, list),
-      isMissingNetworkValue: (list) => list.isEmpty,
     );
   }
 
@@ -130,19 +134,15 @@ class AnimeRepository {
 
   Future<AnimeDetail?> getAnimeDetail(int animeId) {
     final key = SqliteAnimeCache.detailKey(animeId);
+    // SQLite first: only fetch MAL when cache is missing/expired.
+    // AniList extra is loaded exclusively via `anilistAnimeExtraProvider`
+    // so a detail open (or a batch `getAnimeList`) never fans out to
+    // AniList implicitly.
     return _swrNullable<AnimeDetail>(
       key: key,
       ttl: _ttlLong,
       readFresh: () => _cache.getAnimeDetail(animeId),
-      networkFetch: () async {
-        final detail = await _fetchAnimeDetailNetwork(animeId);
-        if (detail != null) {
-          // MAL + AniList are one unit: every detail fetch also syncs the
-          // AniList side (characters, staff, studios, next airing).
-          unawaited(_syncAniListExtra(animeId));
-        }
-        return detail;
-      },
+      networkFetch: () => _fetchAnimeDetailNetwork(animeId),
       writeCache: (d) async {
         if (d != null) await _cache.saveAnimeDetail(d);
       },
@@ -159,16 +159,6 @@ class AnimeRepository {
         return null;
       }
       rethrow;
-    }
-  }
-
-  Future<void> _syncAniListExtra(int malId) async {
-    final api = _anilistApi;
-    if (api == null) return;
-    try {
-      await api.getAnimeExtraInfo(malId);
-    } on Exception catch (e) {
-      _logger?.w('AniList extra sync failed for $malId', error: e);
     }
   }
 
@@ -498,6 +488,13 @@ class AnimeRepository {
     Future<void> Function(List<T>) writeCache,
   ) async {
     if (!_refreshing.add(key)) return;
+    final now = DateTime.now();
+    final last = _lastBackgroundRefresh[key];
+    if (last != null && now.difference(last) < _minBackgroundInterval) {
+      _refreshing.remove(key);
+      return;
+    }
+    _lastBackgroundRefresh[key] = now;
     try {
       final fresh = await networkFetch();
       await writeCache(fresh);
@@ -507,19 +504,27 @@ class AnimeRepository {
     }
   }
 
-  /// Background refresh for a stale detail. On success the provider's
-  /// future has already resolved with the stale value, so notify listeners
-  /// to rebuild with the fresh data.
+  /// Background refresh for a stale entry. SQLite stays the source of
+  /// truth: the stale value was already returned, the DB is updated quietly.
+  /// No global version bump here — bumping would invalidate the weekly
+  /// airing schedule and every sorted list, fanning out to AniList.
+  /// Fresh data is picked up on the next provider rebuild/explicit refresh.
   Future<void> _refreshNullable<T>(
     String key,
     Future<T?> Function() networkFetch,
     Future<void> Function(T?) writeCache,
   ) async {
     if (!_refreshing.add(key)) return;
+    final now = DateTime.now();
+    final last = _lastBackgroundRefresh[key];
+    if (last != null && now.difference(last) < _minBackgroundInterval) {
+      _refreshing.remove(key);
+      return;
+    }
+    _lastBackgroundRefresh[key] = now;
     try {
       final fresh = await networkFetch();
       await writeCache(fresh);
-      _bumpListVersion();
     } on Object catch (_) {
     } finally {
       _refreshing.remove(key);
@@ -575,8 +580,9 @@ final animeRepositoryProvider = Provider<AnimeRepository>((ref) {
 });
 
 /// FutureProvider family for anime detail by ID. Listens to
-/// [animeListVersionProvider] so background detail refreshes (which bump the
-/// version after merging fresh data) propagate to open pages.
+/// [animeListVersionProvider] so list mutations (edit score/episodes,
+/// add/remove) propagate to open pages. Background cache refreshes do NOT
+/// bump the version, so they never fan out to the airing schedule.
 // ignore: specify_nonobvious_property_types
 final animeDetailProvider = FutureProvider.autoDispose
     .family<AnimeDetail?, int>((ref, animeId) async {

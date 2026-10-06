@@ -1,7 +1,6 @@
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
-import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart'
     show AiringFilter, ListSort, userAnimeListProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,15 +100,10 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
       await ref
           .read(animeCacheProvider)
           .invalidateUserAnimeList(status.value, 100, 0);
-      ref
-        ..invalidate(userAnimeListProvider(status))
-        ..invalidate(weeklyAiringProvider)
-        ..invalidate(airingByMalIdProvider);
+      // User-list refresh only: never touch the AniList schedule here.
+      ref.invalidate(userAnimeListProvider(status));
       try {
-        await Future.wait([
-          ref.read(userAnimeListProvider(status).future),
-          ref.read(weeklyAiringProvider.future),
-        ]);
+        await ref.read(userAnimeListProvider(status).future);
       } on Object catch (_) {}
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
