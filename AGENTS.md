@@ -13,6 +13,10 @@ Rules and conventions for contributing to this project.
   - `git restore` — same as above
 - If a git operation goes wrong, use `git stash` or `git checkout -b` instead.
 - Stage only intended files. Never commit secrets or keys.
+- All commit messages MUST be in English and follow Conventional Commits:
+  `type(scope): subject` (scope optional, subject imperative, lowercase, no trailing period).
+- Allowed types: `feat`, `fix`, `chore`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `style`, `revert`.
+- Examples: `fix(anilist): cache empty extras to stop repeat fetches`, `feat(airing): throttle background schedule refresh`.
 - **NEVER use `git mv`** — use the file tools (Write/Edit/Bash `mv`) instead. `git mv` stages immediately and risks unintended renames.
 
 ## Architecture
