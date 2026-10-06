@@ -96,7 +96,7 @@ lib/
 │   └── models/                        # @freezed DTOs (MAL) + plain Dart (AniList)
 ├── shared/
 │   ├── providers/
-│   │   ├── anime_providers.dart       # AnimeRepository (SWR, dedup, mutations)
+│   │   ├── anime_providers.dart       # AnimeRepository (cache-first, dedup, mutations)
 │   │   ├── anime_list_providers.dart  # userAnimeListProvider, sortedUserAnimeListProvider
 │   │   ├── airing_entry.dart          # AiringEntry, AiringRepository, weeklyAiringProvider
 │   │   ├── anilist_providers.dart
@@ -109,22 +109,26 @@ lib/
 ### Caching
 
 Single `animal_cache.db` (SQLite). No raw JSON blobs — typed tables only.
+SQLite is the source of truth: cached rows are served with zero network.
+The network is hit only on a genuine cache miss (first open after install,
+a never-opened anime detail) or via an explicit refresh button. There is
+no background revalidate — stale rows stay until the user refreshes.
 
-| Endpoint | Key | TTL | SWR |
-|----------|-----|-----|-----|
-| Search | `search_<q>_<limit>` | 1 min | Yes |
-| Seasonal | `seasonal_<y>_<season>_<limit>` | 15 min | Yes |
-| Ranking | `ranking_<type>_<limit>` | 10 min | Yes |
-| Detail | `detail_<id>` | 15 min | Yes |
-| User list | `userlist_<status>_<limit>_<offset>` | 3 min | Yes |
-| User info | `userInfo` | 10 min | Yes |
-| AniList weekly | `weeklyAiringSchedule:<YYYY-MM-DD>` | 15 min | Yes |
-| Merged weekly | `weekly_schedule:<YYYY-MM-DD>` | 15 min | Yes |
-| Anime extra / character / staff / studio | `animeExtra_…` etc | 15–30 min | Yes |
+| Endpoint | Key | Refresh |
+|----------|-----|---------|
+| Search | `search_<q>_<limit>` | Button only (1 min debounce at provider) |
+| Seasonal | `seasonal_<y>_<season>_<limit>` | Button only (empty seasons cached) |
+| Ranking | `ranking_<type>_<limit>` | Button only |
+| Detail | `detail_<id>` | Button only |
+| User list | `userlist_<status>_<limit>_<offset>` | Button only (3 min data, invalidated on edit/delete) |
+| User info | `userInfo` | Button only |
+| AniList weekly | `weeklyAiringSchedule:<YYYY-MM-DD>` | Button only |
+| Merged weekly | `weekly_schedule:<YYYY-MM-DD>` | Button only |
+| Anime extra / character / staff / studio | `animeExtra_…` etc | Button only (empty extras cached) |
 
-- **SWR** = serve stale immediately + one background refresh, deduped per key.
+- **Cache-first** = serve SQLite immediately; one blocking fetch only on miss, deduped per key.
 - **Rate limit** `429` → `ApiException.rateLimited` (no auto-retry), health tracked in `ApiHealthTracker`.
-- **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update the embedded `my_list_status` in the shared `anime` row and bump `animeListVersionProvider`.
+- **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update the embedded `my_list_status` in the shared `anime` row and bump `animeListVersionProvider` for user lists/detail only — the airing schedule is never invalidated by list edits.
 
 **Physical retention** (`app_database.dart::_runStartupCleanup` on `AppDatabase.open`):
 
