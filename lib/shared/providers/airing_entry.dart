@@ -120,152 +120,41 @@ class AiringRepository {
   Map<String, List<AiringEntry>> _filterExpired(
     Map<String, List<AiringEntry>> week,
   ) {
+    // Whole-week rule: return every stored entry as-is, including episodes
+    // that already aired earlier this week. Only the live countdown is
+    // recomputed (zero/negative means already aired, shown as "Aired").
     final now = DateTime.now().toUtc();
     final result = <String, List<AiringEntry>>{};
-    final seenSynthetic = <String>{};
     for (final entry in week.entries) {
-      final filtered = <AiringEntry>[];
-      for (final e in entry.value) {
-        final remaining = e.airingAt.toUtc().difference(now).inSeconds;
-        if (remaining <= 0) {
-          final isFinished =
-              e.status == 'FINISHED' ||
-              e.status == 'finished_airing' ||
-              e.status == 'CANCELLED';
-          if (!isFinished) {
-            DateTime? accurateNextAt = e.nextAiringAt?.toUtc();
-            int? accurateNextEp = e.nextEpisode;
-            int? accurateNextUntil = e.nextTimeUntilAiring;
-            late final DateTime nextAiringAt;
-            late final int nextEpisode;
-            late final int nextRemaining;
-            if (accurateNextAt != null &&
-                accurateNextEp != null &&
-                accurateNextAt.isAfter(now)) {
-              nextAiringAt = accurateNextAt;
-              nextEpisode = accurateNextEp;
-              nextRemaining =
-                  accurateNextUntil ?? nextAiringAt.difference(now).inSeconds;
-            } else {
-              final isReleasing =
-                  e.status == 'RELEASING' || e.status == 'currently_airing';
-              if (!isReleasing) {
-                continue;
-              }
-              nextAiringAt = e.airingAt.toUtc().add(const Duration(days: 7));
-              nextEpisode = e.episode + 1;
-              nextRemaining = nextAiringAt.difference(now).inSeconds;
-            }
-            if (nextRemaining > 0) {
-              final syntheticKey = '${e.anilistId}_$nextEpisode';
-              if (!seenSynthetic.contains(syntheticKey)) {
-                seenSynthetic.add(syntheticKey);
-                final syntheticDay = _dayName(nextAiringAt.toUtc().weekday);
-                final synthetic = AiringEntry(
+      final list =
+          entry.value
+              .map(
+                (e) => AiringEntry(
                   anilistId: e.anilistId,
                   malId: e.malId,
                   title: e.title,
                   titleEnglish: e.titleEnglish,
                   titleNative: e.titleNative,
                   imageUrl: e.imageUrl,
-                  airingAt: nextAiringAt,
-                  episode: nextEpisode,
-                  timeUntilAiring: nextRemaining,
+                  airingAt: e.airingAt.toUtc(),
+                  episode: e.episode,
+                  timeUntilAiring: e.airingAt.toUtc().difference(now).inSeconds,
                   malScore: e.malScore,
                   genres: e.genres,
                   episodes: e.episodes,
                   format: e.format,
                   status: e.status,
                   myListStatus: e.myListStatus,
-                );
-                result.putIfAbsent(syntheticDay, () => []).add(synthetic);
-              }
-            }
-          }
-          continue;
-        }
-        filtered.add(
-          AiringEntry(
-            anilistId: e.anilistId,
-            malId: e.malId,
-            title: e.title,
-            titleEnglish: e.titleEnglish,
-            titleNative: e.titleNative,
-            imageUrl: e.imageUrl,
-            airingAt: e.airingAt.toUtc(),
-            episode: e.episode,
-            timeUntilAiring: remaining,
-            malScore: e.malScore,
-            genres: e.genres,
-            episodes: e.episodes,
-            format: e.format,
-            status: e.status,
-            myListStatus: e.myListStatus,
-            nextAiringAt: e.nextAiringAt?.toUtc(),
-            nextEpisode: e.nextEpisode,
-            nextTimeUntilAiring: e.nextTimeUntilAiring,
-          ),
-        );
-      }
-      filtered.sort((a, b) => a.airingAt.compareTo(b.airingAt));
-      result[entry.key] = [...?result[entry.key], ...filtered]
-        ..sort((a, b) => a.airingAt.compareTo(b.airingAt));
-    }
-    for (final day in result.keys) {
-      result[day]!.sort((a, b) => a.airingAt.compareTo(b.airingAt));
-    }
-    final total = result.values.fold<int>(0, (s, l) => s + l.length);
-    final originalTotal = week.values.fold<int>(0, (s, l) => s + l.length);
-    if (total == 0 && originalTotal > 0) {
-      final fallback = <String, List<AiringEntry>>{};
-      for (final e in week.entries) {
-        final list =
-            e.value
-                .map(
-                  (a) => AiringEntry(
-                    anilistId: a.anilistId,
-                    malId: a.malId,
-                    title: a.title,
-                    titleEnglish: a.titleEnglish,
-                    titleNative: a.titleNative,
-                    imageUrl: a.imageUrl,
-                    airingAt: a.airingAt.toUtc(),
-                    episode: a.episode,
-                    timeUntilAiring: a.airingAt
-                        .toUtc()
-                        .difference(now)
-                        .inSeconds,
-                    malScore: a.malScore,
-                    genres: a.genres,
-                    episodes: a.episodes,
-                    format: a.format,
-                    status: a.status,
-                    myListStatus: a.myListStatus,
-                    nextAiringAt: a.nextAiringAt?.toUtc(),
-                    nextEpisode: a.nextEpisode,
-                    nextTimeUntilAiring: a.nextTimeUntilAiring,
-                  ),
-                )
-                .toList()
-              ..sort((a, b) => a.airingAt.compareTo(b.airingAt));
-        fallback[e.key] = list;
-      }
-      return fallback;
+                  nextAiringAt: e.nextAiringAt?.toUtc(),
+                  nextEpisode: e.nextEpisode,
+                  nextTimeUntilAiring: e.nextTimeUntilAiring,
+                ),
+              )
+              .toList()
+            ..sort((a, b) => a.airingAt.compareTo(b.airingAt));
+      result[entry.key] = list;
     }
     return result;
-  }
-
-  String _dayName(int weekday) {
-    return switch (weekday) {
-      1 => 'monday',
-      2 => 'tuesday',
-      3 => 'wednesday',
-      4 => 'thursday',
-      5 => 'friday',
-      6 => 'saturday',
-      7 => 'sunday',
-      _ => 'monday',
-    };
   }
 
   Future<Map<String, List<AiringEntry>>> _buildAndSave(
@@ -296,11 +185,8 @@ class AiringRepository {
     for (final day in anilistSchedule.keys) {
       final list = <AiringEntry>[];
       for (final entry in anilistSchedule[day]!) {
-        final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
-        final effectiveRemaining = entry.timeUntilAiring ?? remaining;
-        if (effectiveRemaining <= 0 && entry.airingAt.toUtc().isBefore(now)) {
-          continue;
-        }
+        // Whole-week rule: merge everything, including episodes that
+        // already aired earlier this week (shown as "Aired" in UI).
         final dedupKey = '${entry.anilistId}_${entry.episode}';
         if (seen.contains(dedupKey)) continue;
         seen.add(dedupKey);
@@ -347,7 +233,6 @@ class AiringRepository {
       list.sort((a, b) => a.airingAt.compareTo(b.airingAt));
       merged[day] = list;
     }
-    final totalMerged = merged.values.fold<int>(0, (s, l) => s + l.length);
     final totalAnilist = anilistSchedule.values.fold<int>(
       0,
       (s, l) => s + l.length,
@@ -359,39 +244,6 @@ class AiringRepository {
         return _filterExpired(cached);
       }
       throw Exception('Airing schedule unavailable');
-    }
-    if (totalMerged == 0 && totalAnilist > 0) {
-      _logger.w('Merged empty but anilist had data — fallback to raw');
-      for (final day in anilistSchedule.keys) {
-        merged[day] =
-            anilistSchedule[day]!
-                .map(
-                  (e) => AiringEntry(
-                    anilistId: e.anilistId,
-                    malId: e.malId,
-                    title: e.titleEnglish ?? e.title,
-                    titleEnglish: e.titleEnglish,
-                    titleNative: e.titleNative,
-                    imageUrl: e.imageUrl,
-                    airingAt: e.airingAt.toUtc(),
-                    episode: e.episode ?? 0,
-                    timeUntilAiring: e.airingAt
-                        .toUtc()
-                        .difference(now)
-                        .inSeconds,
-                    malScore: e.meanScore,
-                    genres: e.genres,
-                    episodes: e.episodes,
-                    format: e.format,
-                    status: e.status,
-                    nextAiringAt: e.nextAiringAt?.toUtc(),
-                    nextEpisode: e.nextEpisode,
-                    nextTimeUntilAiring: e.nextTimeUntilAiring,
-                  ),
-                )
-                .toList()
-              ..sort((a, b) => a.airingAt.compareTo(b.airingAt));
-      }
     }
     _logger.d('Merge: $matchedCount entries matched with MAL scores');
 

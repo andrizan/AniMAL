@@ -134,7 +134,16 @@ class SqliteAniListCache implements AniListCache {
       );
       for (final entries in schedule.values) {
         for (final e in entries) {
-          await txn.insert('airing_schedule', _entryToRow(e));
+          // REPLACE: the same (anilist_id, episode) can legitimately arrive
+          // with a new airingAt (rescheduled episode, synthetic +7d entry
+          // vs. the real one, rows surviving outside the delete window).
+          // A plain insert would abort the whole transaction, skip the
+          // `fetchedAt` upsert below, and cause a fetch on every read.
+          await txn.insert(
+            'airing_schedule',
+            _entryToRow(e),
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
         }
       }
       await _upsertMeta(txn, key);
