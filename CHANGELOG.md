@@ -1,8 +1,20 @@
-## [Unreleased]
+## [2.8.0] - 2026-10-06
+
+### Bug Fixes
+
+- Show full week schedule including aired episodes
+
+### Chores
+
+- Bump version to 2.7.2+10 [skip ci]
 
 ### Documentation
 
 - Describe cache-first fetching without background refresh
+
+### Other
+
+- Merge branch 'main' of https://github.com/andrizan/AniMAL
 ## [2.7.2] - 2026-10-06
 
 ### Bug Fixes
