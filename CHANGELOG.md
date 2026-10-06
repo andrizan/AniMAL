@@ -1,3 +1,25 @@
+## [Unreleased]
+
+### Documentation
+
+- Describe cache-first fetching without background refresh
+## [2.7.2] - 2026-10-06
+
+### Bug Fixes
+
+- Fetch only on explicit refresh, sqlite first
+
+### Chores
+
+- Bump version to 2.7.1+9 [skip ci]
+
+### Documentation
+
+- Require conventional commit messages
+
+### Other
+
+- Minimize AniList API fetches with SQLite-first caching
 ## [2.7.1] - 2026-10-05
 
 ### Chores
