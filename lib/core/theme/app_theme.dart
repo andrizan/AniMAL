@@ -11,7 +11,6 @@ ThemeData buildLightTheme() {
     extensions: const [AppColors.lightStatus],
     textTheme: AppTextStyles.build(Brightness.light, scheme),
     fontFamily: GoogleFonts.inter().fontFamily,
-    fontFamilyFallback: const ['Noto Sans JP'],
     scaffoldBackgroundColor: scheme.surface,
     cardTheme: CardThemeData(
       elevation: 0,
@@ -45,7 +44,6 @@ ThemeData buildDarkTheme() {
     extensions: const [AppColors.darkStatus],
     textTheme: AppTextStyles.build(Brightness.dark, scheme),
     fontFamily: GoogleFonts.inter().fontFamily,
-    fontFamilyFallback: const ['Noto Sans JP'],
     scaffoldBackgroundColor: scheme.surface,
     cardTheme: CardThemeData(
       elevation: 0,

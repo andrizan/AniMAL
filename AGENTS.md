@@ -148,8 +148,11 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 ## Font
 
 - **Primary**: Inter (400 body, 500 label, 600 title, 700 heading).
-- **Fallback**: Noto Sans JP.
+- **Fallback**: platform system font (Japanese text uses the OS CJK font).
 - Configured via `google_fonts` package in `core/theme/app_text_styles.dart`.
+- Inter is bundled in `assets/google_fonts/` (400/500/600/700) and runtime
+  fetching is disabled in `main.dart`. Adding another weight requires adding
+  its `Inter-<Weight>.ttf` file there.
 
 ## Theme
 
