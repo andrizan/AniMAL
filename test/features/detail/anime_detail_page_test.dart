@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/providers.dart';
+import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anilist/anilist_models.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
@@ -233,7 +234,15 @@ void main() {
 
         expect(find.text('Adventure'), findsOneWidget);
         expect(find.text('Fantasy'), findsOneWidget);
-        expect(find.text('Friday at 23:00 JST'), findsOneWidget);
+        final local = convertJstBroadcastToLocal('friday', '23:00')!;
+        expect(
+          find.text(
+            '${local.day[0].toUpperCase()}${local.day.substring(1)}'
+            ' at ${local.time}',
+          ),
+          findsOneWidget,
+        );
+        expect(find.textContaining('JST'), findsNothing);
         expect(
           find.text('Aired: Sep 29, 2023 to Mar 22, 2024'),
           findsOneWidget,
@@ -244,6 +253,41 @@ void main() {
         expect(find.text('An elf outlives her party.'), findsOneWidget);
       },
     );
+
+    testWidgets('a broadcast without a time shows only the day', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        detail: () =>
+            _detail().copyWith(broadcast: const Broadcast(dayOfWeek: 'friday')),
+      );
+      await tester.dragUntilVisible(
+        find.text('Broadcast'),
+        find.byType(CustomScrollView),
+        const Offset(0, -300),
+      );
+
+      expect(find.text('Friday'), findsOneWidget);
+    });
+
+    testWidgets('an unreadable broadcast time falls back to the JST text', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        detail: () => _detail().copyWith(
+          broadcast: const Broadcast(dayOfWeek: 'friday', startTime: '??'),
+        ),
+      );
+      await tester.dragUntilVisible(
+        find.text('Broadcast'),
+        find.byType(CustomScrollView),
+        const Offset(0, -300),
+      );
+
+      expect(find.text('Friday at ?? JST'), findsOneWidget);
+    });
 
     testWidgets('a running anime says Airing and omits the end date', (
       tester,

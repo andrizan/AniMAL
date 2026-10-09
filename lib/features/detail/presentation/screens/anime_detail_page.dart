@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
+import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/models/anime_detail.dart';
+import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
@@ -363,10 +365,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            '${_capitalize(detail.broadcast!.dayOfWeek!)}'
-                            ' at ${detail.broadcast!.startTime ?? '?'} JST',
-                          ),
+                          Text(_broadcastLabel(detail.broadcast!)),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -533,6 +532,15 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
   }
 
   String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
+
+  String _broadcastLabel(Broadcast broadcast) {
+    final day = broadcast.dayOfWeek!;
+    final time = broadcast.startTime;
+    if (time == null) return _capitalize(day);
+    final local = convertJstBroadcastToLocal(day, time);
+    if (local == null) return '${_capitalize(day)} at $time JST';
+    return '${_capitalize(local.day)} at ${local.time}';
+  }
 
   String _formatDate(String dateStr) {
     final parts = dateStr.split('-');

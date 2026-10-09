@@ -31,3 +31,37 @@ String? convertJstToLocal(
     return jstTime;
   }
 }
+
+const _weekDays = <String>[
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+];
+
+({String day, String time})? convertJstBroadcastToLocal(
+  String? jstDay,
+  String? jstTime, {
+  Duration? localOffset,
+}) {
+  if (jstDay == null || jstTime == null) return null;
+  final dayIndex = _weekDays.indexOf(jstDay.toLowerCase());
+  final parts = jstTime.split(':');
+  final hour = parts.length < 2 ? null : int.tryParse(parts[0]);
+  final minute = parts.length < 2 ? null : int.tryParse(parts[1]);
+  if (dayIndex < 0 || hour == null || minute == null) return null;
+
+  final offset = localOffset ?? DateTime.now().timeZoneOffset;
+  final total = hour * 60 + minute - 9 * 60 + offset.inMinutes;
+  final dayShift = (total / Duration.minutesPerDay).floor();
+  final minuteOfDay = total - dayShift * Duration.minutesPerDay;
+  return (
+    day: _weekDays[(dayIndex + dayShift) % 7],
+    time:
+        '${(minuteOfDay ~/ 60).toString().padLeft(2, '0')}:'
+        '${(minuteOfDay % 60).toString().padLeft(2, '0')}',
+  );
+}

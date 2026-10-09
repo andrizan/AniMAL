@@ -50,4 +50,80 @@ void main() {
       expect(convert('10:xx', 7), '10:xx');
     });
   });
+
+  group('convertJstBroadcastToLocal', () {
+    ({String day, String time})? convertBroadcast(
+      String? day,
+      String? time,
+      int offsetHours,
+    ) => convertJstBroadcastToLocal(
+      day,
+      time,
+      localOffset: Duration(hours: offsetHours),
+    );
+
+    test('keeps the day and time on JST', () {
+      expect(convertBroadcast('friday', '23:00', 9), (
+        day: 'friday',
+        time: '23:00',
+      ));
+    });
+
+    test('converts the time within the same day', () {
+      expect(convertBroadcast('friday', '23:00', 7), (
+        day: 'friday',
+        time: '21:00',
+      ));
+    });
+
+    test('moves to the next day ahead of JST, wrapping the week', () {
+      expect(convertBroadcast('friday', '23:00', 13), (
+        day: 'saturday',
+        time: '03:00',
+      ));
+      expect(convertBroadcast('sunday', '23:00', 13), (
+        day: 'monday',
+        time: '03:00',
+      ));
+    });
+
+    test('moves to the previous day behind JST, wrapping the week', () {
+      expect(convertBroadcast('saturday', '01:00', 0), (
+        day: 'friday',
+        time: '16:00',
+      ));
+      expect(convertBroadcast('monday', '01:00', 0), (
+        day: 'sunday',
+        time: '16:00',
+      ));
+    });
+
+    test('handles half hour offsets and midnight', () {
+      expect(convertBroadcast('monday', '00:00', 9), (
+        day: 'monday',
+        time: '00:00',
+      ));
+      expect(
+        convertJstBroadcastToLocal(
+          'monday',
+          '23:45',
+          localOffset: const Duration(hours: 5, minutes: 30),
+        ),
+        (day: 'monday', time: '20:15'),
+      );
+    });
+
+    test('accepts a capitalised day', () {
+      expect(convertBroadcast('Friday', '23:00', 9)?.day, 'friday');
+    });
+
+    test('is null without a day or time, or for malformed input', () {
+      expect(convertBroadcast(null, '23:00', 7), isNull);
+      expect(convertBroadcast('friday', null, 7), isNull);
+      expect(convertBroadcast('someday', '23:00', 7), isNull);
+      expect(convertBroadcast('friday', 'abc', 7), isNull);
+      expect(convertBroadcast('friday', '10', 7), isNull);
+      expect(convertBroadcast('friday', '10:xx', 7), isNull);
+    });
+  });
 }
