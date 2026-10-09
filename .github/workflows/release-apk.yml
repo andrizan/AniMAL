@@ -125,29 +125,42 @@ jobs:
           storeFile=release-keystore.jks
           EOF
 
-      - name: Build APK
+      - name: Build split APKs
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.jvmargs=-Xmx4g"
         run: |
+          set -euo pipefail
+          # Same versionCode for every APK so users can switch between the
+          # split and universal builds without Android reporting a downgrade.
           flutter build apk --release --split-per-abi \
             --target-platform android-arm,android-arm64 --no-pub \
+            --android-project-arg=force-version-code-ignoring-abi=true \
             --dart-define=MAL_CLIENT_ID="${{ secrets.MAL_CLIENT_ID }}" \
             --dart-define=MAL_CLIENT_SECRET="${{ secrets.MAL_CLIENT_SECRET }}" \
             --dart-define=MAL_REDIRECT_URI="${{ secrets.MAL_REDIRECT_URI }}"
+          mkdir -p dist-apk
+          for abi in arm64-v8a armeabi-v7a; do
+            mv "build/app/outputs/flutter-apk/app-${abi}-release.apk" \
+              "dist-apk/animal-${{ github.ref_name }}-${abi}.apk"
+          done
 
-      - name: Rename APKs
+      - name: Build universal APK
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.jvmargs=-Xmx4g"
         run: |
           set -euo pipefail
-          cd build/app/outputs/flutter-apk
-          for abi in arm64-v8a armeabi-v7a; do
-            mv "app-${abi}-release.apk" "animal-${{ github.ref_name }}-${abi}.apk"
-          done
+          flutter build apk --release --no-pub \
+            --dart-define=MAL_CLIENT_ID="${{ secrets.MAL_CLIENT_ID }}" \
+            --dart-define=MAL_CLIENT_SECRET="${{ secrets.MAL_CLIENT_SECRET }}" \
+            --dart-define=MAL_REDIRECT_URI="${{ secrets.MAL_REDIRECT_URI }}"
+          mv build/app/outputs/flutter-apk/app-release.apk \
+            "dist-apk/animal-${{ github.ref_name }}-universal.apk"
 
       - name: Upload APKs
         uses: actions/upload-artifact@v7
         with:
           name: animal-apk
-          path: build/app/outputs/flutter-apk/animal-${{ github.ref_name }}-*.apk
+          path: dist-apk/animal-${{ github.ref_name }}-*.apk
           if-no-files-found: error
 
   release:
@@ -175,7 +188,7 @@ jobs:
         run: |
           set -euo pipefail
           ls -la dist
-          test "$(find dist -maxdepth 1 -type f -name '*.apk' | wc -l)" -eq 2
+          test "$(find dist -maxdepth 1 -type f -name '*.apk' | wc -l)" -eq 3
 
       - name: Resolve release metadata
         id: release-metadata

@@ -209,7 +209,7 @@ flutter build apk --debug \
   --dart-define=MAL_REDIRECT_URI=...
 ```
 
-Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml`); it signs with `KEYSTORE_BASE64` secrets and attaches one APK per ABI to a GitHub Release: `arm64-v8a` for most phones, `armeabi-v7a` for older 32-bit phones.
+Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml`); it signs with `KEYSTORE_BASE64` secrets and attaches three APKs to a GitHub Release: `arm64-v8a` for most phones, `armeabi-v7a` for older 32-bit phones, and `universal` (all ABIs including x86_64, the largest file). All three share the same `versionCode`.
 
 ---
 
@@ -218,7 +218,7 @@ Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml
 | Workflow | Trigger | What |
 |----------|---------|------|
 | `quality.yml` | push `**` + PR | `pub get` → `build_runner` → `dart format --set-exit-if-changed` → `flutter analyze` → `flutter test` |
-| `release-apk.yml` | tag `v*` + manual dispatch | quality → bump version → `flutter build apk --release --split-per-abi --dart-define=...` → upload artifact → GitHub Release → bump `pubspec.yaml` on `main` |
+| `release-apk.yml` | tag `v*` + manual dispatch | quality → bump version → `flutter build apk --release --split-per-abi` + universal `flutter build apk --release` (both with `--dart-define=...`) → upload artifact → GitHub Release → bump `pubspec.yaml` on `main` |
 
 ---
 
