@@ -87,6 +87,44 @@ void main() {
       expect(out['thursday']!.first.malId, 20);
     });
 
+    test(
+      'saves hundreds of entries and replaces rescheduled duplicates',
+      () async {
+        final now = DateTime.now().toUtc();
+        final monday = now.subtract(Duration(days: now.weekday - 1));
+        final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+        final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+
+        final schedule = <String, List<AniListScheduleEntry>>{
+          'monday': [
+            for (var i = 1; i <= 400; i++)
+              makeEntry(
+                anilistId: i,
+                malId: i,
+                airingAt: weekStart.add(Duration(minutes: i)),
+              ),
+          ],
+          'tuesday': [
+            makeEntry(
+              anilistId: 1,
+              malId: 1,
+              airingAt: weekStart.add(const Duration(days: 1, hours: 1)),
+            ),
+          ],
+        };
+
+        await cache.saveWeeklySchedule(weekStartSec, schedule);
+
+        final out = await cache.getWeeklySchedule(weekStartSec);
+        expect(out!['monday']!, hasLength(399));
+        expect(out['tuesday']!.map((e) => e.anilistId), [1]);
+        expect(
+          await cache.getFetchedAt(SqliteAniListCache.weeklyKey(weekStartSec)),
+          isNotNull,
+        );
+      },
+    );
+
     test('week key changes on week boundary', () async {
       // Two different weekStart values produce different keys.
       final a = SqliteAniListCache.weeklyKey(0);

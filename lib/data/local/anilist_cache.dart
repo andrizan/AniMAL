@@ -132,6 +132,7 @@ class SqliteAniListCache implements AniListCache {
         where: 'airing_at >= ? AND airing_at < ?',
         whereArgs: [weekStartEpochSec, end],
       );
+      final batch = txn.batch();
       for (final entries in schedule.values) {
         for (final e in entries) {
           // REPLACE: the same (anilist_id, episode) can legitimately arrive
@@ -139,13 +140,14 @@ class SqliteAniListCache implements AniListCache {
           // vs. the real one, rows surviving outside the delete window).
           // A plain insert would abort the whole transaction, skip the
           // `fetchedAt` upsert below, and cause a fetch on every read.
-          await txn.insert(
+          batch.insert(
             'airing_schedule',
             _entryToRow(e),
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
       }
+      await batch.commit(noResult: true);
       await _upsertMeta(txn, key);
     });
   }

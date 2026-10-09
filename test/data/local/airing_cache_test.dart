@@ -79,6 +79,40 @@ void main() {
     expect(out['monday']!.last.anilistId, 2);
   });
 
+  test('save and read hundreds of entries keeps per-day order', () async {
+    final now = DateTime.now().toUtc();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+    final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+    const days = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ];
+    final week = <String, List<AiringEntry>>{
+      for (var d = 0; d < days.length; d++)
+        days[d]: [
+          for (var i = 0; i < 80; i++)
+            makeEntry(
+              anilistId: d * 1000 + i,
+              airingAt: weekStart.add(Duration(days: d, minutes: i * 10)),
+            ),
+        ],
+    };
+
+    await cache.saveMergedWeek(weekStartSec, week);
+
+    final out = await cache.getMergedWeek(weekStartSec);
+    expect(out!.values.fold<int>(0, (s, l) => s + l.length), 560);
+    expect(out['sunday']!.map((e) => e.anilistId).toList(), [
+      for (var i = 0; i < 80; i++) 6000 + i,
+    ]);
+  });
+
   test('invalidateMergedWeek clears cache', () async {
     final now = DateTime.now().toUtc();
     final monday = now.subtract(Duration(days: now.weekday - 1));

@@ -91,11 +91,12 @@ class SqliteAiringCache implements AiringCache {
         where: 'week_key = ?',
         whereArgs: [key],
       );
+      final batch = txn.batch();
       for (final day in week.keys) {
         final list = week[day]!;
         for (var i = 0; i < list.length; i++) {
           final e = list[i];
-          await txn.insert('merged_airing_entry', {
+          batch.insert('merged_airing_entry', {
             'week_key': key,
             'day': day,
             'anilist_id': e.anilistId,
@@ -124,6 +125,7 @@ class SqliteAiringCache implements AiringCache {
           }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       }
+      await batch.commit(noResult: true);
       await txn.insert('cache_meta', {
         'cache_key': key,
         'fetched_at': DateTime.now().millisecondsSinceEpoch,
