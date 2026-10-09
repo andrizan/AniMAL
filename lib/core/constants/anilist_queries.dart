@@ -21,7 +21,6 @@ abstract final class AniListQueries {
             episodes
             meanScore
             genres
-            description
             format
             startDate { year month day }
             nextAiringEpisode { airingAt episode timeUntilAiring }
