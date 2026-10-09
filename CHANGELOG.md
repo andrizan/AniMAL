@@ -1,3 +1,57 @@
+## [2.10.0] - 2026-10-09
+
+### Bug Fixes
+
+- Report the real schedule result and keep state in sync
+- Convert jst broadcast times to the device zone
+- Keep explicit auth headers, bound refresh retries and harden the login flow
+- Surface provider errors at once and fix the retry actions
+- Compare release versions properly and report failed update checks
+- Expire merged airing weeks during startup cleanup
+- Scroll the status sheet and hide an empty external links section
+- List upcoming anime without a start date in the later tab
+- Show the broadcast day and time in the device zone
+- Build the router once and dispose its auth listenable
+
+### Build
+
+- Publish one apk per abi
+- Also publish a universal apk with a shared versionCode
+- Update locked dependencies
+
+### Chores
+
+- Bump version to 2.9.0+12 [skip ci]
+
+### Code Refactoring
+
+- Remove the unused merged week invalidation
+- Share error, empty and section header views
+- Share the section card, hero panel and stat highlight
+
+### Documentation
+
+- Document the later tab, single router and local broadcast time
+- Describe the profile page layout and chart rules
+- Add shared ui rules for cards, states and headers
+- Document spacing, radius and typography rules
+- Describe the detail page section order
+
+### Features
+
+- Compute score, genre, format and activity insights from the list
+- Redesign the page with a hero header and charts
+- Revamp the anime detail page by importance
+
+### Other
+
+- Give every card one rounded, filled, bordered style
+- Apply spacing, radius and type scale tokens
+
+### Tests
+
+- Cover remaining pages, providers, models and data mappers
+- Cover the update dialog download action
 ## [2.9.0] - 2026-10-09
 
 ### Bug Fixes
