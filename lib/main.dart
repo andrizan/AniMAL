@@ -11,10 +11,11 @@ Future<void> main() async {
 
   tz.initializeTimeZones();
 
-  final database = await AppDatabase.open();
-
   final notificationService = AnimeNotificationService();
-  await notificationService.initialize();
+  final (database, _) = await (
+    AppDatabase.open(),
+    notificationService.initialize(),
+  ).wait;
 
   runApp(
     ProviderScope(
