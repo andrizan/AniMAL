@@ -24,6 +24,8 @@ class AuthInterceptor extends Interceptor {
   final Logger _logger;
   Future<bool>? _refreshFuture;
 
+  static const _retriedKey = 'auth_retried';
+
   String _basicAuthHeader() {
     final credentials = '${Env.malClientId}:${Env.malClientSecret}';
     return 'Basic ${base64.encode(utf8.encode(credentials))}';
@@ -34,9 +36,12 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _tokenStorage.getAccessToken();
-    if (token != null && token.isNotEmpty)
-      options.headers['Authorization'] = 'Bearer $token';
+    if (!options.headers.containsKey('Authorization')) {
+      final token = await _tokenStorage.getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    }
     handler.next(options);
   }
 
@@ -50,13 +55,15 @@ class AuthInterceptor extends Interceptor {
       handler.next(err);
       return;
     }
-    if (err.response?.statusCode == 401) {
+    final alreadyRetried = err.requestOptions.extra[_retriedKey] == true;
+    if (err.response?.statusCode == 401 && !alreadyRetried) {
       _logger.w('AuthInterceptor: 401 — attempting token refresh');
       _refreshFuture ??= _refreshToken();
       final refreshed = await _refreshFuture!;
       if (refreshed) {
         final token = await _tokenStorage.getAccessToken();
         err.requestOptions.headers['Authorization'] = 'Bearer $token';
+        err.requestOptions.extra[_retriedKey] = true;
         try {
           final response = await _dio.fetch<dynamic>(err.requestOptions);
           handler.resolve(response);

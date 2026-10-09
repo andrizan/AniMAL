@@ -141,53 +141,67 @@ class LoginPage extends ConsumerWidget {
     );
   }
 
-  void _showCodeInputDialog(BuildContext context, WidgetRef ref) {
-    final codeController = TextEditingController();
-
-    final dialog = showDialog<void>(
+  Future<void> _showCodeInputDialog(BuildContext context, WidgetRef ref) async {
+    final code = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Enter Authorization Code'),
-        content: TextField(
-          controller: codeController,
-          decoration: const InputDecoration(
-            hintText: 'Paste the code from MAL',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final code = codeController.text.trim();
-              if (code.isNotEmpty) {
-                Navigator.pop(ctx);
-                try {
-                  await ref
-                      .read(authControllerProvider.notifier)
-                      .exchangeCode(code);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Login successful!')),
-                    );
-                  }
-                } on Exception catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Login failed: $e')));
-                  }
-                }
-              }
-            },
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
+      builder: (_) => const _CodeInputDialog(),
     );
-    unawaited(dialog.then((_) => codeController.dispose()));
+    if (code == null) return;
+    try {
+      await ref.read(authControllerProvider.notifier).exchangeCode(code);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Login successful!')));
+      }
+    } on Exception catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Login failed: $e')));
+      }
+    }
+  }
+}
+
+class _CodeInputDialog extends StatefulWidget {
+  const _CodeInputDialog();
+
+  @override
+  State<_CodeInputDialog> createState() => _CodeInputDialogState();
+}
+
+class _CodeInputDialogState extends State<_CodeInputDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Enter Authorization Code'),
+      content: TextField(
+        controller: _controller,
+        decoration: const InputDecoration(
+          hintText: 'Paste the code from MAL',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final code = _controller.text.trim();
+            if (code.isNotEmpty) Navigator.pop(context, code);
+          },
+          child: const Text('Submit'),
+        ),
+      ],
+    );
   }
 }

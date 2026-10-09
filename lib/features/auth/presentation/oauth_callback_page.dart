@@ -24,7 +24,9 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
   @override
   void initState() {
     super.initState();
-    unawaited(_handleCallback());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_handleCallback());
+    });
   }
 
   Future<void> _handleCallback() async {

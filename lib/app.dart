@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/router/app_router.dart';
+import 'package:animal/core/router/deep_links.dart';
 import 'package:animal/core/theme/app_theme.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
 import 'package:app_links/app_links.dart';
@@ -43,22 +44,13 @@ class _AppState extends ConsumerState<App> {
   }
 
   void _handleLink(Uri uri) {
-    if (uri.scheme == 'animal' &&
-        uri.host == 'oauth' &&
-        uri.path == '/callback') {
-      final code = uri.queryParameters['code'];
-      final oauthState = uri.queryParameters['state'];
-      if (code != null && mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            final stateParam = oauthState != null ? '&state=$oauthState' : '';
-            ref
-                .read(routerProvider)
-                .go('/oauth/callback?code=$code$stateParam');
-          }
-        });
-      }
-    }
+    final location = oauthCallbackLocation(uri);
+    if (location == null || !mounted) return;
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (mounted) ref.read(routerProvider).go(location);
+      })
+      ..ensureVisualUpdate();
   }
 
   void _initNotificationListener() {
@@ -70,14 +62,16 @@ class _AppState extends ConsumerState<App> {
 
   void _openAnime(int animeId) {
     if (!mounted) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(
-        ref
-            .read(routerProvider)
-            .pushNamed('animeDetail', pathParameters: {'id': '$animeId'}),
-      );
-    });
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          ref
+              .read(routerProvider)
+              .pushNamed('animeDetail', pathParameters: {'id': '$animeId'}),
+        );
+      })
+      ..ensureVisualUpdate();
   }
 
   @override
