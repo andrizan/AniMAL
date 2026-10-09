@@ -6,6 +6,8 @@ import 'package:animal/data/models/watch_status.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../support/fake_adapter.dart';
+
 class _PagedAdapter implements HttpClientAdapter {
   _PagedAdapter(int total, {this.maxLimit = 1000, this.failAtOffset})
     : ids = [for (var i = 1; i <= total; i++) i];
@@ -116,6 +118,85 @@ void main() {
       final adapter = _PagedAdapter(1200, failAtOffset: 500);
 
       expect(_client(adapter).getUserAnimeList(), throwsA(isA<DioException>()));
+    });
+  });
+
+  group('MalApiClient list status', () {
+    late FakeAdapter adapter;
+    var response = const FakeResponse.json({});
+
+    MalApiClient client() {
+      adapter = FakeAdapter((_) => response);
+      return MalApiClient(fakeDio(adapter));
+    }
+
+    test('sends only the fields that were provided, form encoded', () async {
+      response = const FakeResponse.json({
+        'status': 'completed',
+        'score': 9,
+        'num_episodes_watched': 12,
+      });
+
+      final result = await client().updateAnimeListStatus(
+        7,
+        status: WatchStatus.completed,
+        numWatchedEpisodes: 12,
+        score: 9,
+      );
+
+      final call = adapter.requests.single;
+      expect(call.method, 'PUT');
+      expect(call.path, '/anime/7/my_list_status');
+      expect(call.contentType, Headers.formUrlEncodedContentType);
+      expect(call.data, {
+        'status': 'completed',
+        'num_watched_episodes': 12,
+        'score': 9,
+      });
+      expect(result.status, WatchStatus.completed);
+      expect(result.score, 9);
+    });
+
+    test('can send every optional field', () async {
+      response = const FakeResponse.json({'status': 'watching'});
+
+      await client().updateAnimeListStatus(
+        1,
+        status: WatchStatus.watching,
+        numWatchedEpisodes: 0,
+        score: 0,
+        isRewatching: true,
+        priority: 2,
+        rewatchValue: 3,
+        comments: 'note',
+      );
+
+      expect(adapter.requests.single.data, {
+        'status': 'watching',
+        'num_watched_episodes': 0,
+        'score': 0,
+        'is_rewatching': true,
+        'priority': 2,
+        'rewatch_value': 3,
+        'comments': 'note',
+      });
+    });
+
+    test('deleting uses the status endpoint', () async {
+      response = const FakeResponse.json({});
+
+      await client().deleteAnimeFromList(7);
+
+      expect(adapter.requests.single.method, 'DELETE');
+      expect(adapter.requests.single.path, '/anime/7/my_list_status');
+    });
+
+    test('detail and user info return null for an empty body', () async {
+      response = const FakeResponse.raw('');
+      final c = client();
+
+      expect(await c.getAnimeDetail(1), isNull);
+      expect(await c.getUserInfo(), isNull);
     });
   });
 }
