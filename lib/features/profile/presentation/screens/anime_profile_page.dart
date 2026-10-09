@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
-import 'package:animal/core/utils/github_check.dart';
+import 'package:animal/core/utils/version_utils.dart';
 import 'package:animal/features/profile/presentation/widgets/api_status_section.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
@@ -316,7 +316,8 @@ class AnimeProfilePage extends ConsumerWidget {
                   title: const Text('Check for Update'),
                   subtitle: const Text('Check latest release'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _checkForUpdate(context),
+                  onTap: () =>
+                      _checkForUpdate(context, ref.read(latestReleaseProvider)),
                 ),
               ],
             ),
@@ -357,13 +358,22 @@ Future<void> _launchGitHub() async {
   }
 }
 
-Future<void> _checkForUpdate(BuildContext context) async {
+Future<void> _checkForUpdate(
+  BuildContext context,
+  Future<Map<String, dynamic>?> Function() fetchRelease,
+) async {
   try {
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersion = packageInfo.version;
 
-    final data = await fetchLatestRelease();
-    if (data == null || !context.mounted) return;
+    final data = await fetchRelease();
+    if (!context.mounted) return;
+    if (data == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not check for updates')),
+      );
+      return;
+    }
 
     final tagName = (data['tag_name'] as String?) ?? '';
     final latestVersion = tagName.replaceFirst('v', '');
@@ -372,7 +382,7 @@ Future<void> _checkForUpdate(BuildContext context) async {
 
     if (!context.mounted) return;
 
-    if (latestVersion == currentVersion) {
+    if (!isNewerVersion(latestVersion, currentVersion)) {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(

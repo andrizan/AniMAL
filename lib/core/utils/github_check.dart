@@ -5,15 +5,17 @@ import 'package:dio/dio.dart';
 /// Checks GitHub releases for the latest version.
 ///
 /// Returns the parsed JSON response or null on failure.
-Future<Map<String, dynamic>?> fetchLatestRelease() async {
+Future<Map<String, dynamic>?> fetchLatestRelease({Dio? dio}) async {
   try {
-    final dio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-      ),
-    );
-    final response = await dio.get<Map<String, dynamic>>(
+    final client =
+        dio ??
+        Dio(
+          BaseOptions(
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
+          ),
+        );
+    final response = await client.get<Map<String, dynamic>>(
       Env.githubReleasesUrl(Env.githubRepo),
     );
     return response.data;
