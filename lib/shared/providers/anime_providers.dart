@@ -5,7 +5,6 @@ import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/local/anime_cache.dart';
-import 'package:animal/data/local/app_database.dart';
 import 'package:animal/data/local/sqlite_anime_cache.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/data/models/anime.dart';
@@ -265,73 +264,12 @@ class AnimeRepository {
   /// Apply a list mutation to SQLite caches.
   Future<void> _applyListMutation(int animeId, MyListStatus updated) async {
     try {
-      final newStatus = updated.status;
-      const newLimit = ApiConstants.malUserListPageSize;
-      const newOffset = 0;
-      final newKey = SqliteAnimeCache.userListKey(
-        newStatus.value,
-        newLimit,
-        newOffset,
+      await _cache.applyUserListMutation(
+        animeId,
+        updated,
+        ApiConstants.malUserListPageSize,
+        0,
       );
-
-      final metaRows = await _appDb.raw.query(
-        'cache_meta',
-        columns: ['cache_key'],
-        where: 'cache_key LIKE ?',
-        whereArgs: ['userlist_%'],
-      );
-
-      Anime? sourceAnime;
-      bool foundInNewKey = false;
-      final keys = metaRows.map((r) => r['cache_key']! as String).toList();
-
-      for (final key in keys) {
-        try {
-          final status = _statusFromKey(key);
-          final limit = _limitFromKey(key);
-          final offset = _offsetFromKey(key);
-          final list = await _cache.getUserAnimeList(status, limit, offset);
-          if (list == null) continue;
-          final idx = list.indexWhere((a) => a.id == animeId);
-          if (idx != -1) {
-            sourceAnime ??= list[idx];
-            if (key == newKey) {
-              foundInNewKey = true;
-              final newList = List<Anime>.from(list);
-              newList[idx] = list[idx].copyWith(myListStatus: updated);
-              await _cache.saveUserAnimeList(status, limit, offset, newList);
-            } else {
-              final newList = list.where((a) => a.id != animeId).toList();
-              await _cache.saveUserAnimeList(status, limit, offset, newList);
-            }
-          }
-        } catch (e) {
-          _logger?.w('Skipping malformed userlist cache key: $e');
-        }
-      }
-
-      if (!foundInNewKey && sourceAnime != null) {
-        final existingNewList = await _cache.getUserAnimeList(
-          newStatus.value,
-          newLimit,
-          newOffset,
-        );
-        if (existingNewList != null &&
-            !existingNewList.any((a) => a.id == animeId)) {
-          await _cache.saveUserAnimeList(newStatus.value, newLimit, newOffset, [
-            ...existingNewList,
-            sourceAnime.copyWith(myListStatus: updated),
-          ]);
-        }
-      } else if (!foundInNewKey && sourceAnime == null) {
-        await _cache.invalidateUserAnimeList(
-          newStatus.value,
-          newLimit,
-          newOffset,
-        );
-      }
-
-      await _cache.updateCachedAnimeListStatus(animeId, updated);
       await _cache.invalidateAnimeDetail(animeId);
     } catch (e, st) {
       _logger?.e(
@@ -340,29 +278,6 @@ class AnimeRepository {
         stackTrace: st,
       );
     }
-  }
-
-  // The repository's cache wraps the AppDatabase; expose a tiny accessor for
-  // cleanup queries that need to look at `cache_meta` directly. Today the
-  // cache is interface-only, so we use the AppDatabase via a separate path:
-  // we use `cache_meta` lookups by delegating to AnimeCache.getFetchedAt.
-  // However `_applyListMutation` needs to enumerate userlist keys. We add
-  // a dedicated helper for that via the AppDatabase provider.
-  AppDatabase get _appDb => _ref.read(appDatabaseProvider);
-
-  String _statusFromKey(String key) {
-    final parts = key.split('_');
-    return parts.sublist(1, parts.length - 2).join('_');
-  }
-
-  int _limitFromKey(String key) {
-    final parts = key.split('_');
-    return int.parse(parts[parts.length - 2]);
-  }
-
-  int _offsetFromKey(String key) {
-    final parts = key.split('_');
-    return int.parse(parts.last);
   }
 
   void _bumpListVersion() {

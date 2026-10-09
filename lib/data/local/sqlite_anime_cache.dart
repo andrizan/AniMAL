@@ -223,6 +223,57 @@ class SqliteAnimeCache implements AnimeCache {
   }
 
   @override
+  Future<void> applyUserListMutation(
+    int malId,
+    MyListStatus status,
+    int limit,
+    int offset,
+  ) async {
+    final newKey = userListKey(status.status.value, limit, offset);
+    await _db.transaction((txn) async {
+      await _setMyListStatus(txn, malId, status);
+      final memberships = await txn.query(
+        'user_anime_list_item',
+        columns: ['cache_key'],
+        where: 'mal_id = ?',
+        whereArgs: [malId],
+      );
+      final keys = {for (final r in memberships) r['cache_key']! as String};
+      if (keys.isEmpty) {
+        await txn.delete(
+          'cache_meta',
+          where: 'cache_key = ?',
+          whereArgs: [newKey],
+        );
+        return;
+      }
+      await txn.delete(
+        'user_anime_list_item',
+        where: 'mal_id = ? AND cache_key != ?',
+        whereArgs: [malId, newKey],
+      );
+      if (keys.contains(newKey)) return;
+      final cached = await txn.query(
+        'cache_meta',
+        columns: ['cache_key'],
+        where: 'cache_key = ?',
+        whereArgs: [newKey],
+      );
+      if (cached.isEmpty) return;
+      final next = await txn.rawQuery(
+        'SELECT COALESCE(MAX(position), -1) + 1 AS next '
+        'FROM user_anime_list_item WHERE cache_key = ?',
+        [newKey],
+      );
+      await txn.insert('user_anime_list_item', {
+        'cache_key': newKey,
+        'mal_id': malId,
+        'position': next.first['next'],
+      });
+    });
+  }
+
+  @override
   Future<void> clearCachedAnimeListStatus(int malId) async {
     await _writeMyListStatus(malId, null);
   }
@@ -230,19 +281,25 @@ class SqliteAnimeCache implements AnimeCache {
   // ---------- Internal helpers ----------
 
   Future<void> _writeMyListStatus(int malId, MyListStatus? status) async {
-    await _db.transaction((txn) async {
-      await txn.update(
-        'anime',
-        {
-          'my_list_status_json': status == null
-              ? null
-              : _mappers.encodeMyListStatus(status),
-          'my_list_status_user': status?.status.value,
-        },
-        where: 'mal_id = ?',
-        whereArgs: [malId],
-      );
-    });
+    await _db.transaction((txn) => _setMyListStatus(txn, malId, status));
+  }
+
+  Future<void> _setMyListStatus(
+    DatabaseExecutor txn,
+    int malId,
+    MyListStatus? status,
+  ) async {
+    await txn.update(
+      'anime',
+      {
+        'my_list_status_json': status == null
+            ? null
+            : _mappers.encodeMyListStatus(status),
+        'my_list_status_user': status?.status.value,
+      },
+      where: 'mal_id = ?',
+      whereArgs: [malId],
+    );
   }
 
   Future<List<Anime>?> _readList(

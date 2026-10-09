@@ -23,8 +23,12 @@ class _ListStatusAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    final form = options.data as Map<String, dynamic>;
     return ResponseBody.fromString(
-      jsonEncode({'status': 'completed', 'num_episodes_watched': 12}),
+      jsonEncode({
+        'status': form['status'] ?? 'watching',
+        'num_episodes_watched': form['num_watched_episodes'] ?? 0,
+      }),
       200,
       headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
@@ -92,6 +96,63 @@ void main() {
         ),
         isNull,
       );
+    });
+
+    test(
+      'editing within the same status keeps the cached list as is',
+      () async {
+        await cache.saveUserAnimeList('watching', limit, 0, [
+          makeAnime(1),
+          makeAnime(2),
+        ]);
+        final key = SqliteAnimeCache.userListKey('watching', limit, 0);
+        final fetchedAt = await cache.getFetchedAt(key);
+
+        await repo.updateAnimeListStatus(
+          1,
+          status: WatchStatus.watching,
+          numWatchedEpisodes: 5,
+        );
+
+        final watching = await cache.getUserAnimeList('watching', limit, 0);
+        expect(watching!.map((a) => a.id).toList(), [1, 2]);
+        expect(watching.first.myListStatus?.numEpisodesWatched, 5);
+        expect(await cache.getFetchedAt(key), fetchedAt);
+      },
+    );
+
+    test(
+      'anime outside every cached user list invalidates the target',
+      () async {
+        await cache.saveUserAnimeList('completed', limit, 0, [makeAnime(2)]);
+        await cache.saveSearchResults('q', 20, [makeAnime(9)]);
+
+        await repo.updateAnimeListStatus(9, status: WatchStatus.completed);
+
+        expect(
+          await cache.getFetchedAt(
+            SqliteAnimeCache.userListKey('completed', limit, 0),
+          ),
+          isNull,
+        );
+      },
+    );
+
+    test('moving to an invalidated list does not revive it', () async {
+      await cache.saveUserAnimeList('watching', limit, 0, [makeAnime(1)]);
+      await cache.saveUserAnimeList('completed', limit, 0, [makeAnime(2)]);
+      await cache.invalidateUserAnimeList('completed', limit, 0);
+
+      await repo.updateAnimeListStatus(1, status: WatchStatus.completed);
+
+      expect(
+        await cache.getFetchedAt(
+          SqliteAnimeCache.userListKey('completed', limit, 0),
+        ),
+        isNull,
+      );
+      final watching = await cache.getUserAnimeList('watching', limit, 0);
+      expect(watching, isEmpty);
     });
 
     test('moving to an already cached status appends to its list', () async {
