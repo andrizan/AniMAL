@@ -14,7 +14,6 @@ abstract interface class AiringCache {
     int weekStartEpochSec,
     Map<String, List<AiringEntry>> week,
   );
-  Future<void> invalidateMergedWeek(int weekStartEpochSec);
   Future<void> updateMyListStatus(int malId, MyListStatus? status);
 }
 
@@ -142,19 +141,6 @@ class SqliteAiringCache implements AiringCache {
       where: 'mal_id = ?',
       whereArgs: [malId],
     );
-  }
-
-  @override
-  Future<void> invalidateMergedWeek(int weekStartEpochSec) async {
-    final key = _mergedKey(weekStartEpochSec);
-    await _db.transaction((txn) async {
-      await txn.delete('cache_meta', where: 'cache_key = ?', whereArgs: [key]);
-      await txn.delete(
-        'merged_airing_entry',
-        where: 'week_key = ?',
-        whereArgs: [key],
-      );
-    });
   }
 
   AiringEntry _entryFromRow(Map<String, Object?> row) {

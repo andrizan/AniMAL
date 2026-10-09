@@ -157,18 +157,4 @@ void main() {
     expect(week[0].myListStatus, isNull);
     expect(week[1].myListStatus, isNotNull);
   });
-
-  test('invalidateMergedWeek clears cache', () async {
-    final now = DateTime.now().toUtc();
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
-    final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
-
-    await cache.saveMergedWeek(weekStartSec, {
-      'monday': [makeEntry(anilistId: 1, airingAt: weekStart)],
-    });
-    expect(await cache.getMergedWeek(weekStartSec), isNotNull);
-    await cache.invalidateMergedWeek(weekStartSec);
-    expect(await cache.getMergedWeek(weekStartSec), isNull);
-  });
 }

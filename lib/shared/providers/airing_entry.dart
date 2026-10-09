@@ -269,10 +269,6 @@ class AiringRepository {
     return 'weekly_schedule:$y-$m-$d';
   }
 
-  void invalidateCache() {
-    unawaited(cache.invalidateMergedWeek(_currentWeekStartEpochSec()));
-  }
-
   /// Force refresh: bypasses all TTLs, refetches AniList schedule + MAL
   /// data, and merges into SQLite (merge-on-save keeps existing rows).
   Future<Map<String, List<AiringEntry>>> refreshWeeklySchedule() async {

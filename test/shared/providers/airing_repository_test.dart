@@ -411,25 +411,6 @@ void main() {
       final expected = e.airingAt.difference(DateTime.now().toUtc()).inSeconds;
       expect((e.timeUntilAiring - expected).abs(), lessThan(5));
     });
-
-    test(
-      'invalidateCache drops the merged week and the next read re-merges it',
-      () async {
-        anilistPages = [_schedule(id: 1, hoursFromWeekStart: 10)];
-        await repo.getWeeklySchedule();
-        expect(await cache.getMergedWeek(_weekStartSec()), isNotNull);
-
-        repo.invalidateCache();
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-        expect(await cache.getMergedWeek(_weekStartSec()), isNull);
-
-        final week = await repo.getWeeklySchedule();
-
-        expect(week.values.expand((l) => l), hasLength(1));
-        expect(await cache.getMergedWeek(_weekStartSec()), isNotNull);
-        expect(anilistAdapter.requests, hasLength(1));
-      },
-    );
   });
 
   group('AiringEntry', () {
