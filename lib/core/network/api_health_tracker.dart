@@ -4,6 +4,8 @@ enum ApiSource { mal, anilist }
 
 enum ApiStatus { healthy, error, rateLimited, unknown }
 
+const _keep = Object();
+
 class ApiHealth {
   const ApiHealth({
     required this.source,
@@ -42,7 +44,7 @@ class ApiHealth {
     DateTime? lastError,
     String? lastErrorMessage,
     int? lastStatusCode,
-    DateTime? retryAfter,
+    Object? retryAfter = _keep,
     int? rateLimitRemaining,
     DateTime? rateLimitReset,
   }) {
@@ -56,7 +58,9 @@ class ApiHealth {
       lastError: lastError ?? this.lastError,
       lastErrorMessage: lastErrorMessage ?? this.lastErrorMessage,
       lastStatusCode: lastStatusCode ?? this.lastStatusCode,
-      retryAfter: retryAfter ?? this.retryAfter,
+      retryAfter: identical(retryAfter, _keep)
+          ? this.retryAfter
+          : retryAfter as DateTime?,
       rateLimitRemaining: rateLimitRemaining ?? this.rateLimitRemaining,
       rateLimitReset: rateLimitReset ?? this.rateLimitReset,
     );

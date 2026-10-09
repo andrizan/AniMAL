@@ -43,7 +43,7 @@ class AnimeListTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _ErrorView(
         message: 'Failed to load ${status.label.toLowerCase()} list',
-        onRetry: () => ref.invalidate(sortedUserAnimeListProvider(params)),
+        onRetry: () => ref.invalidate(userAnimeListProvider(status)),
       ),
       data: (result) {
         return _buildList(context, result.anime, result.airingMap, ref);

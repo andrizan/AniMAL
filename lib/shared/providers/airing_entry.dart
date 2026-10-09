@@ -355,9 +355,16 @@ final weeklyAiringProvider =
 
 /// Map of MAL ID to next AiringEntry for quick lookup.
 /// No version watch: rebuilt only when the schedule itself changes.
+/// Airing data only decorates MAL lists, so a failed schedule yields an empty
+/// map instead of failing every list that uses it.
 final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
   (ref) async {
-    final schedule = await ref.watch(weeklyAiringProvider.future);
+    final Map<String, List<AiringEntry>> schedule;
+    try {
+      schedule = await ref.watch(weeklyAiringProvider.future);
+    } on Object {
+      return const <int, AiringEntry>{};
+    }
     final now = DateTime.now().toUtc();
     final map = <int, AiringEntry>{};
     for (final entries in schedule.values) {

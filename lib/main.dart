@@ -22,6 +22,7 @@ Future<void> main() async {
 
   runApp(
     ProviderScope(
+      retry: noProviderRetry,
       overrides: [
         appDatabaseProvider.overrideWithValue(database),
         notificationServiceProvider.overrideWithValue(notificationService),

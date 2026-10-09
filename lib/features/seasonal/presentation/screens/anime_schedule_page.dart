@@ -144,7 +144,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
   }
 
   Future<void> _showYearPicker(BuildContext context) async {
-    const totalYears = 51; // 50 years back + current + next
+    const totalYears = 52; // 50 years back + current + next
     final selectedIndex = _selectedYear - (_currentYear - 50);
 
     final scrollController = ScrollController(
@@ -253,8 +253,7 @@ class _SeasonAnimeList extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () =>
-                    ref.invalidate(groupedSeasonalAnimeProvider(params)),
+                onPressed: () => ref.invalidate(animeScheduleProvider(params)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -290,8 +289,7 @@ class _SeasonAnimeList extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(groupedSeasonalAnimeProvider(params)),
+          onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
           child: CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 8)),

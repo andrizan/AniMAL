@@ -4,6 +4,7 @@ import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/network/dio_client.dart';
 import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
+import 'package:animal/core/utils/github_check.dart';
 import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/local/anime_cache.dart';
 import 'package:animal/data/local/anilist_cache.dart';
@@ -14,6 +15,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
+/// Riverpod 3 retries a failed provider up to 10 times with backoff and keeps
+/// the state loading meanwhile. Every provider here is a cached network read
+/// with its own retry button, so surface errors immediately instead.
+Duration? noProviderRetry(int retryCount, Object error) => null;
+
 /// Global logger instance.
 final loggerProvider = Provider<Logger>((ref) => appLogger);
 
@@ -21,6 +27,12 @@ final loggerProvider = Provider<Logger>((ref) => appLogger);
 final tokenStorageProvider = Provider<SecureTokenStorage>((ref) {
   return const SecureTokenStorage();
 });
+
+/// Looks up the latest GitHub release; overridable in tests.
+final latestReleaseProvider =
+    Provider<Future<Map<String, dynamic>?> Function()>(
+      (ref) => fetchLatestRelease,
+    );
 
 /// Configured Dio client.
 final dioClientProvider = Provider<DioClient>((ref) {
