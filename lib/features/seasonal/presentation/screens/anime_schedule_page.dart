@@ -1,6 +1,8 @@
 import 'package:animal/data/models/season.dart';
 import 'package:animal/features/seasonal/providers/seasonal_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/empty_view.dart';
+import 'package:animal/shared/widgets/error_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -230,36 +232,13 @@ class _SeasonAnimeList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final params = (year: year, season: season);
     final asyncAnime = ref.watch(groupedSeasonalAnimeProvider(params));
-    final theme = Theme.of(context);
 
     return asyncAnime.when(
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load ${season.label} $year',
-                style: theme.textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () => ref.invalidate(animeScheduleProvider(params)),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+      error: (error, _) => ErrorView(
+        message: 'Failed to load ${season.label} $year',
+        onRetry: () => ref.invalidate(animeScheduleProvider(params)),
       ),
       data: (result) {
         final grouped = result.grouped;
@@ -267,24 +246,9 @@ class _SeasonAnimeList extends ConsumerWidget {
         final hasAny =
             grouped.values.any((l) => l.isNotEmpty) || noBroadcast.isNotEmpty;
         if (!hasAny) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_month_outlined,
-                  size: 64,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No anime for ${season.label} $year',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+          return EmptyView(
+            icon: Icons.calendar_month_outlined,
+            message: 'No anime for ${season.label} $year',
           );
         }
 
@@ -334,47 +298,19 @@ class _LaterAnimeList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncAnime = ref.watch(undatedAnimeProvider);
-    final theme = Theme.of(context);
 
     return asyncAnime.when(
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            const Text('Failed to load upcoming anime'),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => ref.invalidate(undatedAnimeProvider),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, _) => ErrorView(
+        message: 'Failed to load upcoming anime',
+        onRetry: () => ref.invalidate(undatedAnimeProvider),
       ),
       data: (animeList) {
         if (animeList.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.schedule,
-                  size: 64,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No anime without a start date',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+          return const EmptyView(
+            icon: Icons.schedule,
+            message: 'No anime without a start date',
           );
         }
 

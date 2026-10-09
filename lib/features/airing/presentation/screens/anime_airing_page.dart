@@ -4,6 +4,8 @@ import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/features/airing/providers/airing_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/countdown_badge.dart';
+import 'package:animal/shared/widgets/empty_view.dart';
+import 'package:animal/shared/widgets/error_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -93,33 +95,13 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
   @override
   Widget build(BuildContext context) {
     final asyncSchedule = ref.watch(weeklyAiringProvider);
-    final theme = Theme.of(context);
 
     return asyncSchedule.when(
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              const Text('Failed to load airing schedule'),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: _handleRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+      error: (error, _) => ErrorView(
+        message: 'Failed to load airing schedule',
+        onRetry: _handleRetry,
       ),
       data: (grouped) {
         final isWeekEmpty = grouped.values.every((l) => l.isEmpty);
@@ -164,33 +146,10 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: SizedBox(
                       height: MediaQuery.sizeOf(context).height * 0.6,
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.tv_off,
-                                size: 48,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'No airing schedule yet',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              FilledButton.icon(
-                                onPressed: _handleRetry,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: EmptyView(
+                        icon: Icons.tv_off,
+                        message: 'No airing schedule yet',
+                        onRetry: _handleRetry,
                       ),
                     ),
                   ),
@@ -212,24 +171,10 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
                             height: MediaQuery.sizeOf(context).height * 0.5,
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.tv_off,
-                                    size: 48,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'No anime on ${_dayLabels[_days.indexOf(day)]}',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            child: EmptyView(
+                              icon: Icons.tv_off,
+                              message:
+                                  'No anime on ${_dayLabels[_days.indexOf(day)]}',
                             ),
                           ),
                         ),

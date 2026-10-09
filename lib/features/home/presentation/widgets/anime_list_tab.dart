@@ -3,6 +3,8 @@ import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/empty_view.dart';
+import 'package:animal/shared/widgets/error_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -41,7 +43,7 @@ class AnimeListTab extends ConsumerWidget {
 
     return asyncList.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _ErrorView(
+      error: (error, _) => ErrorView(
         message: 'Failed to load ${status.label.toLowerCase()} list',
         onRetry: () => ref.invalidate(userAnimeListProvider(status)),
       ),
@@ -57,27 +59,10 @@ class AnimeListTab extends ConsumerWidget {
     Map<int, AiringEntry> airingMap,
     WidgetRef ref,
   ) {
-    final theme = Theme.of(context);
-
     if (sorted.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 64,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No anime here yet',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+      return const EmptyView(
+        icon: Icons.inbox_outlined,
+        message: 'No anime here yet',
       );
     }
 
@@ -93,41 +78,6 @@ class AnimeListTab extends ConsumerWidget {
           final nextAiring = airingMap[anime.id];
           return AnimeCard(anime: anime, nextAiring: nextAiring);
         },
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
       ),
     );
   }

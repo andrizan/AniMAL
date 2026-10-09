@@ -1,6 +1,8 @@
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/features/search/providers/search_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/empty_view.dart';
+import 'package:animal/shared/widgets/error_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -60,7 +62,14 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
               skipLoadingOnReload: true,
               data: (list) => _AnimeListView(anime: list),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(child: Text('Error: $err')),
+              error: (err, _) => ErrorView(
+                message: 'Failed to load results',
+                onRetry: () => ref.invalidate(
+                  _query.isEmpty
+                      ? animeRankingProvider
+                      : animeSearchProvider(_query),
+                ),
+              ),
             ),
           ),
         ],
@@ -77,7 +86,7 @@ class _AnimeListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (anime.isEmpty) {
-      return const Center(child: Text('No results'));
+      return const EmptyView(icon: Icons.search_off, message: 'No results');
     }
 
     return ListView.builder(

@@ -6,32 +6,11 @@ import 'package:animal/features/profile/domain/entities/profile_insights.dart';
 import 'package:animal/features/profile/presentation/widgets/profile_charts.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
+import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _topGenreCount = 6;
-
-class ProfileSectionLabel extends StatelessWidget {
-  const ProfileSectionLabel(this.text, {super.key});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-      child: Text(
-        text,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.6,
-        ),
-      ),
-    );
-  }
-}
 
 class ProfileCard extends StatelessWidget {
   const ProfileCard({
@@ -49,42 +28,16 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      color: theme.colorScheme.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
       child: Padding(
         padding: padding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (title != null) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title!,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  if (trailing != null)
-                    Text(
-                      trailing!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
+            if (title != null)
+              SectionHeader(title!, trailing: trailing, bottomPadding: 16),
             child,
           ],
         ),

@@ -6,6 +6,7 @@ import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
+import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,26 +28,10 @@ class CharacterProfilePage extends ConsumerWidget {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              const Text('Failed to load character'),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () =>
-                    ref.invalidate(anilistCharacterDetailProvider(characterId)),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorView(
+          message: 'Failed to load character',
+          onRetry: () =>
+              ref.invalidate(anilistCharacterDetailProvider(characterId)),
         ),
       ),
       data: (character) {
@@ -229,26 +214,9 @@ class StaffProfilePage extends ConsumerWidget {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              const Text('Failed to load staff info'),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () =>
-                    ref.invalidate(anilistStaffDetailProvider(staffId)),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorView(
+          message: 'Failed to load staff info',
+          onRetry: () => ref.invalidate(anilistStaffDetailProvider(staffId)),
         ),
       ),
       data: (staff) {

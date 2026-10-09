@@ -13,8 +13,11 @@ import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
+import 'package:animal/shared/widgets/empty_view.dart';
+import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
+import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -82,59 +85,19 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
             const Scaffold(body: Center(child: CircularProgressIndicator())),
         error: (error, _) => Scaffold(
           appBar: AppBar(),
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Failed to load anime detail'),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () =>
-                        ref.invalidate(animeDetailProvider(animeId)),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
+          body: ErrorView(
+            message: 'Failed to load anime detail',
+            onRetry: () => ref.invalidate(animeDetailProvider(animeId)),
           ),
         ),
         data: (detail) {
           if (detail == null) {
             return Scaffold(
               appBar: AppBar(),
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.search_off,
-                        size: 48,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text('Anime not found'),
-                      const SizedBox(height: 8),
-                      Text(
-                        'This anime may not be available on MyAnimeList.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
+              body: const EmptyView(
+                icon: Icons.search_off,
+                message: 'Anime not found',
+                hint: 'This anime may not be available on MyAnimeList.',
               ),
             );
           }
@@ -302,11 +265,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Alternative Titles ──
                     if (detail.alternativeTitles != null) ...[
-                      Text(
-                        'Alternative Titles',
-                        style: theme.textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Alternative Titles'),
                       if (detail.alternativeTitles!.ja != null &&
                           detail.alternativeTitles!.ja!.isNotEmpty)
                         _TitleRow(
@@ -336,8 +295,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Genres ──
                     if (detail.genres.isNotEmpty) ...[
-                      Text('Genres', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Genres'),
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
@@ -355,8 +313,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Broadcast ──
                     if (detail.broadcast?.dayOfWeek != null) ...[
-                      Text('Broadcast', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Broadcast'),
                       Row(
                         children: [
                           Icon(
@@ -373,8 +330,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Airing Dates ──
                     if (detail.startDate != null || detail.endDate != null) ...[
-                      Text('Airing', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Airing'),
                       if (detail.startDate != null)
                         Row(
                           children: [
@@ -407,8 +363,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Start Season ──
                     if (detail.startSeason != null) ...[
-                      Text('Season', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Season'),
                       Row(
                         children: [
                           Icon(
@@ -428,11 +383,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                     // ── Episode Duration ──
                     if (detail.averageEpisodeDuration != null &&
                         detail.averageEpisodeDuration! > 0) ...[
-                      Text(
-                        'Episode Duration',
-                        style: theme.textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Episode Duration'),
                       Row(
                         children: [
                           Icon(
@@ -459,8 +410,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Source ──
                     if (detail.source != null && detail.source!.isNotEmpty) ...[
-                      Text('Source', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Source'),
                       Row(
                         children: [
                           Icon(
@@ -477,8 +427,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
                     // ── Related Anime ──
                     if (detail.relatedAnime.isNotEmpty) ...[
-                      Text('Related Anime', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Related Anime'),
                       ...detail.relatedAnime.map(
                         (related) => _RelatedAnimeTile(related: related),
                       ),
@@ -488,8 +437,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                     // ── Synopsis ──
                     if (detail.synopsis != null &&
                         detail.synopsis!.isNotEmpty) ...[
-                      Text('Synopsis', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
+                      const SectionHeader('Synopsis'),
                       SelectableText(
                         detail.synopsis!,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -1172,8 +1120,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Next Episode', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
+          const SectionHeader('Next Episode'),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1239,8 +1186,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('External Links', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
+          const SectionHeader('External Links'),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1345,8 +1291,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Studios', style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
+        const SectionHeader('Studios'),
         ...studios.map((studio) => _StudioCard(studio: studio)),
       ],
     );

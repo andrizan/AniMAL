@@ -2,6 +2,7 @@ import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -21,26 +22,9 @@ class StudioProfilePage extends ConsumerWidget {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              const Text('Failed to load studio info'),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () =>
-                    ref.invalidate(anilistStudioDetailProvider(studioId)),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorView(
+          message: 'Failed to load studio info',
+          onRetry: () => ref.invalidate(anilistStudioDetailProvider(studioId)),
         ),
       ),
       data: (studio) {

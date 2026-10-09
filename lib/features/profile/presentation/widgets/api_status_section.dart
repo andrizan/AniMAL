@@ -3,6 +3,7 @@ import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
+import 'package:animal/shared/widgets/section_header.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -17,7 +18,7 @@ class ApiStatusSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const ProfileSectionLabel('API Status'),
+        const SectionHeader('API Status'),
         ProfileCard(
           padding: EdgeInsets.zero,
           child: Column(

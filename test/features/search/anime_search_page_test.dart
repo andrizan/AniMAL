@@ -124,13 +124,20 @@ void main() {
     expect(find.text('Late result'), findsOneWidget);
   });
 
-  testWidgets('reports a failed search', (tester) async {
+  testWidgets('reports a failed search and retries it', (tester) async {
+    repo.results['frieren'] = [const Anime(id: 1, title: 'Sousou no Frieren')];
     repo.searchFailure = Exception('offline');
     await open(tester);
 
     await search(tester, 'frieren');
+    expect(find.text('Failed to load results'), findsOneWidget);
 
-    expect(find.textContaining('Error:'), findsOneWidget);
+    repo.searchFailure = null;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to load results'), findsNothing);
+    expect(find.text('Sousou no Frieren'), findsOneWidget);
   });
 
   testWidgets('the clear button brings back the ranking', (tester) async {
