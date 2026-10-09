@@ -224,6 +224,7 @@ class AnimeRepository {
       await _cache.invalidateAnimeDetail(animeId);
       await _cache.invalidateUserAnimeLists();
       await _cache.clearCachedAnimeListStatus(animeId);
+      await _ref.read(airingCacheProvider).updateMyListStatus(animeId, null);
       _bumpListVersion();
     } on DioException catch (e) {
       _logger?.e('deleteAnimeFromList failed', error: e);
@@ -270,6 +271,7 @@ class AnimeRepository {
         ApiConstants.malUserListPageSize,
         0,
       );
+      await _ref.read(airingCacheProvider).updateMyListStatus(animeId, updated);
       await _cache.invalidateAnimeDetail(animeId);
     } catch (e, st) {
       _logger?.e(

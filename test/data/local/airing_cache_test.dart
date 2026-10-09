@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/local/app_database.dart';
+import 'package:animal/data/models/my_list_status.dart';
+import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -111,6 +113,49 @@ void main() {
     expect(out['sunday']!.map((e) => e.anilistId).toList(), [
       for (var i = 0; i < 80; i++) 6000 + i,
     ]);
+  });
+
+  test('updateMyListStatus rewrites only the matching anime', () async {
+    final now = DateTime.now().toUtc();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+    final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+    AiringEntry entry(int anilistId, int malId) => AiringEntry(
+      anilistId: anilistId,
+      malId: malId,
+      title: 'T$anilistId',
+      airingAt: weekStart.add(Duration(hours: anilistId)),
+      episode: 1,
+      timeUntilAiring: 0,
+      myListStatus: const MyListStatus(
+        status: WatchStatus.watching,
+        numEpisodesWatched: 1,
+      ),
+    );
+    await cache.saveMergedWeek(weekStartSec, {
+      'monday': [entry(1, 10), entry(2, 20)],
+    });
+
+    await cache.updateMyListStatus(
+      10,
+      const MyListStatus(
+        status: WatchStatus.completed,
+        numEpisodesWatched: 12,
+        score: 9,
+      ),
+    );
+
+    var week = (await cache.getMergedWeek(weekStartSec))!['monday']!;
+    expect(week[0].myListStatus?.status, WatchStatus.completed);
+    expect(week[0].myListStatus?.numEpisodesWatched, 12);
+    expect(week[0].myListStatus?.score, 9);
+    expect(week[1].myListStatus?.numEpisodesWatched, 1);
+
+    await cache.updateMyListStatus(10, null);
+
+    week = (await cache.getMergedWeek(weekStartSec))!['monday']!;
+    expect(week[0].myListStatus, isNull);
+    expect(week[1].myListStatus, isNotNull);
   });
 
   test('invalidateMergedWeek clears cache', () async {

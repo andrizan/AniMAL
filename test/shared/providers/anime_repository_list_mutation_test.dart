@@ -9,7 +9,9 @@ import 'package:animal/data/local/app_database.dart';
 import 'package:animal/data/local/sqlite_anime_cache.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
 import 'package:animal/data/models/anime.dart';
+import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
+import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +25,7 @@ class _ListStatusAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    final form = options.data as Map<String, dynamic>;
+    final form = (options.data as Map<String, dynamic>?) ?? const {};
     return ResponseBody.fromString(
       jsonEncode({
         'status': form['status'] ?? 'watching',
@@ -62,13 +64,15 @@ void main() {
     cache = SqliteAnimeCache(appDb);
     final dio = Dio(BaseOptions(baseUrl: 'https://example.test'))
       ..httpClientAdapter = _ListStatusAdapter();
-    final repoProvider = Provider<AnimeRepository>(
-      (ref) => AnimeRepository(ref, MalApiClient(dio), cache),
-    );
     container = ProviderContainer(
-      overrides: [appDatabaseProvider.overrideWithValue(appDb)],
+      overrides: [
+        appDatabaseProvider.overrideWithValue(appDb),
+        animeRepositoryProvider.overrideWith(
+          (ref) => AnimeRepository(ref, MalApiClient(dio), cache),
+        ),
+      ],
     );
-    repo = container.read(repoProvider);
+    repo = container.read(animeRepositoryProvider);
   });
 
   tearDown(() async {
@@ -77,6 +81,59 @@ void main() {
   });
 
   Anime makeAnime(int id) => Anime(id: id, title: 'Anime $id');
+
+  group('airing schedule follows list edits', () {
+    late DateTime weekStart;
+    late int weekStartSec;
+
+    setUp(() async {
+      final now = DateTime.now().toUtc();
+      final monday = now.subtract(Duration(days: now.weekday - 1));
+      weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+      weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+      await container.read(airingCacheProvider).saveMergedWeek(weekStartSec, {
+        'monday': [
+          AiringEntry(
+            anilistId: 100,
+            malId: 1,
+            title: 'Anime 1',
+            airingAt: weekStart.add(const Duration(hours: 1)),
+            episode: 1,
+            timeUntilAiring: 0,
+            myListStatus: const MyListStatus(
+              status: WatchStatus.watching,
+              numEpisodesWatched: 0,
+            ),
+          ),
+        ],
+      });
+    });
+
+    Future<MyListStatus?> storedStatus() async {
+      final week = await container.read(weeklyAiringProvider.future);
+      return week['monday']!.single.myListStatus;
+    }
+
+    test('an edit reaches the stored week and the provider', () async {
+      final sub = container.listen(weeklyAiringProvider, (_, __) {});
+      expect((await storedStatus())?.numEpisodesWatched, 0);
+
+      await repo.updateAnimeListStatus(1, numWatchedEpisodes: 5);
+
+      expect((await storedStatus())?.numEpisodesWatched, 5);
+      sub.close();
+    });
+
+    test('removing the anime clears it from the stored week', () async {
+      final sub = container.listen(weeklyAiringProvider, (_, __) {});
+      expect(await storedStatus(), isNotNull);
+
+      await repo.deleteAnimeFromList(1);
+
+      expect(await storedStatus(), isNull);
+      sub.close();
+    });
+  });
 
   group('AnimeRepository list mutation', () {
     test('moving to a never-fetched status does not fake its list', () async {

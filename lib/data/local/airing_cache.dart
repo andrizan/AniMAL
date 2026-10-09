@@ -15,6 +15,7 @@ abstract interface class AiringCache {
     Map<String, List<AiringEntry>> week,
   );
   Future<void> invalidateMergedWeek(int weekStartEpochSec);
+  Future<void> updateMyListStatus(int malId, MyListStatus? status);
 }
 
 class SqliteAiringCache implements AiringCache {
@@ -131,6 +132,16 @@ class SqliteAiringCache implements AiringCache {
         'fetched_at': DateTime.now().millisecondsSinceEpoch,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     });
+  }
+
+  @override
+  Future<void> updateMyListStatus(int malId, MyListStatus? status) async {
+    await _db.update(
+      'merged_airing_entry',
+      {'my_list_status_json': status == null ? null : _encodeStatus(status)},
+      where: 'mal_id = ?',
+      whereArgs: [malId],
+    );
   }
 
   @override

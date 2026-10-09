@@ -10,7 +10,7 @@ import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart'
-    show AnimeRepository, animeRepositoryProvider;
+    show AnimeRepository, animeListVersionProvider, animeRepositoryProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -342,11 +342,13 @@ final airingRepositoryProvider = Provider<AiringRepository>((ref) {
 });
 
 /// Fetches weekly airing schedule (AniList schedule + MAL scores).
-/// SQLite first: no version watch here, so list mutations (score/episode
-/// edits) never trigger an AniList fetch. `myListStatus` inside schedule
-/// refreshes on TTL expiry or an explicit refresh from the airing or home page.
+/// SQLite first: a cached week is never refetched on read. It watches the
+/// list version so score/episode/status edits re-read the stored week, whose
+/// `myListStatus` is kept in sync by `AiringCache.updateMyListStatus`. The
+/// schedule itself only refreshes on an explicit airing or home refresh.
 final weeklyAiringProvider =
     FutureProvider.autoDispose<Map<String, List<AiringEntry>>>((ref) async {
+      ref.watch(animeListVersionProvider);
       final repo = ref.watch(airingRepositoryProvider);
       return repo.getWeeklySchedule();
     });
