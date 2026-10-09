@@ -31,7 +31,7 @@ Rules and conventions for contributing to this project.
 - A provider that watches `animeListVersionProvider` must be rendered with
   `when(skipLoadingOnReload: true)` (or a `hasValue` check), otherwise an edit
   flashes a spinner and resets the scroll position.
-- **Routing**: `go_router` with auth guard in `core/router/route_guards.dart`.
+- **Routing**: `go_router` with auth guard in `core/router/route_guards.dart`. The router is built once; the guard reads the live auth status and `AuthRefreshListenable` re-runs it, so never `watch` the auth state in `routerProvider`.
 - **Codegen**: `freezed` + `json_serializable` for data layer DTOs only. Run `dart run build_runner build` after model changes.
 - **Analysis**: `very_good_analysis` — run `flutter analyze` before reporting done.
 - **Formatting**: run `dart format lib/` before commit to auto-format all Dart files.
@@ -125,6 +125,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 
 ### Calendar Page
 - 4 seasons (Winter/Spring/Summer/Fall) + "Later" tab.
+- "Later" lists upcoming anime that have no start date yet (MAL `upcoming` ranking, first 3 pages, filtered on `start_date`). It does not depend on the selected year.
 - Year selector: current year - 50 to current year + 1.
 - Default year: current year.
 - Auto-scroll to selected year in picker dialog.
@@ -144,6 +145,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - Back button: visible circle with white arrow.
 - **Full-screen image viewer** on cover tap (zoom supported).
 - Info chips: score, rank, episodes, media type, status, rating.
+- Broadcast is stored in JST by MAL; show it converted to the device zone (day included) via `convertJstBroadcastToLocal`.
 - Sections: genres, broadcast, source, related anime, alternative titles, characters & staff.
 - Characters & staff from **AniList** (not MAL).
 - 4 items default, "See All" button to expand.
