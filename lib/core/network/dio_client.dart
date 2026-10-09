@@ -66,8 +66,8 @@ class _SafeLogInterceptor extends Interceptor {
     _logger.d('${options.method} ${options.path}${isToken ? ' [token]' : ''}');
     if (!isToken) {
       _logger
-        ..d('headers: ${_redactHeaders(options.headers)}')
-        ..d('body: ${options.data}');
+        ..d(() => 'headers: ${_redactHeaders(options.headers)}')
+        ..d(() => 'body: ${options.data}');
     }
     handler.next(options);
   }
@@ -82,7 +82,7 @@ class _SafeLogInterceptor extends Interceptor {
       '${response.statusCode} ${response.requestOptions.path}${isToken ? ' [token]' : ''}',
     );
     if (!isToken) {
-      _logger.d('body: ${response.data}');
+      _logger.d(() => 'body: ${response.data}');
     }
     handler.next(response);
   }
