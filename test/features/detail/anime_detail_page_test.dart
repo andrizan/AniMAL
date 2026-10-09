@@ -10,6 +10,7 @@ import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/detail/presentation/screens/anime_detail_page.dart';
+import 'package:animal/features/detail/presentation/widgets/detail_sections.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -114,6 +115,13 @@ Future<void> tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> scrollTo(WidgetTester tester, Finder finder) =>
+    tester.dragUntilVisible(
+      finder,
+      find.byType(CustomScrollView),
+      const Offset(0, -300),
+    );
+
 void main() {
   late _Repo repo;
 
@@ -214,45 +222,124 @@ void main() {
       tester,
     ) async {
       await open(tester);
-
-      expect(find.text('Alternative Titles'), findsOneWidget);
       expect(find.text('葬送のフリーレン'), findsOneWidget);
-      expect(find.text('Japanese'), findsOneWidget);
+
+      await scrollTo(tester, find.text('Alternative Titles'));
+
+      expect(find.text('Frieren: Beyond Journey\'s End'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
       expect(find.text('Synonym'), findsOneWidget);
+      expect(find.text('Frieren'), findsOneWidget);
+      expect(find.text('Japanese'), findsNothing);
     });
 
-    testWidgets(
-      'shows genres, broadcast, dates, season, duration, source, synopsis',
-      (tester) async {
-        await open(tester);
-        await tester.dragUntilVisible(
-          find.text('Synopsis'),
-          find.byType(CustomScrollView),
-          const Offset(0, -300),
-        );
+    testWidgets('shows the synopsis with the genres', (tester) async {
+      await open(tester);
+      await scrollTo(tester, find.text('Synopsis'));
 
-        expect(find.text('Adventure'), findsOneWidget);
-        expect(find.text('Fantasy'), findsOneWidget);
-        final local = convertJstBroadcastToLocal('friday', '23:00')!;
-        expect(
-          find.text(
-            '${local.day[0].toUpperCase()}${local.day.substring(1)}'
-            ' at ${local.time}',
-          ),
-          findsOneWidget,
-        );
-        expect(find.textContaining('JST'), findsNothing);
-        expect(
-          find.text('Aired: Sep 29, 2023 to Mar 22, 2024'),
-          findsOneWidget,
-        );
-        expect(find.text('Fall 2023'), findsOneWidget);
-        expect(find.text('26m'), findsOneWidget);
-        expect(find.text('Manga'), findsOneWidget);
-        expect(find.text('An elf outlives her party.'), findsOneWidget);
-      },
-    );
+      expect(find.text('An elf outlives her party.'), findsOneWidget);
+      expect(find.text('Adventure'), findsOneWidget);
+      expect(find.text('Fantasy'), findsOneWidget);
+    });
+
+    testWidgets('lists the facts in the information card', (tester) async {
+      await open(tester);
+      await scrollTo(tester, find.text('Information'));
+
+      final local = convertJstBroadcastToLocal('friday', '23:00')!;
+      expect(find.text('Broadcast'), findsOneWidget);
+      expect(
+        find.text(
+          '${local.day[0].toUpperCase()}${local.day.substring(1)}'
+          ' at ${local.time}',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('JST'), findsNothing);
+      expect(find.text('Aired'), findsOneWidget);
+      expect(find.text('Sep 29, 2023 to Mar 22, 2024'), findsOneWidget);
+      expect(find.text('Fall 2023'), findsOneWidget);
+      expect(find.text('26m'), findsOneWidget);
+      expect(find.text('Manga'), findsOneWidget);
+    });
+
+    testWidgets('a long synopsis is cut until Read more is tapped', (
+      tester,
+    ) async {
+      final long = List.filled(60, 'word').join(' ');
+      await open(tester, detail: () => _detail().copyWith(synopsis: long));
+      await scrollTo(tester, find.text('Synopsis'));
+
+      final text = find.descendant(
+        of: find.byType(AboutCard),
+        matching: find.byType(SelectableText),
+      );
+      final collapsed = tester.getSize(text).height;
+      await tapVisible(tester, find.text('Read more'));
+      final expanded = tester.getSize(text).height;
+
+      expect(expanded, greaterThan(collapsed));
+      expect(find.text('Show less'), findsOneWidget);
+    });
+
+    testWidgets('no alternative titles card when only Japanese is known', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        detail: () => _detail().copyWith(
+          alternativeTitles: const AlternativeTitles(ja: '葬送のフリーレン'),
+        ),
+      );
+
+      expect(find.text('葬送のフリーレン'), findsOneWidget);
+      expect(find.text('Alternative Titles'), findsNothing);
+    });
+
+    testWidgets('a short synopsis has no Read more', (tester) async {
+      await open(tester);
+      await scrollTo(tester, find.text('Synopsis'));
+
+      expect(find.text('Read more'), findsNothing);
+    });
+
+    testWidgets('without a synopsis the card is just the genres', (
+      tester,
+    ) async {
+      await open(tester, detail: () => _detail().copyWith(synopsis: null));
+      await scrollTo(tester, find.text('Genres'));
+
+      expect(find.text('Synopsis'), findsNothing);
+      expect(find.text('Adventure'), findsOneWidget);
+    });
+
+    testWidgets('shows score, rank, popularity and how many rated', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        detail: () =>
+            _detail().copyWith(popularity: 42, numScoringUsers: 123456),
+      );
+
+      expect(find.text('9.31'), findsOneWidget);
+      expect(find.text('123,456 ratings'), findsOneWidget);
+      expect(find.text('#1'), findsOneWidget);
+      expect(find.text('Rank'), findsOneWidget);
+      expect(find.text('#42'), findsOneWidget);
+      expect(find.text('Popularity'), findsOneWidget);
+    });
+
+    testWidgets('leaves out the numbers MAL did not give', (tester) async {
+      await open(
+        tester,
+        detail: () => _detail().copyWith(mean: null, rank: null),
+      );
+
+      expect(find.text('Rank'), findsNothing);
+      expect(find.text('Popularity'), findsNothing);
+      expect(find.text('Score'), findsNothing);
+    });
 
     testWidgets('a broadcast without a time shows only the day', (
       tester,
@@ -293,8 +380,11 @@ void main() {
       tester,
     ) async {
       await open(tester, detail: () => _detail().copyWith(endDate: null));
+      await scrollTo(tester, find.text('Information'));
 
-      expect(find.text('Airing: Sep 29, 2023'), findsOneWidget);
+      expect(find.text('Airing'), findsOneWidget);
+      expect(find.text('Sep 29, 2023'), findsOneWidget);
+      expect(find.text('Aired'), findsNothing);
     });
 
     testWidgets('lists related anime', (tester) async {
@@ -307,6 +397,82 @@ void main() {
 
       expect(find.text('Frieren Season 2'), findsOneWidget);
       expect(find.text('Sequel'), findsOneWidget);
+    });
+  });
+
+  group('order', () {
+    testWidgets('puts what matters first and the reference material last', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 9000);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await open(
+        tester,
+        extra: () => AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: DateTime.now().add(const Duration(hours: 5)),
+            episode: 3,
+            timeUntilAiring: 18000,
+          ),
+          studios: const [AniListStudio(id: 7, name: 'Madhouse')],
+          externalLinks: const [
+            AniListExternalLink(
+              id: 1,
+              url: 'https://official.test',
+              site: 'Official Site',
+              type: 'INFO',
+            ),
+          ],
+          people: const AniListAnimePeople(
+            characters: [AniListCharacter(id: 1, name: 'Frieren')],
+            staff: [AniListStaff(id: 2, name: 'Keiichiro Saito')],
+          ),
+        ),
+      );
+
+      const order = [
+        'Add to Watching',
+        'Next Episode',
+        'Synopsis',
+        'Information',
+        'Characters & Voice Actors',
+        'Staff',
+        'Related Anime',
+        'Alternative Titles',
+        'External Links',
+      ];
+      final tops = [for (final t in order) tester.getTopLeft(find.text(t)).dy];
+
+      expect(tops, orderedEquals([...tops]..sort()));
+      expect(
+        tester.getTopLeft(find.text('9.31')).dy,
+        lessThan(tops.first),
+        reason: 'the score summary comes before everything else',
+      );
+    });
+
+    testWidgets('an in-list anime shows its progress before the synopsis', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 9000);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await open(
+        tester,
+        detail: () => _detail(
+          list: const MyListStatus(
+            status: WatchStatus.watching,
+            numEpisodesWatched: 3,
+          ),
+        ),
+      );
+
+      expect(
+        tester.getTopLeft(find.text('Watching')).dy,
+        lessThan(tester.getTopLeft(find.text('Synopsis')).dy),
+      );
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
   });
 
@@ -332,6 +498,19 @@ void main() {
       expect(find.text('Watching'), findsOneWidget);
       expect(find.text('Change'), findsOneWidget);
       expect(find.text('7'), findsWidgets);
+      expect(find.text('Remove from List'), findsOneWidget);
+    });
+
+    testWidgets('fits a narrow screen with large text', (tester) async {
+      tester.view.physicalSize = const Size(960, 4000);
+      tester.view.devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearAllTestValues);
+
+      await open(tester, detail: () => _detail(list: watching));
+
+      expect(tester.takeException(), isNull);
       expect(find.text('Remove from List'), findsOneWidget);
     });
 
@@ -498,6 +677,8 @@ void main() {
 
       expect(repo.removals, 1);
       expect(find.text('Removed from list'), findsOneWidget);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 1000));
+      await tester.pumpAndSettle();
       expect(find.text('Add to Watching'), findsOneWidget);
     });
 
@@ -544,6 +725,35 @@ void main() {
       await tapVisible(tester, find.text('See All (6)'));
       expect(find.text('Character 6'), findsOneWidget);
       expect(find.text('Show Less'), findsOneWidget);
+    });
+
+    testWidgets('shows readable roles and the voice actor', (tester) async {
+      await open(
+        tester,
+        extra: () => const AniListAnimeExtra(
+          people: AniListAnimePeople(
+            characters: [
+              AniListCharacter(
+                id: 1,
+                name: 'Frieren',
+                role: 'MAIN',
+                voiceActors: [
+                  AniListVoiceActor(
+                    id: 9,
+                    name: 'Atsumi Tanezaki',
+                    language: 'Japanese',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+      await scrollTo(tester, find.text('Characters & Voice Actors'));
+
+      expect(find.text('Main'), findsOneWidget);
+      expect(find.text('Atsumi Tanezaki'), findsOneWidget);
+      expect(find.text('Japanese'), findsOneWidget);
     });
 
     testWidgets('has no See All for four people or fewer', (tester) async {
@@ -596,6 +806,8 @@ void main() {
         ),
       );
 
+      await scrollTo(tester, find.text('External Links'));
+
       expect(find.text('External Links'), findsOneWidget);
       for (final site in ['Official Site', 'Crunchyroll', 'Twitter']) {
         expect(find.text(site), findsOneWidget, reason: site);
@@ -631,6 +843,8 @@ void main() {
           ],
         ),
       );
+
+      await scrollTo(tester, find.text('Studios'));
 
       expect(find.text('Studios'), findsOneWidget);
       expect(find.text('Madhouse'), findsOneWidget);

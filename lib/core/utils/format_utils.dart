@@ -30,3 +30,11 @@ String? formatMonthYear(String? isoDate) {
   if (date == null) return null;
   return '${shortMonthName(date.month)} ${date.year}';
 }
+
+String formatDate(String isoDate) {
+  final parts = isoDate.split('-');
+  if (parts.length != 3) return isoDate;
+  final month = int.tryParse(parts[1]);
+  if (month == null || month < 1 || month > 12) return isoDate;
+  return '${shortMonthName(month)} ${int.tryParse(parts[2]) ?? ''}, ${parts[0]}';
+}

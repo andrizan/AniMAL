@@ -56,4 +56,18 @@ void main() {
       expect(formatMonthYear('not a date'), isNull);
     });
   });
+
+  group('formatDate', () {
+    test('formats a full date', () {
+      expect(formatDate('2023-09-29'), 'Sep 29, 2023');
+      expect(formatDate('2024-03-02'), 'Mar 2, 2024');
+    });
+
+    test('returns partial or unreadable dates as they are', () {
+      expect(formatDate('2023'), '2023');
+      expect(formatDate('2023-09'), '2023-09');
+      expect(formatDate('2023-13-01'), '2023-13-01');
+      expect(formatDate('2023-xx-01'), '2023-xx-01');
+    });
+  });
 }
