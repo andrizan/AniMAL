@@ -94,6 +94,14 @@ class AppDatabase {
       await txn.delete(
         'cache_meta',
         where: 'cache_key LIKE ? AND fetched_at < ?',
+        whereArgs: [
+          'weekly_schedule:%',
+          fourteenDaysAgo.millisecondsSinceEpoch,
+        ],
+      );
+      await txn.delete(
+        'cache_meta',
+        where: 'cache_key LIKE ? AND fetched_at < ?',
         whereArgs: ['animeExtra_%', thirtyDaysAgo.millisecondsSinceEpoch],
       );
       await txn.delete(
