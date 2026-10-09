@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:animal/core/theme/app_colors.dart';
-import 'package:animal/core/theme/app_theme.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
@@ -54,7 +54,10 @@ class AnimeCard extends ConsumerWidget {
     );
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
+      margin: const EdgeInsets.symmetric(
+        vertical: 3,
+        horizontal: AppSpacing.page,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap:
@@ -91,10 +94,7 @@ class AnimeCard extends ConsumerWidget {
                               anime.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: theme.textTheme.titleSmall,
                             ),
                           ),
                           if (anime.myListStatus != null)
@@ -112,9 +112,7 @@ class AnimeCard extends ConsumerWidget {
                               ),
                               child: Text(
                                 anime.myListStatus!.status.label,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
+                                style: theme.textTheme.labelSmall?.copyWith(
                                   color: _listStatusColor(
                                     anime.myListStatus!.status,
                                   ),
@@ -144,8 +142,7 @@ class AnimeCard extends ConsumerWidget {
                           jaTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
+                          style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -169,8 +166,7 @@ class AnimeCard extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   g.name,
-                                  style: TextStyle(
-                                    fontSize: 9,
+                                  style: theme.textTheme.labelSmall?.copyWith(
                                     color:
                                         theme.colorScheme.onSecondaryContainer,
                                   ),
@@ -194,8 +190,7 @@ class AnimeCard extends ConsumerWidget {
                             const SizedBox(width: 2),
                             Text(
                               anime.mean!.toStringAsFixed(1),
-                              style: const TextStyle(
-                                fontSize: 12,
+                              style: theme.textTheme.labelMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -210,8 +205,7 @@ class AnimeCard extends ConsumerWidget {
                             const SizedBox(width: 2),
                             Text(
                               '$personalScore',
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: theme.textTheme.labelMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.primary,
                               ),
@@ -253,9 +247,7 @@ class AnimeCard extends ConsumerWidget {
                                   anime.rating,
                                   compact: true,
                                 ),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
+                                style: theme.textTheme.labelSmall?.copyWith(
                                   color: theme.colorScheme.onErrorContainer,
                                 ),
                               ),
@@ -272,7 +264,6 @@ class AnimeCard extends ConsumerWidget {
                               convertJstToLocal(anime.broadcast?.startTime) ??
                                   '',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 11,
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
@@ -528,8 +519,7 @@ class _UpdateListStatusModalState
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   'Completed can only be set for finished anime',
-                  style: TextStyle(
-                    fontSize: 11,
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -564,7 +554,7 @@ class _UpdateListStatusModalState
                         vertical: 8,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       suffixText: totalEps != null ? '/$totalEps' : null,
                     ),
@@ -648,8 +638,8 @@ class _CoverImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(appCardRadius),
-        bottomLeft: Radius.circular(appCardRadius),
+        topLeft: Radius.circular(AppRadius.card),
+        bottomLeft: Radius.circular(AppRadius.card),
       ),
       child: SizedBox(
         width: 80,
@@ -678,9 +668,8 @@ class _CoverImage extends StatelessWidget {
                   ),
                   child: Text(
                     statusLabel!,
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.iconLight,
-                      fontSize: 8,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -702,11 +691,8 @@ class _CoverImage extends StatelessWidget {
                   ),
                   child: Text(
                     AnimeLabels.mediaTypeLabel(anime.mediaType, compact: true),
-                    style: const TextStyle(
-                      color: AppColors.iconLight,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.labelSmall
+                        ?.copyWith(color: AppColors.iconLight),
                   ),
                 ),
               ),

@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ErrorView extends StatelessWidget {
@@ -11,7 +12,7 @@ class ErrorView extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

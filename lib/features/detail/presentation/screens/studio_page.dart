@@ -1,4 +1,5 @@
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
@@ -58,9 +59,12 @@ class StudioProfilePage extends ConsumerWidget {
                 flexibleSpace: FlexibleSpaceBar(
                   title: SelectableText(
                     studio.name,
-                    style: const TextStyle(fontSize: 16),
+                    style: theme.textTheme.titleMedium,
                   ),
-                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                  titlePadding: const EdgeInsets.only(
+                    left: AppSpacing.page,
+                    bottom: AppSpacing.lg,
+                  ),
                   background: DecoratedBox(
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
@@ -79,7 +83,7 @@ class StudioProfilePage extends ConsumerWidget {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.page),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -133,7 +137,7 @@ class _AnimeWorksList extends ConsumerWidget {
     return asyncAnime.when(
       loading: () => const Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: EdgeInsets.all(AppSpacing.xl),
           child: CircularProgressIndicator(),
         ),
       ),

@@ -228,7 +228,6 @@ class BarChart extends StatelessWidget {
     final maxBar = height - _countHeight - _labelHeight;
     final labelStyle = theme.textTheme.labelSmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
-      fontSize: 10,
     );
 
     return TweenAnimationBuilder<double>(

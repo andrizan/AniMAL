@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/features/search/providers/search_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
@@ -35,14 +36,19 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              AppSpacing.md,
+              AppSpacing.page,
+              AppSpacing.md,
+            ),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search anime…',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(

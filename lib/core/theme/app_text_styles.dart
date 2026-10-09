@@ -77,8 +77,8 @@ abstract final class AppTextStyles {
         color: color,
       ),
       labelSmall: GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
         color: color,
       ),
     );

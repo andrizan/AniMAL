@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/features/auth/providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -21,7 +22,7 @@ class LoginPage extends ConsumerWidget {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(AppSpacing.xxl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -31,7 +32,7 @@ class LoginPage extends ConsumerWidget {
                   height: 80,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   child: Icon(
                     Icons.movie_outlined,
@@ -123,10 +124,8 @@ class LoginPage extends ConsumerWidget {
               const SizedBox(height: 12),
               SelectableText(
                 url,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.primary),
               ),
             ],
           ),

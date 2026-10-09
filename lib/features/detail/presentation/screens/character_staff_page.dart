@@ -1,4 +1,5 @@
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/models/anime.dart';
@@ -61,9 +62,12 @@ class CharacterProfilePage extends ConsumerWidget {
                 flexibleSpace: FlexibleSpaceBar(
                   title: SelectableText(
                     character.name,
-                    style: const TextStyle(fontSize: 16),
+                    style: theme.textTheme.titleMedium,
                   ),
-                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                  titlePadding: const EdgeInsets.only(
+                    left: AppSpacing.page,
+                    bottom: AppSpacing.lg,
+                  ),
                   background: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: () {
@@ -105,7 +109,7 @@ class CharacterProfilePage extends ConsumerWidget {
               // Content
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.page),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -246,9 +250,12 @@ class StaffProfilePage extends ConsumerWidget {
                 flexibleSpace: FlexibleSpaceBar(
                   title: SelectableText(
                     staff.name,
-                    style: const TextStyle(fontSize: 16),
+                    style: theme.textTheme.titleMedium,
                   ),
-                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                  titlePadding: const EdgeInsets.only(
+                    left: AppSpacing.page,
+                    bottom: AppSpacing.lg,
+                  ),
                   background: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: () {
@@ -290,7 +297,7 @@ class StaffProfilePage extends ConsumerWidget {
               // Content
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.page),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -397,7 +404,7 @@ class _WorksList extends ConsumerWidget {
           asyncAnime.when(
             loading: () => const Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.all(AppSpacing.xl),
                 child: CircularProgressIndicator(),
               ),
             ),

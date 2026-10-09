@@ -118,14 +118,6 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                 tabs: _tabs,
                 isScrollable: true,
                 tabAlignment: TabAlignment.start,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w400,
-                  fontSize: 13,
-                ),
               ),
             ),
             IconButton(

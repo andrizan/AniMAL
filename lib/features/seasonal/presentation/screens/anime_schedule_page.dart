@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/features/seasonal/providers/seasonal_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
@@ -69,7 +70,10 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
       children: [
         // Year selector
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.page,
+            vertical: AppSpacing.sm,
+          ),
           color: theme.colorScheme.surface,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -112,14 +116,6 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
         // Season + Later tabs
         TabBar(
           controller: _seasonTabController,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w400,
-            fontSize: 13,
-          ),
           tabs: List.generate(_seasonLabels.length, (i) {
             return Tab(
               key: ValueKey('${_seasonLabels[i]}_$_selectedYear'),
@@ -173,15 +169,15 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
                   title: Text(
                     '$year',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontSize: isSelected ? 18 : 15,
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
+                    style:
+                        (isSelected
+                                ? Theme.of(context).textTheme.titleMedium
+                                : Theme.of(context).textTheme.bodyMedium)
+                            ?.copyWith(
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
                   ),
                   selected: isSelected,
                   onTap: () => Navigator.pop(ctx, year),
@@ -339,7 +335,12 @@ class _DayHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.page,
+        AppSpacing.lg,
+        AppSpacing.page,
+        AppSpacing.xs,
+      ),
       child: Text(
         day,
         style: theme.textTheme.titleSmall?.copyWith(

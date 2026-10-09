@@ -1,11 +1,12 @@
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/format_utils.dart';
 import 'package:animal/data/models/mal_user.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
 
 BoxDecoration _heroDecoration(ColorScheme scheme) => BoxDecoration(
-  borderRadius: BorderRadius.circular(24),
+  borderRadius: BorderRadius.circular(AppRadius.hero),
   border: Border.all(color: scheme.outlineVariant),
   gradient: LinearGradient(
     begin: Alignment.topLeft,
@@ -146,7 +147,7 @@ class _InfoPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -281,7 +282,7 @@ class ProfileHeaderError extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.hero),
         color: scheme.errorContainer.withValues(alpha: 0.35),
         border: Border.all(color: scheme.error.withValues(alpha: 0.5)),
       ),

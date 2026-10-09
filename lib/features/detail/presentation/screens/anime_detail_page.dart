@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
@@ -172,12 +173,12 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                 title: SelectableText(
                   detail.title,
                   maxLines: 2,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: theme.textTheme.titleMedium,
                 ),
-                titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                titlePadding: const EdgeInsets.only(
+                  left: AppSpacing.page,
+                  bottom: AppSpacing.lg,
+                ),
                 background: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onTap: () {
@@ -217,7 +218,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
             // Content
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.page),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -631,11 +632,11 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Text(
                     'Change Status',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
                 for (final s in WatchStatus.values)
@@ -654,9 +655,9 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
                           ),
                         ),
                         subtitle: disabled && s == WatchStatus.completed
-                            ? const Text(
+                            ? Text(
                                 'Only available for finished anime',
-                                style: TextStyle(fontSize: 11),
+                                style: Theme.of(context).textTheme.bodySmall,
                               )
                             : null,
                         trailing: s == widget.detail.myListStatus!.status
@@ -705,7 +706,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
     return Card(
       color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -768,7 +769,7 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
                         vertical: 4,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       isDense: true,
                       suffixText: total != null ? '/$total' : null,
@@ -1028,14 +1029,12 @@ class _RelatedAnimeTile extends StatelessWidget {
           node.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 14),
+          style: theme.textTheme.bodyMedium,
         ),
         subtitle: Text(
           relationType,
-          style: TextStyle(
-            fontSize: 12,
+          style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w500,
           ),
         ),
         trailing: const Icon(Icons.chevron_right, size: 20),
@@ -1122,12 +1121,12 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
         children: [
           const SectionHeader('Next Episode'),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               color: isUrgent
                   ? theme.colorScheme.errorContainer
                   : theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [
@@ -1155,8 +1154,7 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
                       const SizedBox(height: 2),
                       Text(
                         '$dateStr · ${next.countdown}',
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: isUrgent
                               ? theme.colorScheme.onErrorContainer
                               : theme.colorScheme.onPrimaryContainer,
@@ -1324,7 +1322,7 @@ class _LinkChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1333,11 +1331,8 @@ class _LinkChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: textColor,
-              ),
+              style: Theme.of(context).textTheme.labelMedium
+                  ?.copyWith(color: textColor),
             ),
           ],
         ),
@@ -1366,7 +1361,7 @@ class _CharacterTile extends StatelessWidget {
           'characterProfile',
           pathParameters: {'id': '${character.id}'},
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
           child: Row(
@@ -1386,16 +1381,12 @@ class _CharacterTile extends StatelessWidget {
                     SelectableText(
                       character.name,
                       maxLines: 1,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
+                      style: theme.textTheme.titleSmall,
                     ),
                     if (character.role != null)
                       Text(
                         character.role!,
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -1420,16 +1411,12 @@ class _CharacterTile extends StatelessWidget {
                           SelectableText(
                             va.name,
                             maxLines: 1,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
+                            style: theme.textTheme.titleSmall,
                           ),
                           if (va.language != null)
                             Text(
                               va.language!,
-                              style: TextStyle(
-                                fontSize: 11,
+                              style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
@@ -1473,13 +1460,12 @@ class _StaffTile extends StatelessWidget {
         title: SelectableText(
           staff.name,
           maxLines: 1,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          style: theme.textTheme.titleSmall,
         ),
         subtitle: staff.role != null
             ? Text(
                 staff.role!,
-                style: TextStyle(
-                  fontSize: 12,
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               )
@@ -1591,17 +1577,12 @@ class _StudioCard extends StatelessWidget {
           size: 20,
           color: theme.colorScheme.primary,
         ),
-        title: Text(
-          studio.name,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        title: Text(studio.name, style: theme.textTheme.titleSmall),
         subtitle: studio.isAnimationStudio
             ? Text(
                 'Animation Studio',
-                style: TextStyle(
-                  fontSize: 12,
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w500,
                 ),
               )
             : null,

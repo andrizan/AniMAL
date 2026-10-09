@@ -1,4 +1,5 @@
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/format_utils.dart';
 import 'package:animal/data/models/mal_user.dart';
 import 'package:animal/data/models/watch_status.dart';
@@ -18,7 +19,7 @@ class ProfileCard extends StatelessWidget {
     super.key,
     this.title,
     this.trailing,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(AppSpacing.lg),
   });
 
   final String? title;
@@ -236,7 +237,7 @@ class _MiniStat extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

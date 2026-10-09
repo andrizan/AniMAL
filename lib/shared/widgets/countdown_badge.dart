@@ -87,11 +87,8 @@ class _Badge extends StatelessWidget {
               'Ep $episode · $label',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: textColor),
             ),
           ),
         ],

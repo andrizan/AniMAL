@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:material_ui/material_ui.dart';
 
 class InfoChip extends StatelessWidget {
@@ -15,7 +16,7 @@ class InfoChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: effectiveColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -26,11 +27,8 @@ class InfoChip extends StatelessWidget {
           ],
           Text(
             label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: effectiveColor,
-            ),
+            style: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(fontWeight: FontWeight.w600, color: effectiveColor),
           ),
         ],
       ),

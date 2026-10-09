@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:material_ui/material_ui.dart';
 
 class EmptyView extends StatelessWidget {
@@ -20,7 +21,7 @@ class EmptyView extends StatelessWidget {
     final muted = theme.colorScheme.onSurfaceVariant;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

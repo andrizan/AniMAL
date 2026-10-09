@@ -4,6 +4,7 @@
 /// Each top-level function must return a `Widget` and be public.
 library;
 
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_theme.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 // The @Preview annotation is not exported from a public path; this is the
@@ -17,7 +18,7 @@ Widget previewInfoChip() => const InfoChip(label: 'TV', icon: Icons.tv);
 
 @Preview(name: 'InfoChip — score', group: 'shared')
 Widget previewInfoChipScore() =>
-    const InfoChip(label: '8.74', icon: Icons.star, color: Color(0xFFFFB300));
+    const InfoChip(label: '8.74', icon: Icons.star, color: AppColors.starColor);
 
 @Preview(
   name: 'InfoChip — light theme',

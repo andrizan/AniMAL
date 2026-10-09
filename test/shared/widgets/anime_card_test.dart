@@ -1,5 +1,6 @@
 import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/providers.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart' show Genre;
 import 'package:animal/data/models/broadcast.dart';
@@ -237,6 +238,15 @@ void main() {
         expect(find.text(s.label), findsNothing);
       }
     });
+  });
+
+  testWidgets('lines up with the page gutter', (tester) async {
+    await pumpCard(tester, anime());
+
+    expect(
+      tester.widget<Card>(find.byType(Card)).margin,
+      const EdgeInsets.symmetric(vertical: 3, horizontal: AppSpacing.page),
+    );
   });
 
   group('broadcast time', () {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/version_utils.dart';
 import 'package:animal/features/profile/presentation/widgets/api_status_section.dart';
 import 'package:animal/features/profile/presentation/widgets/profile_header.dart';
@@ -28,7 +29,12 @@ class AnimeProfilePage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.page,
+        AppSpacing.md,
+        AppSpacing.page,
+        AppSpacing.xl,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
