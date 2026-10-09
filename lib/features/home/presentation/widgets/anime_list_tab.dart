@@ -84,12 +84,15 @@ class AnimeListTab extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async {
-        // User-list refresh only: the airing schedule (AniList) is left
-        // untouched so a MAL pull-to-refresh never fans out to AniList.
         await ref
             .read(animeCacheProvider)
             .invalidateUserAnimeList(status.value, 100, 0);
-        ref.invalidate(userAnimeListProvider(status));
+        try {
+          await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
+        } on Object catch (_) {}
+        ref
+          ..invalidate(weeklyAiringProvider)
+          ..invalidate(userAnimeListProvider(status));
         // Wait until fresh data is fetched so indicator shows correct state
         try {
           await ref.read(userAnimeListProvider(status).future);
