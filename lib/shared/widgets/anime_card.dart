@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_theme.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
@@ -647,8 +648,8 @@ class _CoverImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(12),
-        bottomLeft: Radius.circular(12),
+        topLeft: Radius.circular(appCardRadius),
+        bottomLeft: Radius.circular(appCardRadius),
       ),
       child: SizedBox(
         width: 80,
