@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show min;
 
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/constants/anilist_queries.dart';
@@ -122,20 +123,22 @@ class AniListClient {
     var page = 1;
     var hasNextPage = true;
     while (hasNextPage && page <= ApiConstants.anilistWeekPageLimit) {
-      final data = await _query(AniListQueries.airingSchedule, {
-        'startAt': weekStartSec,
-        'endAt': weekEnd,
-        'page': page,
-      }) as Map<String, dynamic>;
-      final pageData = data['Page'] as Map<String, dynamic>;
-      final pageInfo = pageData['pageInfo'] as Map<String, dynamic>;
-      hasNextPage = pageInfo['hasNextPage'] as bool? ?? false;
-      final schedules = pageData['airingSchedules'] as List<dynamic>;
-      for (final s in schedules) {
-        final parsed = _parseScheduleEntry(s as Map<String, dynamic>);
-        if (parsed != null) allEntries.add(parsed);
+      final waveSize = page == 1
+          ? 1
+          : ApiConstants.anilistSchedulePageConcurrency;
+      final lastPage = min(
+        page + waveSize - 1,
+        ApiConstants.anilistWeekPageLimit,
+      );
+      final pages = await Future.wait([
+        for (var p = page; p <= lastPage; p++)
+          _fetchSchedulePage(weekStartSec, weekEnd, p),
+      ]);
+      for (final result in pages) {
+        allEntries.addAll(result.entries);
       }
-      page++;
+      hasNextPage = pages.last.hasNextPage;
+      page = lastPage + 1;
     }
     // Whole-week rule: keep EVERY entry in [weekStart, weekStart + 7d) as-is,
     // including episodes that already aired earlier this week. The week is
@@ -163,6 +166,26 @@ class AniListClient {
       entry.value.sort((a, b) => a.airingAt.compareTo(b.airingAt));
     }
     return grouped;
+  }
+
+  Future<({List<AniListScheduleEntry> entries, bool hasNextPage})>
+  _fetchSchedulePage(int weekStartSec, int weekEnd, int page) async {
+    final data = await _query(AniListQueries.airingSchedule, {
+      'startAt': weekStartSec,
+      'endAt': weekEnd,
+      'page': page,
+    }) as Map<String, dynamic>;
+    final pageData = data['Page'] as Map<String, dynamic>;
+    final pageInfo = pageData['pageInfo'] as Map<String, dynamic>;
+    final entries = <AniListScheduleEntry>[];
+    for (final s in pageData['airingSchedules'] as List<dynamic>) {
+      final parsed = _parseScheduleEntry(s as Map<String, dynamic>);
+      if (parsed != null) entries.add(parsed);
+    }
+    return (
+      entries: entries,
+      hasNextPage: pageInfo['hasNextPage'] as bool? ?? false,
+    );
   }
 
   String _dayName(int weekday) {
@@ -526,7 +549,7 @@ class AniListClient {
     final existing = _inFlight[key];
     if (existing != null) return existing as Future<T>;
     final fut = run();
-    unawaited(fut.whenComplete(() => _inFlight.remove(key)));
+    fut.whenComplete(() => _inFlight.remove(key)).ignore();
     _inFlight[key] = fut;
     return fut;
   }
@@ -587,11 +610,9 @@ class AniListClient {
       writeCache: writeCache,
       isMissingNetworkValue: isMissingNetworkValue,
     );
-    unawaited(
-      fut.whenComplete(() {
-        _inFlight.remove(key);
-      }),
-    );
+    fut.whenComplete(() {
+      _inFlight.remove(key);
+    }).ignore();
     _inFlight[key] = fut;
     return fut;
   }
