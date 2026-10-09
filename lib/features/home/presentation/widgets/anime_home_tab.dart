@@ -102,18 +102,24 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
       await ref
           .read(animeCacheProvider)
           .invalidateUserAnimeList(status.value, 100, 0);
-      try {
-        await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
-      } on Object catch (_) {}
-      ref
-        ..invalidate(weeklyAiringProvider)
-        ..invalidate(userAnimeListProvider(status));
-      try {
-        await ref.read(userAnimeListProvider(status).future);
-      } on Object catch (_) {}
+      await Future.wait([_refreshSchedule(), _refreshUserList(status)]);
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
     }
+  }
+
+  Future<void> _refreshSchedule() async {
+    try {
+      await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
+    } on Object catch (_) {}
+    ref.invalidate(weeklyAiringProvider);
+  }
+
+  Future<void> _refreshUserList(WatchStatus status) async {
+    ref.invalidate(userAnimeListProvider(status));
+    try {
+      await ref.read(userAnimeListProvider(status).future);
+    } on Object catch (_) {}
   }
 
   @override
