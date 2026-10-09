@@ -1,3 +1,5 @@
+import 'package:animal/core/constants/mal_endpoints.dart';
+import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,6 +19,26 @@ class NotificationPermissionNotifier extends Notifier<bool> {
     state = await service.requestPermission();
     return state;
   }
+}
+
+enum NotificationToggleResult {
+  enabled,
+  disabled,
+  permissionDenied,
+  tooLate,
+  failed;
+
+  bool get changedState => this == enabled || this == disabled;
+
+  String message(int episode) => switch (this) {
+    enabled => 'Notification enabled for Episode $episode',
+    disabled => 'Notification disabled',
+    permissionDenied => 'Notification permission denied',
+    tooLate =>
+      'Too late to schedule: Episode $episode airs in under '
+          '${ApiConstants.notificationLeadMinutes} minutes or has aired',
+    failed => 'Could not schedule the notification',
+  };
 }
 
 final animeNotificationProvider =
@@ -40,13 +62,13 @@ class AnimeNotificationNotifier extends Notifier<Set<int>> {
 
   bool isEnabled(int animeId) => state.contains(animeId);
 
-  void removeAnime(int animeId) {
+  Future<void> removeAnime(int animeId) async {
     if (!state.contains(animeId)) return;
-    ref.read(notificationServiceProvider).cancelNotification(animeId);
+    await ref.read(notificationServiceProvider).cancelNotification(animeId);
     _refresh();
   }
 
-  Future<bool> toggle({
+  Future<NotificationToggleResult> toggle({
     required int animeId,
     required String title,
     required int episode,
@@ -54,24 +76,38 @@ class AnimeNotificationNotifier extends Notifier<Set<int>> {
   }) async {
     final service = ref.read(notificationServiceProvider);
 
+    if (state.contains(animeId)) {
+      final stillScheduled = await service.isNotificationScheduled(animeId);
+      await service.cancelNotification(animeId);
+      if (stillScheduled) {
+        _refresh();
+        return NotificationToggleResult.disabled;
+      }
+    }
+
     if (!service.permissionGranted) {
       final granted = await ref
           .read(notificationPermissionProvider.notifier)
           .request();
-      if (!granted) return false;
+      if (!granted) {
+        _refresh();
+        return NotificationToggleResult.permissionDenied;
+      }
     }
 
-    if (state.contains(animeId)) {
-      await service.cancelNotification(animeId);
-    } else {
-      await service.scheduleAnimeNotification(
-        animeId: animeId,
-        title: title,
-        episode: episode,
-        airingAt: airingAt,
-      );
-    }
+    final result = await service.scheduleAnimeNotification(
+      animeId: animeId,
+      title: title,
+      episode: episode,
+      airingAt: airingAt,
+    );
     _refresh();
-    return true;
+    return switch (result) {
+      ScheduleResult.scheduled => NotificationToggleResult.enabled,
+      ScheduleResult.permissionDenied =>
+        NotificationToggleResult.permissionDenied,
+      ScheduleResult.tooLate => NotificationToggleResult.tooLate,
+      ScheduleResult.failed => NotificationToggleResult.failed,
+    };
   }
 }

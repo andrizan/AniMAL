@@ -7,6 +7,8 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+enum ScheduleResult { scheduled, permissionDenied, tooLate, failed }
+
 class AnimeNotificationService {
   AnimeNotificationService({Logger? logger}) : _logger = logger ?? appLogger;
   final FlutterLocalNotificationsPlugin _plugin =
@@ -63,6 +65,7 @@ class AnimeNotificationService {
       if (animeId != null && animeId > 0) _launchAnimeId = animeId;
     }
     await Future.wait([_initPermission(), _loadIds()]);
+    await cleanupStaleNotifications();
   }
 
   Future<void> _initPermission() async {
@@ -135,7 +138,7 @@ class AnimeNotificationService {
     return _permissionGranted;
   }
 
-  Future<bool> scheduleAnimeNotification({
+  Future<ScheduleResult> scheduleAnimeNotification({
     required int animeId,
     required String title,
     required int episode,
@@ -143,7 +146,7 @@ class AnimeNotificationService {
   }) async {
     if (!_permissionGranted) {
       final g = await requestPermission();
-      if (!g) return false;
+      if (!g) return ScheduleResult.permissionDenied;
     }
     final scheduledDate = tz.TZDateTime.from(
       airingAt.subtract(
@@ -151,7 +154,9 @@ class AnimeNotificationService {
       ),
       tz.local,
     );
-    if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return false;
+    if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
+      return ScheduleResult.tooLate;
+    }
     try {
       await _plugin.zonedSchedule(
         id: animeId,
@@ -181,10 +186,10 @@ class AnimeNotificationService {
       );
       _notificationIds.add(animeId);
       await _saveIds();
-      return true;
+      return ScheduleResult.scheduled;
     } on Exception catch (e) {
       _logger.e('Failed to schedule notification: $e');
-      return false;
+      return ScheduleResult.failed;
     }
   }
 
@@ -216,8 +221,13 @@ class AnimeNotificationService {
   }
 
   Future<bool> isNotificationScheduled(int animeId) async {
-    final pending = await _plugin.pendingNotificationRequests();
-    return pending.any((n) => n.id == animeId);
+    try {
+      final pending = await _plugin.pendingNotificationRequests();
+      return pending.any((n) => n.id == animeId);
+    } on Exception catch (e) {
+      _logger.w('Pending check failed: $e');
+      return _notificationIds.contains(animeId);
+    }
   }
 
   void dispose() {

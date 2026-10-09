@@ -362,9 +362,11 @@ class _UpdateListStatusModalState
             .read(animeNotificationProvider)
             .contains(widget.anime.id);
         if (enabled) {
-          ref
-              .read(animeNotificationProvider.notifier)
-              .removeAnime(widget.anime.id);
+          unawaited(
+            ref
+                .read(animeNotificationProvider.notifier)
+                .removeAnime(widget.anime.id),
+          );
         }
       });
     }
@@ -387,7 +389,7 @@ class _UpdateListStatusModalState
         score: _selectedScore,
       );
       if (_selectedStatus != WatchStatus.watching) {
-        ref
+        await ref
             .read(animeNotificationProvider.notifier)
             .removeAnime(widget.anime.id);
       }
@@ -464,20 +466,19 @@ class _UpdateListStatusModalState
                     onChanged: _saving
                         ? null
                         : (value) async {
-                            final success = await ref
+                            final episode = widget.nextAiring!.episode;
+                            final result = await ref
                                 .read(animeNotificationProvider.notifier)
                                 .toggle(
                                   animeId: widget.anime.id,
                                   title: widget.anime.title,
-                                  episode: widget.nextAiring!.episode,
+                                  episode: episode,
                                   airingAt: widget.nextAiring!.airingAt,
                                 );
-                            if (!success && context.mounted) {
+                            if (!result.changedState && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Notification permission denied',
-                                  ),
+                                SnackBar(
+                                  content: Text(result.message(episode)),
                                 ),
                               );
                             }

@@ -34,6 +34,14 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
 
   int get animeId => widget.animeId;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ScaffoldMessenger.of(context).clearSnackBars();
+    });
+  }
+
   Future<void> _refresh() async {
     try {
       final repo = ref.read(animeRepositoryProvider);
@@ -1583,7 +1591,7 @@ class _NotificationBell extends ConsumerWidget {
         color: enabled ? AppColors.starColor : AppColors.iconLight,
       ),
       onPressed: () async {
-        final success = await ref
+        final result = await ref
             .read(animeNotificationProvider.notifier)
             .toggle(
               animeId: animeId,
@@ -1594,26 +1602,9 @@ class _NotificationBell extends ConsumerWidget {
 
         if (!context.mounted) return;
 
-        if (!success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Notification permission denied'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-          return;
-        }
-
-        final nowEnabled = ref
-            .read(animeNotificationProvider)
-            .contains(animeId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              nowEnabled
-                  ? 'Notification enabled for Episode ${nextAiring.episode}'
-                  : 'Notification disabled',
-            ),
+            content: Text(result.message(nextAiring.episode)),
             duration: const Duration(seconds: 2),
           ),
         );
