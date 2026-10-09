@@ -6,7 +6,6 @@ import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
-import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
@@ -387,12 +386,6 @@ class _UpdateListStatusModalState
         numWatchedEpisodes: _selectedEps,
         score: _selectedScore,
       );
-      final currentStatus =
-          widget.anime.myListStatus?.status ?? WatchStatus.watching;
-      ref.invalidate(userAnimeListProvider(currentStatus));
-      if (_selectedStatus != currentStatus) {
-        ref.invalidate(userAnimeListProvider(_selectedStatus));
-      }
       if (_selectedStatus != WatchStatus.watching) {
         ref
             .read(animeNotificationProvider.notifier)

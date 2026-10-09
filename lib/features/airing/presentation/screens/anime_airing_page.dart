@@ -96,6 +96,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
     final theme = Theme.of(context);
 
     return asyncSchedule.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
         child: Padding(

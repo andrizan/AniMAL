@@ -233,6 +233,7 @@ class _SeasonAnimeList extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return asyncAnime.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
         child: Padding(
@@ -342,6 +343,7 @@ class _LaterAnimeList extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return asyncAnime.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
         child: Column(

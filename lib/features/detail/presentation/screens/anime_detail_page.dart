@@ -8,7 +8,6 @@ import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
-import 'package:animal/shared/providers/anime_list_providers.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
@@ -320,12 +319,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                     if (inList) ...[
                       _MyListStatusCard(
                         detail: detail,
-                        onUpdated: (updatedStatus) {
-                          _onListStatusUpdated(
-                            updatedStatus,
-                            detail.myListStatus?.status,
-                          );
-                        },
+                        onUpdated: _onListStatusUpdated,
                       ),
                       const SizedBox(height: 20),
                     ],
@@ -504,14 +498,8 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                       animeId: animeId,
                       detail: detail,
                       inList: inList,
-                      onAdded: (updatedStatus) {
-                        _onListStatusUpdated(updatedStatus, null);
-                      },
-                      onRemoved: () {
-                        _onAnimeRemoved(
-                          detail.myListStatus?.status ?? WatchStatus.watching,
-                        );
-                      },
+                      onAdded: _onListStatusUpdated,
+                      onRemoved: _onAnimeRemoved,
                     ),
                     const SizedBox(height: 32),
                   ],
@@ -524,30 +512,16 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
     );
   }
 
-  void _onListStatusUpdated(
-    MyListStatus updatedStatus,
-    WatchStatus? oldStatus,
-  ) {
+  void _onListStatusUpdated(MyListStatus updatedStatus) {
     setState(() {
       _detail = _detail?.copyWith(myListStatus: updatedStatus);
     });
-    final newStatus = updatedStatus.status;
-    if (oldStatus != null) {
-      ref.invalidate(userAnimeListProvider(oldStatus));
-    }
-    ref.invalidate(userAnimeListProvider(newStatus));
-    for (final s in WatchStatus.values) {
-      if (s != oldStatus && s != newStatus) {
-        ref.invalidate(userAnimeListProvider(s));
-      }
-    }
   }
 
-  void _onAnimeRemoved(WatchStatus currentStatus) {
+  void _onAnimeRemoved() {
     setState(() {
       _detail = _detail?.copyWith(myListStatus: null);
     });
-    ref.invalidate(userAnimeListProvider(currentStatus));
   }
 
   String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);

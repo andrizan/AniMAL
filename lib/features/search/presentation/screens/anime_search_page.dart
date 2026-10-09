@@ -57,6 +57,7 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
           ),
           Expanded(
             child: asyncAnime.when(
+              skipLoadingOnReload: true,
               data: (list) => _AnimeListView(anime: list),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
