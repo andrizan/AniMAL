@@ -4,6 +4,7 @@ import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/mal_user.dart';
 import 'package:animal/features/profile/presentation/screens/anime_profile_page.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -270,6 +271,23 @@ void main() {
   });
 
   group('check for update', () {
+    const launcher = MethodChannel('plugins.flutter.io/url_launcher');
+    late List<MethodCall> launched;
+
+    setUp(() {
+      launched = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(launcher, (call) async {
+            launched.add(call);
+            return true;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(launcher, null);
+    });
+
     Map<String, dynamic> release(String tag) => {
       'tag_name': tag,
       'html_url': 'https://github.com/andrizan/AniMAL/releases/tag/$tag',
@@ -295,6 +313,27 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Update Available'), findsNothing);
+      expect(launched, isEmpty);
+    });
+
+    testWidgets('Download opens the release page in the browser', (
+      tester,
+    ) async {
+      await open(tester, release: () async => release('v2.10.0'));
+      await tapVisible(tester, find.text('Check for Update'));
+
+      await tester.tap(find.text('Download'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Update Available'), findsNothing);
+      final call = launched.single;
+      expect(call.method, 'launch');
+      final args = call.arguments as Map;
+      expect(
+        args['url'],
+        'https://github.com/andrizan/AniMAL/releases/tag/v2.10.0',
+      );
+      expect(args['useWebView'], isFalse);
     });
 
     testWidgets('says up to date on the latest version', (tester) async {
