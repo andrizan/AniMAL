@@ -24,6 +24,13 @@ Rules and conventions for contributing to this project.
 - **Feature-Based** with strict isolation: features never import from each other.
 - Each feature: `data/` → `domain/` → `providers/` → `presentation/`.
 - **State management**: `flutter_riverpod` only.
+- **List edits**: go through `AnimeRepository.updateAnimeListStatus` /
+  `deleteAnimeFromList`. They keep every SQLite snapshot of the personal status
+  in sync (user lists, anime rows, stored airing week) and bump
+  `animeListVersionProvider`. Do not `ref.invalidate` list providers after an edit.
+- A provider that watches `animeListVersionProvider` must be rendered with
+  `when(skipLoadingOnReload: true)` (or a `hasValue` check), otherwise an edit
+  flashes a spinner and resets the scroll position.
 - **Routing**: `go_router` with auth guard in `core/router/route_guards.dart`.
 - **Codegen**: `freezed` + `json_serializable` for data layer DTOs only. Run `dart run build_runner build` after model changes.
 - **Analysis**: `very_good_analysis` — run `flutter analyze` before reporting done.
