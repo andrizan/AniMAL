@@ -114,6 +114,9 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - **Error / empty states**: use `ErrorView` (message + optional Retry) and `EmptyView` (icon, message, optional hint/Retry) from `shared/widgets/`. Do not hand-roll icon + text + button columns.
 - **Section titles**: use `SectionHeader` (`titleSmall`, optional trailing caption).
 - **Loading**: a full-area load is a centred `CircularProgressIndicator`; inside a card use a skeleton or `LinearProgressIndicator`.
+- **Spacing and radius**: use `AppSpacing` (`xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32; `page` is the horizontal gutter of every page and list card) and `AppRadius` (`sm`, `md`, `card`, `hero`, `pill`) from `core/theme/app_spacing.dart` for page, card and container paddings and corners. Micro offsets inside a component may stay literal.
+- **Typography**: never set `fontSize`; pick a slot from `Theme.of(context).textTheme` and adjust only weight or colour with `copyWith`. `labelSmall` (10, w600) is the micro size for badges and chart labels. Tab labels come from `tabBarTheme`.
+- `test/core/theme/design_rules_test.dart` fails on raw `fontSize`, `Colors.*`, `Color(0x...)` and hand-rolled error icons outside their allowed files.
 
 ### Cards
 - **Unified card widget** (`anime_card.dart`) used across all pages.
