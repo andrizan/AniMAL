@@ -394,11 +394,9 @@ class AnimeRepository {
     // which is what we want for cleanup. The resulting future propagates
     // any rejection from `fut`; we suppress it here since the original
     // caller already sees it through `fut`.
-    unawaited(
-      fut.whenComplete(() {
-        _inFlight.remove(key);
-      }),
-    );
+    fut.whenComplete(() {
+      _inFlight.remove(key);
+    }).ignore();
     _inFlight[key] = fut;
     return fut;
   }

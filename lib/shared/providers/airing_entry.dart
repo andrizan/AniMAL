@@ -99,7 +99,7 @@ class AiringRepository {
     if (existing != null) return existing;
     final fut = _getWeeklyScheduleInner(weekStartSec);
     _inFlight[key] = fut;
-    unawaited(fut.whenComplete(() => _inFlight.remove(key)));
+    fut.whenComplete(() => _inFlight.remove(key)).ignore();
     return fut;
   }
 
@@ -281,7 +281,7 @@ class AiringRepository {
     if (existing != null) return existing;
     final fut = _buildAndSave(weekStartSec, force: true);
     _inFlight[_weekKey(weekStartSec)] = fut;
-    unawaited(fut.whenComplete(() => _inFlight.remove(_weekKey(weekStartSec))));
+    fut.whenComplete(() => _inFlight.remove(_weekKey(weekStartSec))).ignore();
     return fut;
   }
 
