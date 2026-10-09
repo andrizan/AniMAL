@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/mal_user.dart';
+import 'package:animal/features/profile/domain/entities/profile_insights.dart';
 import 'package:animal/features/profile/presentation/screens/anime_profile_page.dart';
+import 'package:animal/features/profile/presentation/widgets/profile_header.dart';
+import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +20,9 @@ import '../../support/fake_auth_repository.dart';
 
 const _stats = AnimeStatistics(
   numDaysWatched: 30.76,
+  numDaysWatching: 2,
+  numDaysCompleted: 27.5,
+  numDaysDropped: 1.26,
   meanScore: 7.9,
   numItems: 166,
   numEpisodes: 2500,
@@ -25,6 +31,14 @@ const _stats = AnimeStatistics(
   numItemsOnHold: 1,
   numItemsDropped: 2,
   numItemsPlanToWatch: 40,
+);
+
+const _noInsights = ProfileInsights(
+  totalCount: 0,
+  scoreCounts: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  genres: [],
+  formats: [],
+  activity: [],
 );
 
 void main() {
@@ -38,6 +52,7 @@ void main() {
     Future<Map<String, dynamic>?> Function()? release,
     String version = '2.9.0',
     Map<String, Object> prefs = const {},
+    ProfileInsights insights = _noInsights,
   }) async {
     SharedPreferences.setMockInitialValues(prefs);
     PackageInfo.setMockInitialValues(
@@ -60,6 +75,7 @@ void main() {
               animeStatistics: _stats,
             ))(),
       ),
+      profileInsightsProvider.overrideWith((ref) async => insights),
       if (release != null) latestReleaseProvider.overrideWithValue(release),
     ];
     final router = GoRouter(
@@ -117,15 +133,17 @@ void main() {
           overrides: [
             malAuthRepositoryProvider.overrideWithValue(auth),
             userInfoProvider.overrideWith((ref) => gate.future),
+            profileInsightsProvider.overrideWith((ref) async => _noInsights),
           ],
           child: const MaterialApp(home: Scaffold(body: AnimeProfilePage())),
         ),
       );
       await tester.pump();
 
-      expect(find.text('Loading...'), findsOneWidget);
+      expect(find.byType(ProfileHeaderPlaceholder), findsOneWidget);
       gate.complete(const MalUser(id: 1, name: 'late'));
       await tester.pumpAndSettle();
+      expect(find.byType(ProfileHeaderPlaceholder), findsNothing);
       expect(find.text('late'), findsOneWidget);
     });
 
@@ -157,22 +175,43 @@ void main() {
     });
   });
 
-  group('statistics', () {
-    testWidgets('are shown with sensible precision when signed in', (
+  group('header details', () {
+    testWidgets('shows when the user joined and the three headline numbers', (
       tester,
     ) async {
-      await open(tester);
+      await open(
+        tester,
+        user: () => const MalUser(
+          id: 1,
+          name: 'andrizan',
+          joinedAt: '2019-03-12T09:41:05+00:00',
+          animeStatistics: _stats,
+        ),
+      );
 
-      expect(find.text('Statistics'), findsOneWidget);
+      expect(find.textContaining('Since '), findsOneWidget);
+      expect(find.textContaining('2019'), findsOneWidget);
       expect(find.text('30.8'), findsOneWidget);
+      expect(find.text('Days watched'), findsOneWidget);
+      expect(find.text('2,500'), findsOneWidget);
+      expect(find.text('Episodes'), findsOneWidget);
       expect(find.text('7.90'), findsOneWidget);
-      expect(find.text('166'), findsOneWidget);
-      expect(find.text('2500'), findsOneWidget);
-      expect(find.text('120'), findsOneWidget);
-      expect(find.text('40'), findsOneWidget);
+      expect(find.text('Mean score'), findsOneWidget);
     });
 
-    testWidgets('missing numbers fall back to zero or a dash', (tester) async {
+    testWidgets('a user without a join date or location omits those pills', (
+      tester,
+    ) async {
+      await open(tester, user: () => const MalUser(id: 1, name: 'andrizan'));
+
+      expect(find.textContaining('Since '), findsNothing);
+      expect(find.byIcon(Icons.location_on_outlined), findsNothing);
+      expect(find.text('Connected to MyAnimeList'), findsOneWidget);
+    });
+
+    testWidgets('missing headline numbers fall back to zero or a dash', (
+      tester,
+    ) async {
       await open(
         tester,
         user: () =>
@@ -183,16 +222,77 @@ void main() {
       expect(find.text('0'), findsWidgets);
     });
 
-    testWidgets('are hidden when signed out', (tester) async {
-      await open(tester, signedIn: false);
-
-      expect(find.text('Statistics'), findsNothing);
-    });
-
-    testWidgets('are hidden when MAL returned none', (tester) async {
+    testWidgets('a user without statistics has no headline numbers', (
+      tester,
+    ) async {
       await open(tester, user: () => const MalUser(id: 1, name: 'u'));
 
-      expect(find.text('Days Watched'), findsNothing);
+      expect(find.text('Days watched'), findsNothing);
+      expect(find.byType(LibrarySection), findsNothing);
+      expect(find.byType(TimeInvestedSection), findsNothing);
+    });
+  });
+
+  group('statistics and charts', () {
+    testWidgets('are shown for a signed in user', (tester) async {
+      await open(tester);
+
+      expect(find.byType(LibrarySection), findsOneWidget);
+      expect(find.byType(TimeInvestedSection), findsOneWidget);
+      expect(find.byType(InsightsSection), findsOneWidget);
+      expect(find.text('166 anime'), findsOneWidget);
+      expect(find.text('738 hours'), findsOneWidget);
+    });
+
+    testWidgets('the insight charts appear once the lists are analysed', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        insights: ProfileInsights(
+          totalCount: 4,
+          scoreCounts: const [0, 0, 0, 0, 0, 0, 1, 2, 0, 0],
+          genres: const [CountEntry('Action', 3)],
+          formats: const [CountEntry('TV', 4)],
+          activity: [
+            MonthActivity(month: DateTime(2026, 9), count: 2),
+            MonthActivity(month: DateTime(2026, 10), count: 1),
+          ],
+        ),
+      );
+
+      expect(find.text('Score distribution'), findsOneWidget);
+      expect(find.text('Top genres'), findsOneWidget);
+      expect(find.text('Formats'), findsOneWidget);
+      expect(find.text('Activity'), findsOneWidget);
+    });
+
+    testWidgets('are replaced by a login prompt when signed out', (
+      tester,
+    ) async {
+      await open(tester, signedIn: false);
+
+      expect(find.byType(LibrarySection), findsNothing);
+      expect(find.byType(InsightsSection), findsNothing);
+      expect(find.byType(ProfileHeader), findsNothing);
+      expect(find.text('Connect MyAnimeList'), findsOneWidget);
+    });
+
+    testWidgets('the login prompt opens the login page', (tester) async {
+      await open(tester, signedIn: false);
+
+      await tapVisible(tester, find.text('Log in'));
+
+      expect(openedRoute, '/login');
+    });
+
+    testWidgets('a user MAL returned nothing for shows no charts', (
+      tester,
+    ) async {
+      await open(tester, user: () => null);
+
+      expect(find.byType(LibrarySection), findsNothing);
+      expect(find.byType(InsightsSection), findsNothing);
     });
   });
 

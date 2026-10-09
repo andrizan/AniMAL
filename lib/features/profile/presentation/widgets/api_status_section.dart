@@ -1,6 +1,7 @@
 import 'package:animal/core/network/api_health_tracker.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,15 +12,14 @@ class ApiStatusSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final healthMap = ref.watch(apiHealthTrackerProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('API Status', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Card(
+        const ProfileSectionLabel('API Status'),
+        ProfileCard(
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               for (var i = 0; i < ApiSource.values.length; i++) ...[

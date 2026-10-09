@@ -5,9 +5,10 @@ import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/version_utils.dart';
 import 'package:animal/features/profile/presentation/widgets/api_status_section.dart';
+import 'package:animal/features/profile/presentation/widgets/profile_header.dart';
+import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,250 +21,36 @@ class AnimeProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authStatus = ref.watch(authControllerProvider);
-    final asyncUser = ref.watch(userInfoProvider);
+    final signedIn =
+        ref.watch(authControllerProvider) == AuthStatus.authenticated;
     final themeMode = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Profile header with real data
-          asyncUser.when(
-            loading: () => const Card(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    CircleAvatar(radius: 32),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Loading...'),
-                          SizedBox(height: 4),
-                          Text('Fetching profile'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            error: (error, _) => Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: theme.colorScheme.error,
-                      child: const Icon(
-                        Icons.error,
-                        color: AppColors.iconLight,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Failed to load profile',
-                            style: theme.textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Check your connection',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: () => ref.invalidate(userInfoProvider),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            data: (user) {
-              if (user == null) return const SizedBox.shrink();
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      // User avatar
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        backgroundImage: user.picture != null
-                            ? CachedNetworkImageProvider(user.picture!)
-                            : null,
-                        child: user.picture == null
-                            ? Icon(
-                                Icons.person,
-                                size: 32,
-                                color: theme.colorScheme.onPrimaryContainer,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(user.name, style: theme.textTheme.titleLarge),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Connected to MyAnimeList',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppColors.statusAiring,
-                              ),
-                            ),
-                            if (user.location != null) ...[
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    size: 14,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    user.location!,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () => ref.invalidate(userInfoProvider),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // Statistics section
-          if (authStatus == AuthStatus.authenticated) ...[
-            Text('Statistics', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            asyncUser.when(
-              loading: () => const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-              error: (error, _) => const SizedBox.shrink(),
-              data: (user) {
-                if (user == null) return const SizedBox.shrink();
-                final stats = user.animeStatistics;
-                if (stats == null) return const SizedBox.shrink();
-
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _StatRow(
-                          label: 'Days Watched',
-                          value:
-                              stats.numDaysWatched?.toStringAsFixed(1) ?? '0',
-                        ),
-                        _StatRow(
-                          label: 'Mean Score',
-                          value: stats.meanScore?.toStringAsFixed(2) ?? '-',
-                        ),
-                        _StatRow(
-                          label: 'Total Anime',
-                          value: '${stats.numItems ?? 0}',
-                        ),
-                        _StatRow(
-                          label: 'Episodes',
-                          value: '${stats.numEpisodes ?? 0}',
-                        ),
-                        const Divider(),
-                        _StatRow(
-                          label: 'Watching',
-                          value: '${stats.numItemsWatching ?? 0}',
-                          color: AppColors.statusAiring,
-                        ),
-                        _StatRow(
-                          label: 'Completed',
-                          value: '${stats.numItemsCompleted ?? 0}',
-                          color: AppColors.statusFinished,
-                        ),
-                        _StatRow(
-                          label: 'On Hold',
-                          value: '${stats.numItemsOnHold ?? 0}',
-                          color: theme.colorScheme.tertiary,
-                        ),
-                        _StatRow(
-                          label: 'Dropped',
-                          value: '${stats.numItemsDropped ?? 0}',
-                          color: theme.colorScheme.error,
-                        ),
-                        _StatRow(
-                          label: 'Plan to Watch',
-                          value: '${stats.numItemsPlanToWatch ?? 0}',
-                          color: theme.colorScheme.secondary,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-          ],
-
-          // API Status section
+          if (signedIn) ..._accountSections(ref) else const _SignInCard(),
           const ApiStatusSection(),
           const SizedBox(height: 24),
-
-          // Settings section
-          Text('Settings', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Card(
+          const ProfileSectionLabel('Settings'),
+          ProfileCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.language),
                   title: const Text('MyAnimeList Account'),
-                  subtitle: Text(
-                    authStatus == AuthStatus.authenticated
-                        ? 'Connected'
-                        : 'Tap to login',
-                  ),
-                  trailing: authStatus == AuthStatus.authenticated
+                  subtitle: Text(signedIn ? 'Connected' : 'Tap to login'),
+                  trailing: signedIn
                       ? const Icon(
                           Icons.check_circle,
                           color: AppColors.statusAiring,
                         )
                       : const Icon(Icons.chevron_right),
                   onTap: () {
-                    if (authStatus != AuthStatus.authenticated) {
-                      unawaited(context.pushNamed('login'));
-                    }
+                    if (!signedIn) unawaited(context.pushNamed('login'));
                   },
                 ),
                 const Divider(height: 1),
@@ -304,6 +91,7 @@ class AnimeProfilePage extends ConsumerWidget {
                     );
                   },
                 ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.code),
                   title: const Text('GitHub'),
@@ -311,6 +99,7 @@ class AnimeProfilePage extends ConsumerWidget {
                   trailing: const Icon(Icons.open_in_new, size: 20),
                   onTap: () => _launchGitHub(),
                 ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.system_update),
                   title: const Text('Check for Update'),
@@ -323,9 +112,7 @@ class AnimeProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Logout button
-          if (authStatus == AuthStatus.authenticated)
+          if (signedIn)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -346,6 +133,84 @@ class AnimeProfilePage extends ConsumerWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  List<Widget> _accountSections(WidgetRef ref) {
+    final asyncUser = ref.watch(userInfoProvider);
+    final user = asyncUser.value;
+    final stats = user?.animeStatistics;
+
+    return [
+      asyncUser.when(
+        skipLoadingOnReload: true,
+        loading: () => const ProfileHeaderPlaceholder(),
+        error: (error, _) =>
+            ProfileHeaderError(onRetry: () => ref.invalidate(userInfoProvider)),
+        data: (user) => user == null
+            ? const SizedBox.shrink()
+            : ProfileHeader(
+                user: user,
+                onRefresh: () => ref.invalidate(userInfoProvider),
+              ),
+      ),
+      if (stats != null) ...[
+        const SizedBox(height: 12),
+        LibrarySection(stats: stats),
+        const SizedBox(height: 12),
+        TimeInvestedSection(stats: stats),
+      ],
+      if (user != null) ...[
+        const SizedBox(height: 12),
+        const InsightsSection(),
+      ],
+      const SizedBox(height: 24),
+    ];
+  }
+}
+
+class _SignInCard extends StatelessWidget {
+  const _SignInCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: ProfileCard(
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            children: [
+              Icon(
+                Icons.account_circle_outlined,
+                size: 56,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Connect MyAnimeList',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Log in to see your library stats and charts.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => unawaited(context.pushNamed('login')),
+                child: const Text('Log in'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -441,34 +306,5 @@ Future<void> _checkForUpdate(
     if (!context.mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text('Failed to check update: $e')));
-  }
-}
-
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.label, required this.value, this.color});
-
-  final String label;
-  final String value;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: theme.textTheme.bodyMedium),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
