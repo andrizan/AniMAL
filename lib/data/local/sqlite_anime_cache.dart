@@ -1,3 +1,5 @@
+import 'dart:math' show min;
+
 import 'package:animal/data/local/anime_cache.dart';
 import 'package:animal/data/local/app_database.dart';
 import 'package:animal/data/local/cache_mappers.dart';
@@ -279,21 +281,48 @@ class SqliteAnimeCache implements AnimeCache {
     return map[malId] ?? const <Genre>[];
   }
 
+  static const _maxSqlVariables = 500;
+
+  Iterable<List<int>> _chunks(List<int> ids) sync* {
+    for (var i = 0; i < ids.length; i += _maxSqlVariables) {
+      yield ids.sublist(i, min(i + _maxSqlVariables, ids.length));
+    }
+  }
+
   Future<Map<int, List<Genre>>> _loadGenresForMany(List<int> malIds) async {
-    if (malIds.isEmpty) return const <int, List<Genre>>{};
-    final placeholders = List.filled(malIds.length, '?').join(',');
-    final rows = await _db.rawQuery('''
-      SELECT ag.mal_id, g.id, g.name
-      FROM anime_genre ag
-      JOIN genre g ON g.id = ag.genre_id
-      WHERE ag.mal_id IN ($placeholders)
-      ORDER BY ag.mal_id, g.id
-      ''', malIds);
     final result = <int, List<Genre>>{};
-    for (final row in rows) {
-      final mid = row['mal_id']! as int;
-      final g = Genre(id: row['id']! as int, name: row['name']! as String);
-      result.putIfAbsent(mid, () => <Genre>[]).add(g);
+    for (final chunk in _chunks(malIds)) {
+      final placeholders = List.filled(chunk.length, '?').join(',');
+      final rows = await _db.rawQuery('''
+        SELECT ag.mal_id, g.id, g.name
+        FROM anime_genre ag
+        JOIN genre g ON g.id = ag.genre_id
+        WHERE ag.mal_id IN ($placeholders)
+        ORDER BY ag.mal_id, g.id
+        ''', chunk);
+      for (final row in rows) {
+        final mid = row['mal_id']! as int;
+        final g = Genre(id: row['id']! as int, name: row['name']! as String);
+        result.putIfAbsent(mid, () => <Genre>[]).add(g);
+      }
+    }
+    return result;
+  }
+
+  Future<Map<int, Map<String, Object?>>> _loadAnimeRows(
+    DatabaseExecutor txn,
+    List<int> malIds,
+  ) async {
+    final result = <int, Map<String, Object?>>{};
+    for (final chunk in _chunks(malIds)) {
+      final placeholders = List.filled(chunk.length, '?').join(',');
+      final rows = await txn.rawQuery(
+        'SELECT * FROM anime WHERE mal_id IN ($placeholders)',
+        chunk,
+      );
+      for (final row in rows) {
+        result[row['mal_id']! as int] = {...row};
+      }
     }
     return result;
   }
@@ -307,20 +336,52 @@ class SqliteAnimeCache implements AnimeCache {
         ? 'user_anime_list_item'
         : 'anime_query_item';
     await _db.transaction((txn) async {
+      final known = await _loadAnimeRows(txn, [for (final a in results) a.id]);
+      final batch = txn.batch();
       for (final a in results) {
-        await _upsertAnime(txn, a);
-        await _upsertGenres(txn, a.id, a.genres);
+        _queueAnimeUpsert(batch, a, known[a.id]);
+        _queueGenres(batch, a.id, a.genres);
       }
-      await txn.delete(itemsTable, where: 'cache_key = ?', whereArgs: [key]);
+      batch.delete(itemsTable, where: 'cache_key = ?', whereArgs: [key]);
       for (var i = 0; i < results.length; i++) {
-        await txn.insert(itemsTable, {
+        batch.insert(itemsTable, {
           'cache_key': key,
           'mal_id': results[i].id,
           'position': i,
         });
       }
-      await _upsertCacheMeta(txn, key);
+      batch.insert('cache_meta', {
+        'cache_key': key,
+        'fetched_at': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await batch.commit(noResult: true);
     });
+  }
+
+  void _queueAnimeUpsert(Batch batch, Anime a, Map<String, Object?>? existing) {
+    final row = _mappers.animeToRow(a);
+    if (existing == null) {
+      batch.insert('anime', row);
+      return;
+    }
+    final merged = <String, Object?>{...existing};
+    row.forEach((k, v) {
+      if (v != null) merged[k] = v;
+    });
+    batch.update('anime', merged, where: 'mal_id = ?', whereArgs: [a.id]);
+  }
+
+  void _queueGenres(Batch batch, int malId, List<Genre> genres) {
+    if (genres.isEmpty) return;
+    batch.delete('anime_genre', where: 'mal_id = ?', whereArgs: [malId]);
+    for (final g in genres) {
+      batch
+        ..insert('genre', {
+          'id': g.id,
+          'name': g.name,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore)
+        ..insert('anime_genre', {'mal_id': malId, 'genre_id': g.id});
+    }
   }
 
   Future<void> _saveDetailInTxn(AnimeDetail detail, String key) async {

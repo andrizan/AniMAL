@@ -105,6 +105,68 @@ void main() {
       );
     });
 
+    test(
+      'userlist: round-trips more entries than SQLite variable limit',
+      () async {
+        const genres = [
+          Genre(id: 1, name: 'Action'),
+          Genre(id: 2, name: 'Drama'),
+        ];
+        final list = [
+          for (var i = 1; i <= 1500; i++) makeAnime(i, genres: genres),
+        ];
+        await cache.saveUserAnimeList('completed', 500, 0, list);
+
+        final out = await cache.getUserAnimeList('completed', 500, 0);
+
+        expect(out!.map((a) => a.id).toList(), [
+          for (var i = 1; i <= 1500; i++) i,
+        ]);
+        expect(out.first.genres.map((g) => g.name), ['Action', 'Drama']);
+        expect(out.last.genres.map((g) => g.name), ['Action', 'Drama']);
+      },
+    );
+
+    test('userlist: re-saving a list keeps richer cached fields', () async {
+      await cache.saveUserAnimeList('watching', 500, 0, [
+        makeAnime(
+          1,
+          genres: const [Genre(id: 1, name: 'Action')],
+          myListStatus: const MyListStatus(
+            status: WatchStatus.watching,
+            numEpisodesWatched: 3,
+          ),
+        ),
+      ]);
+
+      await cache.saveUserAnimeList('watching', 500, 0, [
+        makeAnime(1, title: 'Renamed'),
+        makeAnime(2),
+      ]);
+
+      final out = await cache.getUserAnimeList('watching', 500, 0);
+      expect(out!.map((a) => a.id).toList(), [1, 2]);
+      expect(out.first.title, 'Renamed');
+      expect(out.first.genres.map((g) => g.name), ['Action']);
+      expect(out.first.myListStatus?.numEpisodesWatched, 3);
+    });
+
+    test(
+      'userlist: anime already cached by search is updated in place',
+      () async {
+        await cache.saveSearchResults('q', 20, [makeAnime(1), makeAnime(2)]);
+        await cache.saveUserAnimeList('watching', 500, 0, [
+          makeAnime(2, title: 'From list'),
+        ]);
+
+        final userlist = await cache.getUserAnimeList('watching', 500, 0);
+        final search = await cache.getSearchResults('q', 20);
+        expect(userlist!.map((a) => a.id).toList(), [2]);
+        expect(search!.map((a) => a.id).toList(), [1, 2]);
+        expect(search.last.title, 'From list');
+      },
+    );
+
     test('anime shared by search and seasonal is a single row', () async {
       final list1 = [makeAnime(1, title: 'X')];
       final list2 = [makeAnime(1, title: 'X')];
