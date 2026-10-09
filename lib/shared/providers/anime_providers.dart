@@ -316,17 +316,10 @@ class AnimeRepository {
           newLimit,
           newOffset,
         );
-        if (existingNewList != null) {
-          if (!existingNewList.any((a) => a.id == animeId)) {
-            await _cache.saveUserAnimeList(
-              newStatus.value,
-              newLimit,
-              newOffset,
-              [...existingNewList, sourceAnime.copyWith(myListStatus: updated)],
-            );
-          }
-        } else {
+        if (existingNewList != null &&
+            !existingNewList.any((a) => a.id == animeId)) {
           await _cache.saveUserAnimeList(newStatus.value, newLimit, newOffset, [
+            ...existingNewList,
             sourceAnime.copyWith(myListStatus: updated),
           ]);
         }
