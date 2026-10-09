@@ -1,3 +1,4 @@
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
@@ -101,7 +102,11 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
       final status = _statuses[_tabController.index];
       await ref
           .read(animeCacheProvider)
-          .invalidateUserAnimeList(status.value, 100, 0);
+          .invalidateUserAnimeList(
+            status.value,
+            ApiConstants.malUserListPageSize,
+            0,
+          );
       await Future.wait([_refreshSchedule(), _refreshUserList(status)]);
     } finally {
       if (mounted) setState(() => _isRefreshing = false);

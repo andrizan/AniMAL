@@ -322,7 +322,6 @@ class AiringRepository {
     try {
       final list = await _animeRepo.getUserAnimeList(
         status: WatchStatus.watching,
-        limit: 100,
       );
       return {for (final a in list) a.id: a};
     } on Object catch (_) {

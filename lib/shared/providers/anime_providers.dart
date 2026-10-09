@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
@@ -190,18 +191,16 @@ class AnimeRepository {
 
   Future<List<Anime>> getUserAnimeList({
     WatchStatus status = WatchStatus.watching,
-    int limit = 100,
-    int offset = 0,
   }) {
-    final key = SqliteAnimeCache.userListKey(status.value, limit, offset);
+    const limit = ApiConstants.malUserListPageSize;
+    final key = SqliteAnimeCache.userListKey(status.value, limit, 0);
     return _swrList<Anime>(
       key: key,
       ttl: _ttlUserList,
-      readFresh: () => _cache.getUserAnimeList(status.value, limit, offset),
-      networkFetch: () =>
-          _api.getUserAnimeList(status: status, limit: limit, offset: offset),
+      readFresh: () => _cache.getUserAnimeList(status.value, limit, 0),
+      networkFetch: () => _api.getUserAnimeList(status: status),
       writeCache: (list) =>
-          _cache.saveUserAnimeList(status.value, limit, offset, list),
+          _cache.saveUserAnimeList(status.value, limit, 0, list),
     );
   }
 
@@ -267,7 +266,7 @@ class AnimeRepository {
   Future<void> _applyListMutation(int animeId, MyListStatus updated) async {
     try {
       final newStatus = updated.status;
-      const newLimit = 100;
+      const newLimit = ApiConstants.malUserListPageSize;
       const newOffset = 0;
       final newKey = SqliteAnimeCache.userListKey(
         newStatus.value,

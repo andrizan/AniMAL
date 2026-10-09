@@ -105,27 +105,36 @@ class MalApiClient {
 
   Future<List<Anime>> getUserAnimeList({
     WatchStatus status = WatchStatus.watching,
-    int limit = 100,
-    int offset = 0,
   }) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      MalEndpoints.animeList,
-      queryParameters: {
-        'status': status.value,
-        'limit': limit,
-        'offset': offset,
-        'fields': _userListFields,
-        'nsfw': true,
-      },
-    );
-    final data = _extractList(response.data, 'data') ?? [];
-    return data
-        .map(
-          (e) => Anime.fromJson(
-            (e as Map<String, dynamic>)['node'] as Map<String, dynamic>,
-          ),
-        )
-        .toList();
+    final byId = <int, Anime>{};
+    var offset = 0;
+    bool hasNext;
+    do {
+      final response = await _dio.get<Map<String, dynamic>>(
+        MalEndpoints.animeList,
+        queryParameters: {
+          'status': status.value,
+          'limit': ApiConstants.malUserListPageSize,
+          'offset': offset,
+          'fields': _userListFields,
+          'nsfw': true,
+        },
+      );
+      final data = _extractList(response.data, 'data') ?? [];
+      for (final e in data) {
+        final anime = Anime.fromJson(
+          (e as Map<String, dynamic>)['node'] as Map<String, dynamic>,
+        );
+        byId[anime.id] = anime;
+      }
+      offset += data.length;
+      final paging = response.data?['paging'];
+      hasNext =
+          data.isNotEmpty &&
+          paging is Map<String, dynamic> &&
+          paging['next'] != null;
+    } while (hasNext);
+    return byId.values.toList();
   }
 
   Future<void> deleteAnimeFromList(int animeId) async {

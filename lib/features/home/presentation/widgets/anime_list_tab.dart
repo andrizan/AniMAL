@@ -1,3 +1,4 @@
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
@@ -86,7 +87,11 @@ class AnimeListTab extends ConsumerWidget {
       onRefresh: () async {
         await ref
             .read(animeCacheProvider)
-            .invalidateUserAnimeList(status.value, 100, 0);
+            .invalidateUserAnimeList(
+              status.value,
+              ApiConstants.malUserListPageSize,
+              0,
+            );
         try {
           await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
         } on Object catch (_) {}
