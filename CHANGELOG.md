@@ -1,3 +1,38 @@
+## [2.9.0] - 2026-10-09
+
+### Bug Fixes
+
+- Chunk genre lookups and batch list writes
+- Fetch complete user lists instead of the first 100 entries
+- Stop caching a one-item list for never-fetched statuses
+- Stop leaking unhandled errors from in-flight cleanup
+- Keep the stored week in sync with list edits
+- Keep scroll position when an edit reloads a page
+
+### Chores
+
+- Bump version to 2.8.0+11 [skip ci]
+
+### Documentation
+
+- Document list edit and reload rules
+
+### Features
+
+- Refresh anilist airing schedule on list refresh
+- Refresh anilist airing schedule on list pull-to-refresh
+
+### Performance
+
+- Run airing and user list refresh in parallel
+- Apply list mutations in a single sql transaction
+- Log request and response bodies lazily
+- Drop unused description from the schedule query
+- Batch airing schedule writes
+- Fetch schedule pages in parallel waves
+- Share list refresh and run pull-to-refresh in parallel
+- Open the database and init notifications in parallel
+- Bundle Inter and drop the inert Noto Sans JP fallback
 ## [2.8.0] - 2026-10-06
 
 ### Bug Fixes
