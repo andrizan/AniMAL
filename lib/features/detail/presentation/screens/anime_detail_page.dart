@@ -671,51 +671,56 @@ class _MyListStatusCardState extends ConsumerState<_MyListStatusCard> {
       showModalBottomSheet<void>(
         context: context,
         builder: (ctx) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Change Status',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'Change Status',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-              for (final s in WatchStatus.values)
-                Builder(
-                  builder: (_) {
-                    final disabled =
-                        _busy || (s == WatchStatus.completed && !isFinished);
-                    return ListTile(
-                      leading: Icon(_statusIcon(s)),
-                      title: Text(
-                        s.label,
-                        style: TextStyle(
-                          color: disabled
-                              ? theme.colorScheme.onSurfaceVariant
-                              : null,
+                for (final s in WatchStatus.values)
+                  Builder(
+                    builder: (_) {
+                      final disabled =
+                          _busy || (s == WatchStatus.completed && !isFinished);
+                      return ListTile(
+                        leading: Icon(_statusIcon(s)),
+                        title: Text(
+                          s.label,
+                          style: TextStyle(
+                            color: disabled
+                                ? theme.colorScheme.onSurfaceVariant
+                                : null,
+                          ),
                         ),
-                      ),
-                      subtitle: disabled && s == WatchStatus.completed
-                          ? const Text(
-                              'Only available for finished anime',
-                              style: TextStyle(fontSize: 11),
-                            )
-                          : null,
-                      trailing: s == widget.detail.myListStatus!.status
-                          ? Icon(Icons.check, color: theme.colorScheme.primary)
-                          : null,
-                      onTap: disabled
-                          ? null
-                          : () {
-                              Navigator.pop(ctx);
-                              unawaited(_changeStatus(s));
-                            },
-                    );
-                  },
-                ),
-              const SizedBox(height: 8),
-            ],
+                        subtitle: disabled && s == WatchStatus.completed
+                            ? const Text(
+                                'Only available for finished anime',
+                                style: TextStyle(fontSize: 11),
+                              )
+                            : null,
+                        trailing: s == widget.detail.myListStatus!.status
+                            ? Icon(
+                                Icons.check,
+                                color: theme.colorScheme.primary,
+                              )
+                            : null,
+                        onTap: disabled
+                            ? null
+                            : () {
+                                Navigator.pop(ctx);
+                                unawaited(_changeStatus(s));
+                              },
+                      );
+                    },
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ),
@@ -1217,6 +1222,9 @@ class _AniListExtraSectionState extends State<_AniListExtraSection> {
     final official = links.where((l) => l.type == 'INFO').toList();
     final streaming = links.where((l) => l.type == 'STREAMING').toList();
     final social = links.where((l) => l.type == 'SOCIAL').toList();
+    if (official.isEmpty && streaming.isEmpty && social.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
