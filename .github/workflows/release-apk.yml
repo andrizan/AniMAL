@@ -129,19 +129,25 @@ jobs:
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.jvmargs=-Xmx4g"
         run: |
-          flutter build apk --release --no-pub \
+          flutter build apk --release --split-per-abi \
+            --target-platform android-arm,android-arm64 --no-pub \
             --dart-define=MAL_CLIENT_ID="${{ secrets.MAL_CLIENT_ID }}" \
             --dart-define=MAL_CLIENT_SECRET="${{ secrets.MAL_CLIENT_SECRET }}" \
             --dart-define=MAL_REDIRECT_URI="${{ secrets.MAL_REDIRECT_URI }}"
 
-      - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/animal-${{ github.ref_name }}.apk
+      - name: Rename APKs
+        run: |
+          set -euo pipefail
+          cd build/app/outputs/flutter-apk
+          for abi in arm64-v8a armeabi-v7a; do
+            mv "app-${abi}-release.apk" "animal-${{ github.ref_name }}-${abi}.apk"
+          done
 
-      - name: Upload APK
+      - name: Upload APKs
         uses: actions/upload-artifact@v7
         with:
           name: animal-apk
-          path: build/app/outputs/flutter-apk/animal-${{ github.ref_name }}.apk
+          path: build/app/outputs/flutter-apk/animal-${{ github.ref_name }}-*.apk
           if-no-files-found: error
 
   release:
@@ -159,7 +165,7 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Download APK
+      - name: Download APKs
         uses: actions/download-artifact@v8
         with:
           name: animal-apk
@@ -169,7 +175,7 @@ jobs:
         run: |
           set -euo pipefail
           ls -la dist
-          test "$(find dist -maxdepth 1 -type f -name '*.apk' | wc -l)" -gt 0
+          test "$(find dist -maxdepth 1 -type f -name '*.apk' | wc -l)" -eq 2
 
       - name: Resolve release metadata
         id: release-metadata
@@ -198,7 +204,7 @@ jobs:
         env:
           OUTPUT: CHANGELOG.md
 
-      - name: Create release and upload APK
+      - name: Create release and upload APKs
         uses: softprops/action-gh-release@v3
         with:
           name: AniMAL ${{ github.ref_name }}
