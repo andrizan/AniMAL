@@ -152,7 +152,9 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 
 ### Profile Page
 - Real data from MAL `/users/@me`.
-- Stats: days watched, mean score, total anime, episodes, per-status counts.
+- Header: avatar, name, member-since, location, plus days watched, episodes and mean score.
+- Library donut (per-status counts), time invested (days per status), then insight charts: score distribution, top genres, formats, activity. Insights are computed from the cached user lists by `GetProfileInsights` (`profileInsightsProvider`), never from extra API calls.
+- Charts are custom-painted widgets in `profile_charts.dart` (no chart dependency, to keep the APK small). Chart colours come from `AppColors` (`chartPalette`, status colours).
 
 ## Font
 
