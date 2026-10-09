@@ -49,6 +49,9 @@ class AnimeLabels {
         'ona' => 'ONA',
         'special' => compact ? 'SP' : 'Special',
         'music' => compact ? 'MV' : 'Music',
+        'tv_special' => compact ? 'TV SP' : 'TV Special',
+        'cm' => 'CM',
+        'pv' => 'PV',
         _ => type ?? '',
       };
 

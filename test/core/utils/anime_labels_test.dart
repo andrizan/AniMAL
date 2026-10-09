@@ -69,10 +69,14 @@ void main() {
       expect(AnimeLabels.mediaTypeLabel('special', compact: true), 'SP');
       expect(AnimeLabels.mediaTypeLabel('music'), 'Music');
       expect(AnimeLabels.mediaTypeLabel('music', compact: true), 'MV');
+      expect(AnimeLabels.mediaTypeLabel('tv_special'), 'TV Special');
+      expect(AnimeLabels.mediaTypeLabel('tv_special', compact: true), 'TV SP');
+      expect(AnimeLabels.mediaTypeLabel('cm'), 'CM');
+      expect(AnimeLabels.mediaTypeLabel('pv'), 'PV');
     });
 
     test('falls back safely', () {
-      expect(AnimeLabels.mediaTypeLabel('cm'), 'cm');
+      expect(AnimeLabels.mediaTypeLabel('weird'), 'weird');
       expect(AnimeLabels.mediaTypeLabel(null), '');
     });
   });
