@@ -26,12 +26,13 @@ abstract final class AppRoutes {
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authStatus = ref.watch(authControllerProvider);
+  final refresh = AuthRefreshListenable(ref);
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/home',
-    refreshListenable: AuthRefreshListenable(ref),
-    redirect: (context, state) => authGuard(state, authStatus),
+    refreshListenable: refresh,
+    redirect: (context, state) =>
+        authGuard(state, ref.read(authControllerProvider)),
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
@@ -152,4 +153,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  ref.onDispose(() {
+    router.dispose();
+    refresh.dispose();
+  });
+  return router;
 });
