@@ -127,6 +127,20 @@ class AnimeRepository {
     );
   }
 
+  static const _undatedRankingType = 'upcoming_undated';
+
+  Future<List<Anime>> getUndatedUpcomingAnime() {
+    const limit = ApiConstants.malRankingPageSize;
+    return _swrList<Anime>(
+      key: SqliteAnimeCache.rankingKey(_undatedRankingType, limit),
+      ttl: _ttlMedium,
+      readFresh: () => _cache.getAnimeRanking(_undatedRankingType, limit),
+      networkFetch: _api.getUndatedUpcomingAnime,
+      writeCache: (list) =>
+          _cache.saveAnimeRanking(_undatedRankingType, limit, list),
+    );
+  }
+
   // ---------- Detail (SWR over T?) ----------
 
   Future<AnimeDetail?> getAnimeDetail(int animeId) {

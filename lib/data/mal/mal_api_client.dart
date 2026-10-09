@@ -103,6 +103,39 @@ class MalApiClient {
         .toList();
   }
 
+  Future<List<Anime>> getUndatedUpcomingAnime() async {
+    final undated = <Anime>[];
+    for (var page = 0; page < ApiConstants.malUpcomingMaxPages; page++) {
+      final response = await _dio.get<Map<String, dynamic>>(
+        MalEndpoints.ranking(),
+        queryParameters: {
+          'ranking_type': 'upcoming',
+          'limit': ApiConstants.malRankingPageSize,
+          'offset': page * ApiConstants.malRankingPageSize,
+          'fields': '$_listFields,start_date',
+          'nsfw': true,
+        },
+      );
+      final data = _extractList(response.data, 'data') ?? [];
+      for (final e in data) {
+        final node =
+            (e as Map<String, dynamic>)['node'] as Map<String, dynamic>;
+        if (node['start_date'] == null) {
+          undated.add(Anime.fromJson(node));
+        }
+      }
+      final paging = response.data?['paging'];
+      final hasNext =
+          data.isNotEmpty &&
+          paging is Map<String, dynamic> &&
+          paging['next'] != null;
+      if (!hasNext) {
+        break;
+      }
+    }
+    return undated;
+  }
+
   Future<List<Anime>> getUserAnimeList({
     WatchStatus status = WatchStatus.watching,
   }) async {

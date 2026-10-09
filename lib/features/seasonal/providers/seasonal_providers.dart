@@ -62,6 +62,13 @@ final animeScheduleProvider =
       return repo.getSeasonalAnime(year: params.year, season: params.season);
     });
 
+/// Fetches upcoming anime that have no start date yet.
+final undatedAnimeProvider = FutureProvider<List<Anime>>((ref) {
+  ref.watch(animeListVersionProvider);
+  final repo = ref.watch(animeRepositoryProvider);
+  return repo.getUndatedUpcomingAnime();
+});
+
 /// Fetches and groups the seasonal anime schedule by broadcast day.
 // ignore: specify_nonobvious_property_types
 final groupedSeasonalAnimeProvider =

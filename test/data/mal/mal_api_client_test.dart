@@ -199,4 +199,104 @@ void main() {
       expect(await c.getUserInfo(), isNull);
     });
   });
+
+  group('MalApiClient.getUndatedUpcomingAnime', () {
+    Map<String, Object?> node(int id, {String? startDate}) => {
+      'node': {
+        'id': id,
+        'title': 'T$id',
+        if (startDate != null) 'start_date': startDate,
+      },
+    };
+
+    Map<String, Object?> page(List<int> ids, {Set<int> dated = const {}}) => {
+      'data': [
+        for (final id in ids)
+          node(id, startDate: dated.contains(id) ? '2027-04' : null),
+      ],
+      'paging': {'next': 'https://example.test/next'},
+    };
+
+    test('keeps only the anime without a start date', () async {
+      final adapter = FakeAdapter(
+        (_) => FakeResponse.json({
+          'data': [node(1), node(2, startDate: '2027'), node(3)],
+        }),
+      );
+      final dio = fakeDio(adapter, baseUrl: 'https://example.test');
+
+      final out = await MalApiClient(dio).getUndatedUpcomingAnime();
+
+      expect(out.map((a) => a.id), [1, 3]);
+      final query = adapter.requests.single.queryParameters;
+      expect(query['ranking_type'], 'upcoming');
+      expect(query['limit'], 500);
+      expect(query['fields'], contains('start_date'));
+    });
+
+    test('stops when the server has no further page', () async {
+      final adapter = FakeAdapter(
+        (_) => const FakeResponse.json({
+          'data': [
+            {
+              'node': {'id': 1, 'title': 'T1'},
+            },
+          ],
+          'paging': <String, Object?>{},
+        }),
+      );
+      final dio = fakeDio(adapter, baseUrl: 'https://example.test');
+
+      await MalApiClient(dio).getUndatedUpcomingAnime();
+
+      expect(adapter.requests, hasLength(1));
+    });
+
+    test('scans a bounded number of pages and advances the offset', () async {
+      var next = 1;
+      final adapter = FakeAdapter((_) => FakeResponse.json(page([next++])));
+      final dio = fakeDio(adapter, baseUrl: 'https://example.test');
+
+      final out = await MalApiClient(dio).getUndatedUpcomingAnime();
+
+      expect(adapter.requests.map((o) => o.queryParameters['offset']), [
+        0,
+        500,
+        1000,
+      ]);
+      expect(out.map((a) => a.id), [1, 2, 3]);
+    });
+
+    test(
+      'an empty page ends the scan even if it links to a next one',
+      () async {
+        final adapter = FakeAdapter(
+          (_) => const FakeResponse.json({
+            'data': <Object?>[],
+            'paging': {'next': 'https://example.test/next'},
+          }),
+        );
+        final dio = fakeDio(adapter, baseUrl: 'https://example.test');
+
+        final out = await MalApiClient(dio).getUndatedUpcomingAnime();
+
+        expect(out, isEmpty);
+        expect(adapter.requests, hasLength(1));
+      },
+    );
+
+    test('a failing page fails the whole fetch', () async {
+      final adapter = FakeAdapter(
+        (o) => o.queryParameters['offset'] == 500
+            ? const FakeResponse.json({}, status: 500)
+            : FakeResponse.json(page([1])),
+      );
+      final dio = fakeDio(adapter, baseUrl: 'https://example.test');
+
+      await expectLater(
+        MalApiClient(dio).getUndatedUpcomingAnime(),
+        throwsA(isA<DioException>()),
+      );
+    });
+  });
 }

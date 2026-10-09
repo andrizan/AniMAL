@@ -14,6 +14,16 @@ class _Repo extends Fake implements AnimeRepository {
   final calls = <({int year, Season season})>[];
   final failing = <({int year, Season season})>{};
   final data = <({int year, Season season}), List<Anime>>{};
+  var undated = <Anime>[];
+  var undatedCalls = 0;
+  var undatedFails = false;
+
+  @override
+  Future<List<Anime>> getUndatedUpcomingAnime() async {
+    undatedCalls++;
+    if (undatedFails) throw Exception('offline');
+    return undated;
+  }
 
   @override
   Future<List<Anime>> getSeasonalAnime({
@@ -189,6 +199,66 @@ void main() {
 
       expect(find.text('Select Year'), findsNothing);
       expect(find.text('${year - 2}'), findsOneWidget);
+    });
+  });
+
+  group('Later tab', () {
+    Future<void> openLater(WidgetTester tester) async {
+      await open(tester);
+      await tester.tap(find.widgetWithText(Tab, 'Later'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('lists the anime without a start date', (tester) async {
+      repo.undated = [_anime(11), _anime(12)];
+
+      await openLater(tester);
+
+      final ids = tester
+          .widgetList<AnimeCard>(find.byType(AnimeCard))
+          .map((c) => c.anime.id)
+          .toList();
+      expect(ids, [11, 12]);
+    });
+
+    testWidgets('does not depend on the selected year', (tester) async {
+      repo.undated = [_anime(11)];
+      await open(tester);
+
+      await tester.tap(find.byIcon(Icons.chevron_left));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(Tab, 'Later'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AnimeCard), findsOneWidget);
+      expect(repo.undatedCalls, 1);
+      expect(
+        repo.calls.where(
+          (c) => c.season == Season.winter && c.year == year + 1,
+        ),
+        isEmpty,
+      );
+    });
+
+    testWidgets('says so when there are none', (tester) async {
+      await openLater(tester);
+
+      expect(find.text('No anime without a start date'), findsOneWidget);
+    });
+
+    testWidgets('a failure shows an error and Retry reloads', (tester) async {
+      repo.undatedFails = true;
+      await openLater(tester);
+      expect(find.text('Failed to load upcoming anime'), findsOneWidget);
+
+      repo
+        ..undatedFails = false
+        ..undated = [_anime(11)];
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AnimeCard), findsOneWidget);
+      expect(find.text('Failed to load upcoming anime'), findsNothing);
     });
   });
 }

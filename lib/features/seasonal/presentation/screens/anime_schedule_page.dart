@@ -135,7 +135,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
               ..._seasons.map((season) {
                 return _SeasonAnimeList(year: _selectedYear, season: season);
               }),
-              _LaterAnimeList(year: _selectedYear),
+              const _LaterAnimeList(),
             ],
           ),
         ),
@@ -327,17 +327,13 @@ class _SeasonAnimeList extends ConsumerWidget {
   }
 }
 
-/// "Later" tab — anime that have no broadcast year/date.
+/// "Later" tab — upcoming anime that have no start date yet.
 class _LaterAnimeList extends ConsumerWidget {
-  const _LaterAnimeList({this.year});
-
-  final int? year;
+  const _LaterAnimeList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final now = DateTime.now();
-    final params = (year: year ?? now.year + 1, season: Season.winter);
-    final asyncAnime = ref.watch(animeScheduleProvider(params));
+    final asyncAnime = ref.watch(undatedAnimeProvider);
     final theme = Theme.of(context);
 
     return asyncAnime.when(
@@ -352,7 +348,7 @@ class _LaterAnimeList extends ConsumerWidget {
             const Text('Failed to load upcoming anime'),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => ref.invalidate(animeScheduleProvider(params)),
+              onPressed: () => ref.invalidate(undatedAnimeProvider),
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
             ),
@@ -372,7 +368,7 @@ class _LaterAnimeList extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No upcoming anime found',
+                  'No anime without a start date',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -383,7 +379,7 @@ class _LaterAnimeList extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
+          onRefresh: () async => ref.invalidate(undatedAnimeProvider),
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemExtent: 126,

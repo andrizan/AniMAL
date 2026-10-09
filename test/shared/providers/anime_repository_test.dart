@@ -151,6 +151,44 @@ void main() {
     expect(adapter.requests.first.queryParameters['ranking_type'], 'airing');
   });
 
+  group('undated upcoming', () {
+    setUp(() {
+      respond = (_) => const FakeResponse.json({
+        'data': [
+          {
+            'node': {'id': 1, 'title': 'Undated'},
+          },
+          {
+            'node': {'id': 2, 'title': 'Dated', 'start_date': '2027-04'},
+          },
+        ],
+      });
+    });
+
+    test(
+      'lists the anime without a start date and caches the result',
+      () async {
+        final first = await repo.getUndatedUpcomingAnime();
+        final again = await repo.getUndatedUpcomingAnime();
+
+        expect(first.map((a) => a.id), [1]);
+        expect(again.map((a) => a.id), [1]);
+        expect(calls('/ranking'), 1);
+      },
+    );
+
+    test(
+      'does not share a cache entry with the plain upcoming ranking',
+      () async {
+        await repo.getUndatedUpcomingAnime();
+        final ranking = await repo.getAnimeRanking(rankingType: 'upcoming');
+
+        expect(ranking.map((a) => a.id), [1, 2]);
+        expect(calls('/ranking'), 2);
+      },
+    );
+  });
+
   group('detail', () {
     setUp(() {
       respond = (_) => const FakeResponse.json({
