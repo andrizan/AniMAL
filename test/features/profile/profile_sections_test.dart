@@ -7,6 +7,7 @@ import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/widgets/section_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -352,11 +353,11 @@ void main() {
     });
   });
 
-  group('ProfileCard', () {
+  group('SectionCard', () {
     testWidgets('shows its title and trailing caption', (tester) async {
       await _show(
         tester,
-        const ProfileCard(
+        const SectionCard(
           title: 'Title',
           trailing: 'caption',
           child: Text('body'),
@@ -369,7 +370,7 @@ void main() {
     });
 
     testWidgets('works without a title', (tester) async {
-      await _show(tester, const ProfileCard(child: Text('body')));
+      await _show(tester, const SectionCard(child: Text('body')));
 
       expect(find.text('body'), findsOneWidget);
     });

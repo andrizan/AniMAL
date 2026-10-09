@@ -10,6 +10,7 @@ import 'package:animal/features/profile/presentation/widgets/profile_header.dart
 import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
+import 'package:animal/shared/widgets/section_card.dart';
 import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -42,7 +43,7 @@ class AnimeProfilePage extends ConsumerWidget {
           const ApiStatusSection(),
           const SizedBox(height: 24),
           const SectionHeader('Settings'),
-          ProfileCard(
+          SectionCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
@@ -185,7 +186,7 @@ class _SignInCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
-      child: ProfileCard(
+      child: SectionCard(
         child: SizedBox(
           width: double.infinity,
           child: Column(

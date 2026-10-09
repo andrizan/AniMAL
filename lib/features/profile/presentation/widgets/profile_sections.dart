@@ -7,45 +7,11 @@ import 'package:animal/features/profile/domain/entities/profile_insights.dart';
 import 'package:animal/features/profile/presentation/widgets/profile_charts.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart';
-import 'package:animal/shared/widgets/section_header.dart';
+import 'package:animal/shared/widgets/section_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _topGenreCount = 6;
-
-class ProfileCard extends StatelessWidget {
-  const ProfileCard({
-    required this.child,
-    super.key,
-    this.title,
-    this.trailing,
-    this.padding = const EdgeInsets.all(AppSpacing.lg),
-  });
-
-  final String? title;
-  final String? trailing;
-  final EdgeInsetsGeometry padding;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (title != null)
-              SectionHeader(title!, trailing: trailing, bottomPadding: 16),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 Color _statusColor(BuildContext context, WatchStatus status) {
   final colors =
@@ -86,7 +52,7 @@ class LibrarySection extends StatelessWidget {
     final started = sum - counts[WatchStatus.planToWatch]!;
     final completed = counts[WatchStatus.completed]!;
 
-    return ProfileCard(
+    return SectionCard(
       title: 'Library',
       trailing: '${formatCount(total)} anime',
       child: Column(
@@ -278,7 +244,7 @@ class TimeInvestedSection extends StatelessWidget {
     if (sum <= 0) return const SizedBox.shrink();
     final hours = ((stats.numDaysWatched ?? sum) * 24).round();
 
-    return ProfileCard(
+    return SectionCard(
       title: 'Time invested',
       trailing: '${formatCount(hours)} hours',
       child: Column(
@@ -323,7 +289,7 @@ class InsightsSection extends ConsumerWidget {
 
     return insights.when(
       skipLoadingOnReload: true,
-      loading: () => const ProfileCard(
+      loading: () => const SectionCard(
         title: 'Insights',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +300,7 @@ class InsightsSection extends ConsumerWidget {
           ],
         ),
       ),
-      error: (error, _) => ProfileCard(
+      error: (error, _) => SectionCard(
         title: 'Insights',
         child: Row(
           children: [
@@ -353,7 +319,7 @@ class InsightsSection extends ConsumerWidget {
       ),
       data: (data) {
         if (data.totalCount == 0) {
-          return const ProfileCard(
+          return const SectionCard(
             title: 'Insights',
             child: Text(
               'Add anime to your lists to see score, genre and activity '
@@ -400,7 +366,7 @@ class _ScoreCard extends StatelessWidget {
     final rated = insights.ratedCount;
     final top = insights.mostGivenScore;
 
-    return ProfileCard(
+    return SectionCard(
       title: 'Score distribution',
       trailing: '${formatCount(rated)} rated',
       child: rated == 0
@@ -447,7 +413,7 @@ class _GenresCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final top = insights.genres.take(_topGenreCount);
-    return ProfileCard(
+    return SectionCard(
       title: 'Top genres',
       trailing: '${insights.genres.length} genres',
       child: HorizontalBars(
@@ -468,7 +434,7 @@ class _FormatsCard extends StatelessWidget {
     const palette = AppColors.chartPalette;
     Color colorAt(int i) => palette[i % palette.length];
 
-    return ProfileCard(
+    return SectionCard(
       title: 'Formats',
       trailing: '${insights.formats.length} types',
       child: Column(
@@ -517,7 +483,7 @@ class _ActivityCard extends StatelessWidget {
       if (months[i].count > months[busiest].count) busiest = i;
     }
 
-    return ProfileCard(
+    return SectionCard(
       title: 'Activity',
       trailing: 'Last 12 months',
       child: Column(

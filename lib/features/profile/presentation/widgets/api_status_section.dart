@@ -1,8 +1,8 @@
 import 'package:animal/core/network/api_health_tracker.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
-import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
+import 'package:animal/shared/widgets/section_card.dart';
 import 'package:animal/shared/widgets/section_header.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +19,7 @@ class ApiStatusSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader('API Status'),
-        ProfileCard(
+        SectionCard(
           padding: EdgeInsets.zero,
           child: Column(
             children: [

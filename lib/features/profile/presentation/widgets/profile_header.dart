@@ -2,18 +2,10 @@ import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/format_utils.dart';
 import 'package:animal/data/models/mal_user.dart';
+import 'package:animal/shared/widgets/hero_panel.dart';
+import 'package:animal/shared/widgets/stat_highlight.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
-
-BoxDecoration _heroDecoration(ColorScheme scheme) => BoxDecoration(
-  borderRadius: BorderRadius.circular(AppRadius.hero),
-  border: Border.all(color: scheme.outlineVariant),
-  gradient: LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [scheme.primaryContainer, scheme.surfaceContainer],
-  ),
-);
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({required this.user, required this.onRefresh, super.key});
@@ -28,9 +20,7 @@ class ProfileHeader extends StatelessWidget {
     final stats = user.animeStatistics;
     final joined = formatMonthYear(user.joinedAt);
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: _heroDecoration(scheme),
+    return HeroPanel(
       child: Column(
         children: [
           Row(
@@ -105,19 +95,19 @@ class ProfileHeader extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _Highlight(
+                  child: StatHighlight(
                     value: stats.numDaysWatched?.toStringAsFixed(1) ?? '0',
                     label: 'Days watched',
                   ),
                 ),
                 Expanded(
-                  child: _Highlight(
+                  child: StatHighlight(
                     value: formatCount(stats.numEpisodes ?? 0),
                     label: 'Episodes',
                   ),
                 ),
                 Expanded(
-                  child: _Highlight(
+                  child: StatHighlight(
                     value: stats.meanScore?.toStringAsFixed(2) ?? '-',
                     label: 'Mean score',
                     icon: Icons.star_rounded,
@@ -177,45 +167,6 @@ class _InfoPill extends StatelessWidget {
   }
 }
 
-class _Highlight extends StatelessWidget {
-  const _Highlight({required this.value, required this.label, this.icon});
-
-  final String value;
-  final String label;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 18, color: AppColors.starColor),
-              const SizedBox(width: 3),
-            ],
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class ProfileHeaderPlaceholder extends StatelessWidget {
   const ProfileHeaderPlaceholder({super.key});
 
@@ -235,9 +186,7 @@ class ProfileHeaderPlaceholder extends StatelessWidget {
 
     return Semantics(
       label: 'Loading profile',
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: _heroDecoration(scheme),
+      child: HeroPanel(
         child: Column(
           children: [
             Row(
