@@ -1,11 +1,7 @@
-import 'package:animal/core/constants/mal_endpoints.dart';
-import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
-import 'package:animal/shared/providers/airing_entry.dart'
-    show airingRepositoryProvider, weeklyAiringProvider;
 import 'package:animal/shared/providers/anime_list_providers.dart'
-    show AiringFilter, ListSort, userAnimeListProvider;
+    show AiringFilter, ListSort, refreshUserAnimeListProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -99,32 +95,12 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
     if (_isRefreshing) return;
     setState(() => _isRefreshing = true);
     try {
-      final status = _statuses[_tabController.index];
-      await ref
-          .read(animeCacheProvider)
-          .invalidateUserAnimeList(
-            status.value,
-            ApiConstants.malUserListPageSize,
-            0,
-          );
-      await Future.wait([_refreshSchedule(), _refreshUserList(status)]);
+      await ref.read(refreshUserAnimeListProvider)(
+        _statuses[_tabController.index],
+      );
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
     }
-  }
-
-  Future<void> _refreshSchedule() async {
-    try {
-      await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
-    } on Object catch (_) {}
-    ref.invalidate(weeklyAiringProvider);
-  }
-
-  Future<void> _refreshUserList(WatchStatus status) async {
-    ref.invalidate(userAnimeListProvider(status));
-    try {
-      await ref.read(userAnimeListProvider(status).future);
-    } on Object catch (_) {}
   }
 
   @override

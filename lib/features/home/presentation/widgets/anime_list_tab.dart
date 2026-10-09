@@ -1,5 +1,3 @@
-import 'package:animal/core/constants/mal_endpoints.dart';
-import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
@@ -84,25 +82,7 @@ class AnimeListTab extends ConsumerWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () async {
-        await ref
-            .read(animeCacheProvider)
-            .invalidateUserAnimeList(
-              status.value,
-              ApiConstants.malUserListPageSize,
-              0,
-            );
-        try {
-          await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
-        } on Object catch (_) {}
-        ref
-          ..invalidate(weeklyAiringProvider)
-          ..invalidate(userAnimeListProvider(status));
-        // Wait until fresh data is fetched so indicator shows correct state
-        try {
-          await ref.read(userAnimeListProvider(status).future);
-        } catch (_) {}
-      },
+      onRefresh: () => ref.read(refreshUserAnimeListProvider)(status),
       child: ListView.builder(
         key: PageStorageKey<String>('anime_list_${status.value}'),
         padding: const EdgeInsets.symmetric(vertical: 8),

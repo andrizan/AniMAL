@@ -1,3 +1,5 @@
+import 'package:animal/core/constants/mal_endpoints.dart';
+import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
@@ -106,6 +108,39 @@ final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>((
   final repo = ref.watch(animeRepositoryProvider);
   return repo.getUserAnimeList(status: status);
 });
+
+/// Force-refreshes the user list of a status together with the airing
+/// schedule. The AniList schedule and the MAL list are fetched in parallel.
+final refreshUserAnimeListProvider =
+    Provider<Future<void> Function(WatchStatus)>((ref) {
+      return (status) async {
+        await ref
+            .read(animeCacheProvider)
+            .invalidateUserAnimeList(
+              status.value,
+              ApiConstants.malUserListPageSize,
+              0,
+            );
+        await Future.wait([
+          _refreshSchedule(ref),
+          _refreshUserList(ref, status),
+        ]);
+      };
+    });
+
+Future<void> _refreshSchedule(Ref ref) async {
+  try {
+    await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
+  } on Object catch (_) {}
+  ref.invalidate(weeklyAiringProvider);
+}
+
+Future<void> _refreshUserList(Ref ref, WatchStatus status) async {
+  ref.invalidate(userAnimeListProvider(status));
+  try {
+    await ref.read(userAnimeListProvider(status).future);
+  } on Object catch (_) {}
+}
 
 /// Memoized, sorted and filtered user anime list together with the airing map.
 // ignore: specify_nonobvious_property_types
