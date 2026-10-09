@@ -153,11 +153,18 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - Cover image with gradient overlay (transparent top → surface bottom).
 - Back button: visible circle with white arrow.
 - **Full-screen image viewer** on cover tap (zoom supported).
-- Info chips: score, rank, episodes, media type, status, rating.
+- **Order = importance**, one `SectionCard` per block, 12 apart:
+  1. Header: Japanese title, `HeroPanel` with type/episodes/status/rating chips and score, rank, popularity.
+  2. Your list: `MyListCard` (status, progress bar, episode stepper, score, remove) or the Add to Watching button. The page edits the list only through these.
+  3. Next episode (AniList, when airing).
+  4. Synopsis with genres (long synopsis collapses behind Read more).
+  5. Information: aired/airing, season, broadcast, duration, source, studios.
+  6. Characters & voice actors, then staff (AniList).
+  7. Related anime, alternative titles, external links.
 - Broadcast is stored in JST by MAL; show it converted to the device zone (day included) via `convertJstBroadcastToLocal`.
-- Sections: genres, broadcast, source, related anime, alternative titles, characters & staff.
 - Characters & staff from **AniList** (not MAL).
 - 4 items default, "See All" button to expand.
+- Cards that have nothing to show are left out, never rendered empty.
 
 ### Profile Page
 - Real data from MAL `/users/@me`.
