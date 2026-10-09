@@ -13,14 +13,16 @@ Track your anime, discover seasonal charts, follow weekly airing schedules, and 
 
 ## Features
 
-- **Home** — User anime lists by status (Watching / Plan to Watch / On Hold / Completed / Dropped) with sort & airing filter, unified card UI, inline status edit
-- **Airing** — Weekly schedule grouped by day (Mon–Sun) with countdown (`2d 5h`, `45m`, urgent <6h in red), merged from AniList + MAL scores
-- **Calendar** — Seasonal browser (Winter/Spring/Summer/Fall + Later) with year picker (current-50 → current+1)
-- **Search & Ranking** — Full-text search and MAL rankings with local cache
-- **Detail** — Cover with gradient overlay & full-screen viewer, chips, genres, broadcast, related anime, staff & characters (4 + See All)
-- **Profile** — Real MAL user stats (`/users/@me`), days watched, mean score, per-status counts
-- **Auth** — MAL OAuth2 PKCE, secure token storage, auto refresh on 401
-- **Offline** — Persistent SQLite cache survives cold start; works offline for cached screens
+- **Home** — Your lists by status (Watching / Plan to Watch / On Hold / Completed / Dropped) with sort and airing filter, one card UI everywhere, and an edit modal (status, episodes, score). Complete lists are fetched page by page, and editing keeps your scroll position.
+- **Airing** — Weekly schedule grouped by day (Mon–Sun) with countdown (`2d 5h`, `45m`, urgent <6h in red), merged from AniList and MAL scores. Refresh fetches both sources.
+- **Calendar** — Seasonal browser (Winter / Spring / Summer / Fall) with a year picker (current − 50 → current + 1). The **Later** tab lists upcoming anime that have no start date yet.
+- **Search & Ranking** — Debounced full-text search and MAL rankings with local cache.
+- **Detail** — Ordered by importance: score / rank / popularity summary, your list card (status, progress bar, episode stepper, score, remove) or *Add to Watching*, next episode, synopsis with genres, information (aired, season, broadcast in your local time, duration, source, studios), characters & voice actors, staff, related anime, alternative titles, external links. Cover with gradient and full-screen viewer.
+- **Profile** — Header with your MAL stats, a status donut, time invested, and charts built from your own list: score distribution, top genres, formats and activity over the last 12 months. Also API health, theme, update check and logout.
+- **Notifications** — Per-anime reminder 15 minutes before the next episode airs.
+- **Auth** — MAL OAuth2 PKCE with a manual-code fallback, secure token storage, token refresh on 401 (retried once), `animal://` deep links.
+- **Offline** — Persistent SQLite cache survives cold start; cached screens work offline.
+- **Theme** — Material 3, dark by default, switchable and remembered.
 
 ---
 
@@ -29,17 +31,17 @@ Track your anime, discover seasonal charts, follow weekly airing schedules, and 
 | Layer | Package |
 |-------|---------|
 | State | `flutter_riverpod` 3.x |
-| Routing | `go_router` (StatefulShellRoute, auth guard) |
+| Routing | `go_router` (StatefulShellRoute, auth guard), `app_links` (deep links) |
 | Network | `dio` 5.x |
 | Persistence | `sqflite` + `path` (typed SQLite cache) |
-| Data | `sqflite_common_ffi` (host tests) |
 | Codegen | `freezed` + `json_serializable` (DTOs only) |
 | Auth | `flutter_secure_storage` |
 | Prefs | `shared_preferences` |
-| Images | `cached_network_image` |
-| Fonts | `google_fonts` (Inter 400/500/600/700, fallback Noto Sans JP) |
+| UI | `material_ui`, `cached_network_image`, custom-painted charts (no chart package) |
+| Fonts | `google_fonts` with Inter 400/500/600/700 bundled in `assets/google_fonts/` (runtime fetching disabled) |
 | Notifications | `flutter_local_notifications` + `timezone` |
-| Logging | `logger` (PrettyPrinter) |
+| Misc | `url_launcher`, `share_plus`, `package_info_plus`, `logger` |
+| Tests | `flutter_test`, `sqflite_common_ffi` (host SQLite) |
 
 ---
 
@@ -49,6 +51,7 @@ Track your anime, discover seasonal charts, follow weekly airing schedules, and 
 |--------|------|
 | **MyAnimeList API v2** | User list, detail, search, ranking, seasonal, scores (`mean`), auth |
 | **AniList GraphQL** | Characters, staff, studios, airing schedule (`airingAt`, `episode`, `timeUntilAiring`) |
+| **GitHub Releases** | Update check from the profile page |
 
 MAL is primary; AniList is supplementary. On merge MAL wins.
 
@@ -60,29 +63,31 @@ MAL is primary; AniList is supplementary. On merge MAL wins.
 
 ```
 feature/
-├── data/           Repo impl, DTO → entity mappers
-├── domain/         Entities (plain Dart), abstract repos, use cases
+├── data/           Repo impl, DTO → entity mappers            (when the feature needs them)
+├── domain/         Plain Dart entities, abstract repos, use cases
 ├── providers/      Riverpod providers (*_providers.dart)
 └── presentation/   Screens (*_page.dart) + widgets
 ```
+
+Layers are added only when a feature needs them: most features are `presentation/` + `providers/`, `auth` also has `data/`, `profile` also has `domain/` (list insights).
 
 ### Project Structure
 
 ```
 lib/
-├── main.dart                          # WidgetsFlutterBinding + TZ + SQLite + notifications → runApp
-├── app.dart
+├── main.dart                          # binding + TZ + SQLite + notifications → runApp
+├── app.dart                           # MaterialApp.router, deep links, notification taps
 ├── core/
-│   ├── config/env.dart               # --dart-define (MAL_CLIENT_ID/SECRET/REDIRECT_URI)
+│   ├── config/env.dart                # --dart-define (MAL_CLIENT_ID/SECRET/REDIRECT_URI)
 │   ├── constants/                     # mal_endpoints, anilist_queries
 │   ├── logger/app_logger.dart
-│   ├── network/                       # DioClient, AuthInterceptor, ApiHealth*, ApiException (incl. RateLimit)
-│   ├── notification/
-│   ├── router/                        # GoRouter + AuthRefreshListenable + guards
+│   ├── network/                       # DioClient, AuthInterceptor, ApiHealth*, ApiException
+│   ├── notification/                  # airing reminders
+│   ├── router/                        # app_router, route_guards, deep_links
 │   ├── storage/secure_token_storage.dart
-│   ├── theme/                         # AppColors/StatusColors, AppTextStyles, app_theme (M3, indigo, dark)
-│   ├── utils/date_utils.dart          # JST→local, countdown
-│   └── providers.dart                 # logger, dio, appDatabase, caches, auth
+│   ├── theme/                         # app_colors, app_text_styles, app_spacing, app_theme
+│   ├── utils/                         # date_utils (JST→local), format_utils, anime_labels, version_utils, github_check
+│   └── providers.dart                 # logger, dio, appDatabase, caches, auth, retry policy
 ├── data/
 │   ├── mal/mal_api_client.dart
 │   ├── anilist/anilist_client.dart
@@ -95,32 +100,40 @@ lib/
 │   │   └── airing_cache.dart          # merged weekly schedule
 │   └── models/                        # @freezed DTOs (MAL) + plain Dart (AniList)
 ├── shared/
-│   ├── providers/
-│   │   ├── anime_providers.dart       # AnimeRepository (cache-first, dedup, mutations)
-│   │   ├── anime_list_providers.dart  # userAnimeListProvider, sortedUserAnimeListProvider
-│   │   ├── airing_entry.dart          # AiringEntry, AiringRepository, weeklyAiringProvider
-│   │   ├── anilist_providers.dart
-│   │   └── theme_providers.dart
-│   └── widgets/                       # anime_card, loading_shimmer, app_cached_image, etc.
+│   ├── providers/                     # AnimeRepository, user lists, airing, AniList, theme, notifications
+│   └── widgets/                       # anime_card, section_card, section_header, hero_panel, stat_highlight,
+│                                      # error_view, empty_view, info_chip, countdown_badge, app_cached_image, full_screen_image
 └── features/
     ├── home/ airing/ seasonal/ profile/ auth/ detail/ search/
 ```
+
+### Design system
+
+One look across every screen, enforced by `test/core/theme/design_rules_test.dart`:
+
+- **Colors** only from `core/theme/app_colors.dart` (`AppColors`, `StatusColors`, `chartPalette`) — never `Colors.*`.
+- **Typography** only from the theme text styles; no raw `fontSize`. `labelSmall` (10) is the micro size.
+- **Spacing and radius** from `AppSpacing` (`page` is the page gutter) and `AppRadius` in `core/theme/app_spacing.dart`.
+- **Cards** are plain `Card`s styled once in `cardTheme`; use `SectionCard` for a titled block and `HeroPanel` for a highlighted one.
+- **Error and empty states** use `ErrorView` / `EmptyView`; section titles use `SectionHeader`.
 
 ### Caching
 
 Single `animal_cache.db` (SQLite). No raw JSON blobs — typed tables only.
 SQLite is the source of truth: cached rows are served with zero network.
 The network is hit only on a genuine cache miss (first open after install,
-a never-opened anime detail) or via an explicit refresh button. There is
-no background revalidate — stale rows stay until the user refreshes.
+a never-opened anime detail) or via an explicit refresh. There is
+no background revalidate — stale rows stay until the user refreshes. If a
+refetch fails, the stored rows are served instead of an error.
 
 | Endpoint | Key | Refresh |
 |----------|-----|---------|
-| Search | `search_<q>_<limit>` | Button only (1 min debounce at provider) |
+| Search | `search_<q>_<limit>` | Button only (300 ms debounce at provider) |
 | Seasonal | `seasonal_<y>_<season>_<limit>` | Button only (empty seasons cached) |
 | Ranking | `ranking_<type>_<limit>` | Button only |
-| Detail | `detail_<id>` | Button only |
-| User list | `userlist_<status>_<limit>_<offset>` | Button only (3 min data, invalidated on edit/delete) |
+| Undated upcoming (Later tab) | `ranking_upcoming_undated_500` | Button only (first 3 pages of the `upcoming` ranking, filtered on `start_date`) |
+| Detail | `detail_<id>` | Pull to refresh |
+| User list | `userlist_<status>_500_0` (one complete list per status) | Button only (invalidated on edit/delete) |
 | User info | `userInfo` | Button only |
 | AniList weekly | `weeklyAiringSchedule:<YYYY-MM-DD>` | Button only |
 | Merged weekly | `weekly_schedule:<YYYY-MM-DD>` | Button only |
@@ -128,7 +141,8 @@ no background revalidate — stale rows stay until the user refreshes.
 
 - **Cache-first** = serve SQLite immediately; one blocking fetch only on miss, deduped per key.
 - **Rate limit** `429` → `ApiException.rateLimited` (no auto-retry), health tracked in `ApiHealthTracker`.
-- **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update the embedded `my_list_status` in the shared `anime` row and bump `animeListVersionProvider` for user lists/detail only — the airing schedule is never invalidated by list edits.
+- **Provider errors surface at once**: Riverpod's default retry is disabled (`noProviderRetry`), so a failed load shows its error and a Retry button instead of an endless spinner.
+- **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update every stored snapshot of the personal status (user lists, `anime` rows, merged airing week) and bump `animeListVersionProvider`. Providers that watch it render with `skipLoadingOnReload` so an edit never flashes a spinner or resets scroll. The airing schedule itself is never refetched by list edits.
 
 **Physical retention** (`app_database.dart::_runStartupCleanup` on `AppDatabase.open`):
 
@@ -141,6 +155,7 @@ no background revalidate — stale rows stay until the user refreshes.
 | `cache_meta` `userInfo` | `fetched_at < now-1d` | 1 day |
 | `cache_meta` `detail_%` | `fetched_at < now-30d` | 30 days |
 | `cache_meta` `weeklyAiringSchedule:%` | `fetched_at < now-14d` | 14 days |
+| `cache_meta` `weekly_schedule:%` | `fetched_at < now-14d` | 14 days |
 | `cache_meta` `animeExtra_%` | `fetched_at < now-30d` | 30 days |
 | `cache_meta` `character_%`/`staff_%`/`studio_%` | `fetched_at < now-90d` | 90 days |
 | `airing_schedule` rows | `airing_at < now-14d` (epoch sec) | 14 days |
@@ -200,6 +215,8 @@ flutter test --coverage
 
 `very_good_analysis` is enabled — `flutter analyze` must be 0 errors (infos are allowed unless `--fatal-infos`).
 
+Tests live under `test/` and mirror `lib/`. They cover the pure logic (date and version helpers, insights), repositories and caches (real SQLite through `sqflite_common_ffi`, fake Dio adapters in `test/support/`), providers, and the pages and shared widgets.
+
 ### Build APK (debug)
 
 ```bash
@@ -218,7 +235,9 @@ Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml
 | Workflow | Trigger | What |
 |----------|---------|------|
 | `quality.yml` | push `**` + PR | `pub get` → `build_runner` → `dart format --set-exit-if-changed` → `flutter analyze` → `flutter test` |
-| `release-apk.yml` | tag `v*` + manual dispatch | quality → bump version → `flutter build apk --release --split-per-abi` + universal `flutter build apk --release` (both with `--dart-define=...`) → upload artifact → GitHub Release → bump `pubspec.yaml` on `main` |
+| `release-apk.yml` | tag `v*` + manual dispatch | quality → bump version → `flutter build apk --release --split-per-abi` + universal `flutter build apk --release` (both with `--dart-define=...`) → upload artifact → release notes and `CHANGELOG.md` via `git-cliff` → GitHub Release → bump `pubspec.yaml` and changelog on `main` |
+
+The release job pushes a `chore: bump version … [skip ci]` commit to `main`, so pull or rebase before pushing.
 
 ---
 
@@ -229,8 +248,10 @@ Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml
 - **Formatting** — `dart format lib test` before every commit (CI enforces).
 - **Analysis** — `flutter analyze` with `very_good_analysis`.
 - **Imports** — `dart:` → `package:` → relative, alphabetically; `directives_ordering` lint.
-- **Colors** — never raw `Colors.*`, use `AppColors.*` / `StatusColors` in `core/theme/app_colors.dart`.
+- **UI** — follow the [design system](#design-system) above.
 - **Logging** — use shared `appLogger`, never `Logger()` directly.
+
+Longer contributor and agent rules live in [`AGENTS.md`](AGENTS.md).
 
 ---
 
