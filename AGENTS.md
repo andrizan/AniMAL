@@ -109,6 +109,12 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 
 ## UI / UX Rules
 
+### Shared UI
+- **Cards**: use plain `Card`; the look (radius `appCardRadius` = 20, `surfaceContainer` fill, outline border) comes from `cardTheme` in `core/theme/app_theme.dart`. Do not override colour or shape per screen.
+- **Error / empty states**: use `ErrorView` (message + optional Retry) and `EmptyView` (icon, message, optional hint/Retry) from `shared/widgets/`. Do not hand-roll icon + text + button columns.
+- **Section titles**: use `SectionHeader` (`titleSmall`, optional trailing caption).
+- **Loading**: a full-area load is a centred `CircularProgressIndicator`; inside a card use a skeleton or `LinearProgressIndicator`.
+
 ### Cards
 - **Unified card widget** (`anime_card.dart`) used across all pages.
 - **Full-height image** (left side), info (right side).
