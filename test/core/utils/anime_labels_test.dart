@@ -144,5 +144,12 @@ void main() {
     test('leaves plain text alone', () {
       expect(cleanAniListDescription('Just text.'), 'Just text.');
     });
+
+    test('keeps a markdown link while stripping tags', () {
+      expect(
+        cleanAniListDescription('[b]See[/b] [Wiki](https://example.com/w)'),
+        'See [Wiki](https://example.com/w)',
+      );
+    });
   });
 }

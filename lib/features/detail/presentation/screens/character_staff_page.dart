@@ -7,6 +7,7 @@ import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
+import 'package:animal/shared/widgets/linked_text.dart';
 import 'package:animal/shared/widgets/scrim_icon_button.dart';
 import 'package:animal/shared/widgets/section_card.dart';
 import 'package:animal/shared/widgets/works_sliver.dart';
@@ -240,7 +241,7 @@ class _PersonScaffold extends StatelessWidget {
                     const SizedBox(height: AppSpacing.lg),
                     SectionCard(
                       title: 'About',
-                      child: SelectableText(
+                      child: LinkedText(
                         cleanAniListDescription(description!),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           height: 1.6,

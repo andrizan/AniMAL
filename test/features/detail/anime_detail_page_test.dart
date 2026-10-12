@@ -15,6 +15,7 @@ import 'package:animal/features/detail/presentation/widgets/detail_sections.dart
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
+import 'package:animal/shared/widgets/linked_text.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -276,7 +277,7 @@ void main() {
 
       final text = find.descendant(
         of: find.byType(AboutCard),
-        matching: find.byType(SelectableText),
+        matching: find.byType(LinkedText),
       );
       final collapsed = tester.getSize(text).height;
       await tapVisible(tester, find.text('Read more'));

@@ -1,6 +1,6 @@
 String cleanAniListDescription(String desc) {
   return desc
-      .replaceAll(RegExp(r'\[/?[a-zA-Z]+\]'), '')
+      .replaceAll(RegExp(r'\[/?[a-zA-Z]+\](?!\(https?://)'), '')
       .replaceAll(RegExp('~!.*?!~'), '[Spoiler]')
       .replaceAll('&#039;', "'")
       .replaceAll('&quot;', '"')

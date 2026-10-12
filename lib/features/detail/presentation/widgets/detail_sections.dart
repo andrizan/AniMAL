@@ -10,6 +10,7 @@ import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
+import 'package:animal/shared/widgets/linked_text.dart';
 import 'package:animal/shared/widgets/section_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -87,7 +88,7 @@ class _AboutCardState extends State<AboutCard> {
             AnimatedSize(
               duration: const Duration(milliseconds: 200),
               alignment: Alignment.topCenter,
-              child: SelectableText(
+              child: LinkedText(
                 synopsis,
                 maxLines: collapsible && !_expanded ? 5 : null,
                 style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),

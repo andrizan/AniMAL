@@ -11,6 +11,7 @@ import 'package:animal/features/profile/presentation/widgets/profile_sections.da
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
+import 'package:animal/shared/widgets/linked_text.dart';
 import 'package:animal/shared/widgets/section_card.dart';
 import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -305,7 +306,7 @@ Future<void> _checkForUpdate(
                 Text('v$currentVersion → v$latestVersion'),
                 if (body.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Text(body, style: Theme.of(ctx).textTheme.bodySmall),
+                  LinkedText(body, style: Theme.of(ctx).textTheme.bodySmall),
                 ],
               ],
             ),
