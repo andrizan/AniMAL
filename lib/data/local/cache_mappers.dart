@@ -91,26 +91,6 @@ class CacheMappers {
     );
   }
 
-  // ---------- Genres ----------
-
-  /// Returns a list of `(mal_id, genre_id)` rows for `anime_genre`, and a list
-  /// of unique `(id, name)` rows for `genre` (caller upserts).
-  List<int> extractGenreIds(List<Genre> genres) =>
-      genres.map((g) => g.id).toList(growable: false);
-
-  List<Map<String, Object?>> genreRows(List<Genre> genres) {
-    return genres
-        .map((g) => <String, Object?>{'id': g.id, 'name': g.name})
-        .toList(growable: false);
-  }
-
-  List<Genre> genresFromIds(List<int> ids, Map<int, Genre> idToGenre) {
-    return ids
-        .map((id) => idToGenre[id])
-        .whereType<Genre>()
-        .toList(growable: false);
-  }
-
   // ---------- MyListStatus ----------
 
   Map<String, dynamic> _myListStatusToJson(MyListStatus s) {

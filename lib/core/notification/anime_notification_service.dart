@@ -203,12 +203,6 @@ class AnimeNotificationService {
     await _saveIds();
   }
 
-  Future<void> cancelAllNotifications() async {
-    await _plugin.cancelAll();
-    _notificationIds.clear();
-    await _saveIds();
-  }
-
   Future<void> cleanupStaleNotifications() async {
     try {
       final pending = await _plugin.pendingNotificationRequests();

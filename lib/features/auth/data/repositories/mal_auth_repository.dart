@@ -62,12 +62,6 @@ class MalAuthRepository {
     );
   }
 
-  Future<bool> validateOAuthState(String? returnedState) async {
-    final storedState = await _tokenStorage.getOAuthState();
-    if (storedState == null || storedState.isEmpty) return false;
-    return returnedState == storedState;
-  }
-
   Future<AuthToken> exchangeCode(String authorizationCode) async {
     final codeVerifier = await _tokenStorage.getCodeVerifier();
     if (codeVerifier == null || codeVerifier.isEmpty) {

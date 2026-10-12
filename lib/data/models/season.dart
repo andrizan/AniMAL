@@ -36,6 +36,4 @@ enum Season {
         return Season.fall;
     }
   }
-
-  static int yearFromDate(DateTime date) => date.year;
 }

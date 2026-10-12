@@ -221,7 +221,6 @@ abstract final class AppColors {
 
   // ── Overlays on imagery (same in both themes) ──
   static const transparent = Color(0x00000000);
-  static const overlayDark = Color(0x6614121F);
   static const overlayDarker = Color(0xB814121F);
   static const barrier = Color(0xCC14121F);
   static const iconLight = Color(0xFFFFFFFF);

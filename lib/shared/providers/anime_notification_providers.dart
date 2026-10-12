@@ -60,8 +60,6 @@ class AnimeNotificationNotifier extends Notifier<Set<int>> {
     );
   }
 
-  bool isEnabled(int animeId) => state.contains(animeId);
-
   Future<void> removeAnime(int animeId) async {
     if (!state.contains(animeId)) return;
     await ref.read(notificationServiceProvider).cancelNotification(animeId);

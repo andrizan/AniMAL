@@ -43,7 +43,6 @@ void main() {
         'fall',
       ]);
       expect(Season.fall.label, 'Fall');
-      expect(Season.yearFromDate(DateTime(2031, 6)), 2031);
     });
   });
 

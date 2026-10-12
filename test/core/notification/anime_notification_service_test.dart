@@ -197,17 +197,6 @@ void main() {
 
       expect(service.notificationIds, isEmpty);
     });
-
-    test('cancelAll clears everything', () async {
-      await schedule();
-      await schedule(animeId: 6);
-
-      await service.cancelAllNotifications();
-
-      expect(native.of('cancelAll'), hasLength(1));
-      expect(service.notificationIds, isEmpty);
-      expect(await storedIds(), isEmpty);
-    });
   });
 
   group('isNotificationScheduled', () {

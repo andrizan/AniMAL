@@ -184,24 +184,6 @@ void main() {
     });
   });
 
-  group('genres', () {
-    const genres = [Genre(id: 1, name: 'Action'), Genre(id: 2, name: 'Drama')];
-
-    test('exposes ids and rows for storage', () {
-      expect(mappers.extractGenreIds(genres), [1, 2]);
-      expect(mappers.genreRows(genres), [
-        {'id': 1, 'name': 'Action'},
-        {'id': 2, 'name': 'Drama'},
-      ]);
-    });
-
-    test('resolves ids back to genres and skips unknown ones', () {
-      final byId = {for (final g in genres) g.id: g};
-
-      expect(mappers.genresFromIds([2, 99, 1], byId), [genres[1], genres[0]]);
-    });
-  });
-
   group('anime detail rows', () {
     const detail = AnimeDetail(
       id: 7,

@@ -71,27 +71,6 @@ void main() {
     });
   });
 
-  group('validateOAuthState', () {
-    test('accepts only the state that was stored', () async {
-      await storage.saveOAuthState('abc');
-
-      expect(await repo.validateOAuthState('abc'), isTrue);
-      expect(await repo.validateOAuthState('xyz'), isFalse);
-      expect(await repo.validateOAuthState(null), isFalse);
-    });
-
-    test('rejects everything when no state was stored', () async {
-      expect(await repo.validateOAuthState('abc'), isFalse);
-      expect(await repo.validateOAuthState(null), isFalse);
-    });
-
-    test('rejects an empty stored state', () async {
-      await storage.saveOAuthState('');
-
-      expect(await repo.validateOAuthState(''), isFalse);
-    });
-  });
-
   group('exchangeCode', () {
     test('fails clearly when the code verifier is missing', () async {
       await expectLater(
