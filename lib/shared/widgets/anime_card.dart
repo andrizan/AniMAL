@@ -11,15 +11,22 @@ import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/countdown_badge.dart';
+import 'package:animal/shared/widgets/score_picker.dart';
+import 'package:animal/shared/widgets/status_chip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+const _coverWidth = 84.0;
+const _coverHeight = 120.0;
+const _cardInset = 14.0;
+const _titleTopInset = 10.0;
+
 /// Unified anime card used across all pages.
 ///
-/// Layout: full-height image (left) + info (right).
-/// Image has rounded corners only on the left side.
-/// Supports edit modal via 3-dot button or long press.
+/// Layout: inset cover (left) + info (right). The card sizes to its content
+/// so large text never clips. Supports the edit modal via the ⋮ button or a
+/// long press.
 class AnimeCard extends ConsumerWidget {
   const AnimeCard({
     required this.anime,
@@ -31,7 +38,7 @@ class AnimeCard extends ConsumerWidget {
 
   final Anime anime;
 
-  /// Optional trailing widget below the main info (e.g. countdown).
+  /// Optional trailing widget in the footer row (e.g. countdown).
   final Widget? trailing;
 
   /// Optional next airing info from AniList schedule.
@@ -43,19 +50,66 @@ class AnimeCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final muted = theme.textTheme.labelMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+      fontWeight: FontWeight.w500,
+    );
     final jaTitle = anime.alternativeTitles?.ja;
-    final episodes = anime.numEpisodes;
-    final statusLabel = AnimeLabels.statusLabel(anime.status, compact: true);
-    final statusColor = AnimeLabels.statusColor(anime.status);
-    final personalScore = anime.myListStatus?.score;
-    final watchedEps = anime.myListStatus?.numEpisodesWatched;
+    final list = anime.myListStatus;
+    final total = (anime.numEpisodes ?? 0) > 0 ? anime.numEpisodes : null;
+    final watched = list?.numEpisodesWatched;
+    final personalScore = list?.score ?? 0;
+    final time = _broadcastTime();
     final notifEnabled = ref.watch(
       animeNotificationProvider.select((s) => s.contains(anime.id)),
     );
 
+    final stats = <Widget>[
+      if (anime.mean case final mean?)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.star_rounded,
+              size: 16,
+              color: StatusColors.of(context).star,
+            ),
+            const SizedBox(width: 2),
+            Text(mean.toStringAsFixed(1), style: theme.textTheme.labelLarge),
+          ],
+        ),
+      if (personalScore > 0) _PersonalScore(score: personalScore),
+      if (list != null) ListStatusChip(status: list.status, dense: true),
+    ];
+
+    final footer = <Widget>[
+      if (nextAiring case final next?)
+        CountdownBadge(airingAt: next.airingAt, episode: next.episode),
+      if (trailing case final trailing?) trailing,
+      if (notifEnabled && anime.status != 'finished_airing')
+        Semantics(
+          label: 'Reminder on',
+          child: Icon(
+            Icons.notifications_active,
+            size: 16,
+            color: StatusColors.of(context).star,
+          ),
+        ),
+      if (time != null)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.access_time, size: 14, color: scheme.onSurfaceVariant),
+            const SizedBox(width: AppSpacing.xs),
+            Text(time, style: muted),
+          ],
+        ),
+    ];
+
     return Card(
       margin: const EdgeInsets.symmetric(
-        vertical: 3,
+        vertical: AppSpacing.md / 2,
         horizontal: AppSpacing.page,
       ),
       clipBehavior: Clip.antiAlias,
@@ -67,227 +121,133 @@ class AnimeCard extends ConsumerWidget {
               pathParameters: {'id': '${anime.id}'},
             ),
         onLongPress: onTap != null ? null : () => _showUpdateModal(context),
-        child: SizedBox(
-          height: 120,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            _cardInset,
+            AppSpacing.xs,
+            AppSpacing.xs,
+            _cardInset,
+          ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Cover image (left rounded only) ──
-              _CoverImage(
-                anime: anime,
-                statusLabel: statusLabel,
-                statusColor: statusColor,
+              Padding(
+                padding: const EdgeInsets.only(top: _titleTopInset),
+                child: _Cover(anime: anime),
               ),
-
-              // ── Info section ──
+              const SizedBox(width: _cardInset),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title row + edit button
-                      Row(
-                        children: [
-                          Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: _titleTopInset),
                             child: Text(
                               anime.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ),
+                        ),
+                        if (onTap == null)
+                          SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 20,
+                              tooltip: 'Edit list entry',
+                              icon: Icon(
+                                Icons.more_vert,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              onPressed: () => _showUpdateModal(context),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: _cardInset - AppSpacing.xs),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        right: _cardInset - AppSpacing.xs,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (jaTitle != null && jaTitle.isNotEmpty)
+                            Text(
+                              jaTitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleSmall,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                          if (anime.myListStatus != null)
-                            Container(
-                              margin: const EdgeInsets.only(right: 4),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _listStatusColor(
-                                  anime.myListStatus!.status,
-                                ).withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              child: Text(
-                                anime.myListStatus!.status.label,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: _listStatusColor(
-                                    anime.myListStatus!.status,
+                          if (stats.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: AppSpacing.sm,
+                              runSpacing: AppSpacing.xs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: stats,
+                            ),
+                          ],
+                          if (list != null && total != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: LinearProgressIndicator(
+                                    value: ((watched ?? 0) / total).clamp(
+                                      0.0,
+                                      1.0,
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                    semanticsLabel:
+                                        '${watched ?? 0} of $total '
+                                        'episodes watched',
                                   ),
                                 ),
-                              ),
-                            ),
-                          if (onTap == null)
-                            SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.more_vert,
-                                  size: 18,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                padding: EdgeInsets.zero,
-                                onPressed: () => _showUpdateModal(context),
-                              ),
-                            ),
-                        ],
-                      ),
-
-                      // Japanese title
-                      if (jaTitle != null && jaTitle.isNotEmpty)
-                        Text(
-                          jaTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-
-                      // Genres
-                      if (anime.genres.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Wrap(
-                            spacing: 4,
-                            runSpacing: 2,
-                            children: anime.genres.take(3).map((g) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                                child: Text(
-                                  g.name,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color:
-                                        theme.colorScheme.onSecondaryContainer,
+                                const SizedBox(width: AppSpacing.sm + 2),
+                                Text(
+                                  '${watched ?? 0} / $total',
+                                  style: muted?.copyWith(
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-
-                      const Spacer(),
-
-                      // Scores + episodes
-                      Row(
-                        children: [
-                          if (anime.mean != null) ...[
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 14,
-                              color: AppColors.starColor,
+                              ],
                             ),
-                            const SizedBox(width: 2),
-                            Text(
-                              anime.mean!.toStringAsFixed(1),
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                          ] else if (list != null && watched != null) ...[
+                            const SizedBox(height: 6),
+                            Text('$watched eps watched', style: muted),
+                          ] else if (list == null) ...[
+                            if (_meta(total) case final meta?) ...[
+                              const SizedBox(height: 6),
+                              Text(meta, style: muted),
+                            ],
+                          ],
+                          if (footer.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Wrap(
+                              spacing: AppSpacing.sm,
+                              runSpacing: AppSpacing.xs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: footer,
                             ),
                           ],
-                          if (personalScore != null && personalScore > 0) ...[
-                            const SizedBox(width: 10),
-                            Icon(
-                              Icons.star,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              '$personalScore',
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                          if (watchedEps != null && episodes != null)
-                            Text(
-                              '$watchedEps/$episodes ep',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            )
-                          else if (episodes != null)
-                            Text(
-                              '${episodes}ep',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
                         ],
                       ),
-
-                      // Bottom: rating + broadcast (left) | badge (right)
-                      Row(
-                        children: [
-                          if (anime.rating != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.errorContainer,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              child: Text(
-                                AnimeLabels.ratingLabel(
-                                  anime.rating,
-                                  compact: true,
-                                ),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.onErrorContainer,
-                                ),
-                              ),
-                            ),
-                          if (anime.broadcast?.startTime != null) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.access_time,
-                              size: 12,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              convertJstToLocal(anime.broadcast?.startTime) ??
-                                  '',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                          if (notifEnabled &&
-                              anime.status != 'finished_airing') ...[
-                            const Icon(
-                              Icons.notifications_active,
-                              size: 14,
-                              color: AppColors.starColor,
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          if (nextAiring case final next?)
-                            CountdownBadge(
-                              airingAt: next.airingAt,
-                              episode: next.episode,
-                            ),
-                          if (trailing case final trailing?) trailing,
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -295,6 +255,25 @@ class AnimeCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String? _meta(int? total) {
+    final parts = [
+      AnimeLabels.mediaTypeLabel(anime.mediaType),
+      if (total != null) '$total eps',
+      AnimeLabels.statusLabel(anime.status),
+    ].where((p) => p.isNotEmpty);
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
+
+  String? _broadcastTime() {
+    final broadcast = anime.broadcast;
+    final start = broadcast?.startTime;
+    if (start == null || start.isEmpty) return null;
+    final local = convertJstBroadcastToLocal(broadcast?.dayOfWeek, start);
+    if (local == null) return convertJstToLocal(start);
+    final day = local.day;
+    return '${day[0].toUpperCase()}${day.substring(1, 3)} ${local.time}';
   }
 
   void _showUpdateModal(BuildContext context) {
@@ -309,14 +288,40 @@ class AnimeCard extends ConsumerWidget {
       ),
     );
   }
+}
 
-  static Color _listStatusColor(WatchStatus status) => switch (status) {
-    WatchStatus.watching => AppColors.listWatching,
-    WatchStatus.completed => AppColors.listCompleted,
-    WatchStatus.onHold => AppColors.listOnHold,
-    WatchStatus.dropped => AppColors.listDropped,
-    WatchStatus.planToWatch => AppColors.listPlanToWatch,
-  };
+/// The user's own score as a small primary pill.
+class _PersonalScore extends StatelessWidget {
+  const _PersonalScore({required this.score});
+
+  final int score;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 3, AppSpacing.sm, 3),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star, size: 12, color: scheme.onPrimaryContainer),
+          const SizedBox(width: 2),
+          Text(
+            '$score',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: scheme.onPrimaryContainer,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Modal content for updating an anime's list status.
@@ -403,6 +408,8 @@ class _UpdateListStatusModalState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final jaTitle = widget.anime.alternativeTitles?.ja;
     final totalEps = widget.anime.numEpisodes != 0
         ? widget.anime.numEpisodes
         : null;
@@ -411,11 +418,11 @@ class _UpdateListStatusModalState
     );
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.page,
+        0,
+        AppSpacing.page,
+        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -424,69 +431,88 @@ class _UpdateListStatusModalState
           children: [
             Text(
               widget.anime.title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: theme.textTheme.titleLarge,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 20),
-
-            // Notification toggle (only for airing anime with nextAiring)
-            if (widget.nextAiring != null) ...[
-              Text('Notification', style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    notifEnabled
-                        ? Icons.notifications_active
-                        : Icons.notifications_none,
-                    color: notifEnabled ? AppColors.starColor : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      notifEnabled
-                          ? 'Notification enabled for Ep ${widget.nextAiring!.episode}'
-                          : 'Get notified before episode airs',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ),
-                  Switch(
-                    value: notifEnabled,
-                    onChanged: _saving
-                        ? null
-                        : (value) async {
-                            final episode = widget.nextAiring!.episode;
-                            final result = await ref
-                                .read(animeNotificationProvider.notifier)
-                                .toggle(
-                                  animeId: widget.anime.id,
-                                  title: widget.anime.title,
-                                  episode: episode,
-                                  airingAt: widget.nextAiring!.airingAt,
-                                );
-                            if (!result.changedState && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(result.message(episode)),
-                                ),
-                              );
-                            }
-                          },
-                  ),
-                ],
+            if (jaTitle != null && jaTitle.isNotEmpty)
+              Text(
+                jaTitle,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 20),
+
+            if (widget.nextAiring != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.card - 4),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: scheme.primaryContainer,
+                      child: Icon(
+                        notifEnabled
+                            ? Icons.notifications_active
+                            : Icons.notifications_none,
+                        size: 20,
+                        color: scheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        notifEnabled
+                            ? 'Notification enabled for '
+                                  'Ep ${widget.nextAiring!.episode}'
+                            : 'Get notified before the episode airs',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    Switch(
+                      value: notifEnabled,
+                      onChanged: _saving
+                          ? null
+                          : (value) async {
+                              final episode = widget.nextAiring!.episode;
+                              final result = await ref
+                                  .read(animeNotificationProvider.notifier)
+                                  .toggle(
+                                    animeId: widget.anime.id,
+                                    title: widget.anime.title,
+                                    episode: episode,
+                                    airingAt: widget.nextAiring!.airingAt,
+                                  );
+                              if (!result.changedState && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(result.message(episode)),
+                                  ),
+                                );
+                              }
+                            },
+                    ),
+                  ],
+                ),
+              ),
             ],
 
-            // Status
-            Text('Status', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
+            const _SheetLabel('Status'),
+            const SizedBox(height: AppSpacing.sm),
             Wrap(
-              spacing: 8,
-              runSpacing: 4,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: WatchStatus.values.map((s) {
                 final isCompleted = s == WatchStatus.completed;
                 final canMarkCompleted =
@@ -516,22 +542,22 @@ class _UpdateListStatusModalState
             ),
             if (widget.anime.status != 'finished_airing')
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
                 child: Text(
                   'Completed can only be set for finished anime',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
               ),
-            const SizedBox(height: 20),
 
-            // Episodes
-            Text('Episodes Watched', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
+            const _SheetLabel('Episodes Watched'),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
-                IconButton(
+                IconButton.filledTonal(
+                  tooltip: 'One episode less',
                   icon: const Icon(Icons.remove_circle_outline),
                   onPressed: (_saving || _selectedEps <= 0)
                       ? null
@@ -540,23 +566,16 @@ class _UpdateListStatusModalState
                           _epsController.text = '$_selectedEps';
                         },
                 ),
-                SizedBox(
-                  width: 70,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
                   child: TextField(
                     controller: _epsController,
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
                     enabled: !_saving,
+                    style: theme.textTheme.titleMedium,
                     decoration: InputDecoration(
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      suffixText: totalEps != null ? '/$totalEps' : null,
+                      suffixText: totalEps != null ? '/ $totalEps' : null,
                     ),
                     onSubmitted: (v) {
                       final parsed = int.tryParse(v);
@@ -566,7 +585,9 @@ class _UpdateListStatusModalState
                     },
                   ),
                 ),
-                IconButton(
+                const SizedBox(width: AppSpacing.md),
+                IconButton.filledTonal(
+                  tooltip: 'One episode more',
                   icon: const Icon(Icons.add_circle_outline),
                   onPressed:
                       (_saving ||
@@ -579,31 +600,20 @@ class _UpdateListStatusModalState
                 ),
               ],
             ),
-            const SizedBox(height: 20),
 
-            // Score
-            Text('Score', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            DropdownButton<int>(
+            const SizedBox(height: AppSpacing.lg),
+            const _SheetLabel('Score'),
+            const SizedBox(height: AppSpacing.sm),
+            ScorePicker(
               value: _selectedScore,
-              isExpanded: true,
-              items: List.generate(11, (i) {
-                return DropdownMenuItem(
-                  value: i,
-                  child: Text(i == 0 ? 'Not rated' : '$i'),
-                );
-              }),
-              onChanged: _saving
-                  ? null
-                  : (v) {
-                      if (v != null) setState(() => _selectedScore = v);
-                    },
+              enabled: !_saving,
+              onChanged: (v) => setState(() => _selectedScore = v),
             ),
-            const SizedBox(height: 24),
 
-            // Save
+            const SizedBox(height: AppSpacing.xl),
             SizedBox(
               width: double.infinity,
+              height: 56,
               child: FilledButton(
                 onPressed: _saving ? null : _save,
                 child: _saving
@@ -622,81 +632,41 @@ class _UpdateListStatusModalState
   }
 }
 
-/// Cover image with left-side rounded corners only.
-class _CoverImage extends StatelessWidget {
-  const _CoverImage({
-    required this.anime,
-    required this.statusLabel,
-    required this.statusColor,
-  });
+class _SheetLabel extends StatelessWidget {
+  const _SheetLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      text,
+      style: theme.textTheme.labelMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+/// Inset cover with rounded corners.
+class _Cover extends StatelessWidget {
+  const _Cover({required this.anime});
 
   final Anime anime;
-  final String? statusLabel;
-  final Color statusColor;
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(AppRadius.card),
-        bottomLeft: Radius.circular(AppRadius.card),
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.cover),
       child: SizedBox(
-        width: 80,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Image
-            AppCachedImage(
-              imageUrl: anime.mainPicture?.medium ?? '',
-              fallbackSize: 20,
-              memCacheWidth: 240,
-            ),
-            // Status badge (top-left)
-            if (statusLabel != null)
-              Positioned(
-                top: 2,
-                left: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 3,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  child: Text(
-                    statusLabel!,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.iconLight,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            // Media type badge (bottom-left)
-            if (anime.mediaType != null)
-              Positioned(
-                bottom: 2,
-                left: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 3,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.overlayDark,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  child: Text(
-                    AnimeLabels.mediaTypeLabel(anime.mediaType, compact: true),
-                    style: Theme.of(context).textTheme.labelSmall
-                        ?.copyWith(color: AppColors.iconLight),
-                  ),
-                ),
-              ),
-          ],
+        width: _coverWidth,
+        height: _coverHeight,
+        child: AppCachedImage(
+          imageUrl: anime.mainPicture?.medium ?? '',
+          fallbackSize: 20,
+          memCacheWidth: 252,
         ),
       ),
     );

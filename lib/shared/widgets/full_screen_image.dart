@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:animal/core/theme/app_colors.dart';
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
+import 'package:animal/shared/widgets/scrim_icon_button.dart';
 import 'package:material_ui/material_ui.dart';
 
 class FullScreenImageViewer extends StatelessWidget {
@@ -77,17 +79,12 @@ class FullScreenImageViewer extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            right: 16,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.overlayDark,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.close, color: AppColors.iconLight),
-                onPressed: () => Navigator.pop(context),
-              ),
+            top: MediaQuery.of(context).padding.top + AppSpacing.sm,
+            right: AppSpacing.lg,
+            child: ScrimIconButton(
+              icon: Icons.close_rounded,
+              tooltip: 'Close',
+              onPressed: () => Navigator.pop(context),
             ),
           ),
         ],

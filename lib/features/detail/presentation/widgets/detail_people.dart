@@ -194,7 +194,7 @@ class _CharacterRow extends StatelessWidget {
                       _Avatar(
                         imageUrl: va.imageUrl,
                         fallbackIcon: Icons.mic,
-                        size: 36,
+                        size: 40,
                       ),
                     ],
                   ),
@@ -248,7 +248,11 @@ class _StaffRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ],
         ),
       ),
@@ -260,7 +264,7 @@ class _Avatar extends StatelessWidget {
   const _Avatar({
     required this.imageUrl,
     required this.fallbackIcon,
-    this.size = 44,
+    this.size = 48,
   });
 
   final String? imageUrl;

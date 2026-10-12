@@ -197,7 +197,7 @@ void main() {
 
     expect(result.sawSpinner, isFalse);
     expect(scrollOffset(tester), before);
-    expect(find.text('3/12 ep'), findsOneWidget);
+    expect(find.text('3 / 12'), findsOneWidget);
     expect(repo.listLoads, 2);
   });
 
@@ -212,7 +212,7 @@ void main() {
 
     expect(result.sawSpinner, isFalse);
     expect(scrollOffset(tester), before);
-    expect(find.text('3/12 ep'), findsOneWidget);
+    expect(find.text('3 / 12'), findsOneWidget);
   });
 
   testWidgets('search: a save keeps the results in place without a spinner', (
@@ -230,7 +230,7 @@ void main() {
 
     expect(result.sawSpinner, isFalse);
     expect(scrollOffset(tester), before);
-    expect(find.text('3/12 ep'), findsOneWidget);
+    expect(find.text('3 / 12'), findsOneWidget);
   });
 
   testWidgets('airing: a save keeps the list in place without a spinner', (
@@ -281,6 +281,6 @@ void main() {
 
     expect(result.sawSpinner, isFalse);
     expect(scrollOffset(tester), before);
-    expect(find.text('3/12 ep'), findsOneWidget);
+    expect(find.text('3 / 12'), findsOneWidget);
   });
 }

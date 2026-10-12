@@ -25,35 +25,28 @@ class ProfileHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: scheme.primary, width: 2),
-                ),
-                child: CircleAvatar(
-                  radius: 34,
-                  backgroundColor: scheme.primaryContainer,
-                  backgroundImage: user.picture != null
-                      ? CachedNetworkImageProvider(user.picture!)
-                      : null,
-                  child: user.picture == null
-                      ? Icon(
-                          Icons.person,
-                          size: 34,
-                          color: scheme.onPrimaryContainer,
-                        )
-                      : null,
-                ),
+              CircleAvatar(
+                radius: 36,
+                backgroundColor: scheme.primaryContainer,
+                backgroundImage: user.picture != null
+                    ? CachedNetworkImageProvider(user.picture!)
+                    : null,
+                child: user.picture == null
+                    ? Icon(
+                        Icons.person,
+                        size: 36,
+                        color: scheme.onPrimaryContainer,
+                      )
+                    : null,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Text(
                   user.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -64,15 +57,15 @@ class ProfileHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,
             child: Wrap(
               spacing: 6,
               runSpacing: 6,
               children: [
-                const _InfoPill(
-                  dotColor: AppColors.statusAiring,
+                _InfoPill(
+                  dotColor: StatusColors.of(context).listWatching,
                   text: 'Connected to MyAnimeList',
                 ),
                 if (joined != null)
@@ -89,9 +82,12 @@ class ProfileHeader extends StatelessWidget {
             ),
           ),
           if (stats != null) ...[
-            const SizedBox(height: 18),
-            Divider(height: 1, color: scheme.outlineVariant),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
+            Divider(
+              height: 1,
+              color: scheme.onPrimaryContainer.withValues(alpha: 0.18),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 Expanded(
@@ -134,9 +130,12 @@ class _InfoPill extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm + 2,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.45),
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
@@ -144,21 +143,24 @@ class _InfoPill extends StatelessWidget {
         children: [
           if (dotColor != null)
             Container(
-              width: 7,
-              height: 7,
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(
                 color: dotColor,
                 shape: BoxShape.circle,
               ),
             ),
-          if (icon != null) Icon(icon, size: 13, color: muted),
+          if (icon != null) Icon(icon, size: 14, color: muted),
           if (dotColor != null || icon != null) const SizedBox(width: 6),
           Flexible(
             child: Text(
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(color: muted),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: muted,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -191,23 +193,26 @@ class ProfileHeaderPlaceholder extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(radius: 37, backgroundColor: block),
-                const SizedBox(width: 16),
+                CircleAvatar(radius: 36, backgroundColor: block),
+                const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       bar(140, 18),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       bar(200, 12),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            Divider(height: 1, color: scheme.outlineVariant),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
+            Divider(
+              height: 1,
+              color: scheme.onPrimaryContainer.withValues(alpha: 0.18),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [bar(60, 22), bar(60, 22), bar(60, 22)],
@@ -229,20 +234,19 @@ class ProfileHeaderError extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.page),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.hero),
-        color: scheme.errorContainer.withValues(alpha: 0.35),
-        border: Border.all(color: scheme.error.withValues(alpha: 0.5)),
+        color: scheme.errorContainer,
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 28,
             backgroundColor: scheme.error,
-            child: const Icon(Icons.error, color: AppColors.iconLight),
+            child: Icon(Icons.error, color: scheme.onError),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,14 +254,14 @@ class ProfileHeaderError extends StatelessWidget {
                 Text(
                   'Failed to load profile',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    color: scheme.onErrorContainer,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Check your connection',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.error,
+                    color: scheme.onErrorContainer,
                   ),
                 ),
               ],
@@ -265,6 +269,7 @@ class ProfileHeaderError extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Retry',
+            color: scheme.onErrorContainer,
             icon: const Icon(Icons.refresh),
             onPressed: onRetry,
           ),

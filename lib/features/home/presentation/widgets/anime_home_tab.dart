@@ -1,7 +1,9 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/home/presentation/widgets/anime_list_tab.dart';
 import 'package:animal/shared/providers/anime_list_providers.dart'
     show AiringFilter, ListSort, refreshUserAnimeListProvider;
+import 'package:animal/shared/widgets/pill_tab_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,12 +26,12 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
   bool _loaded = false;
   SharedPreferences? _prefs;
 
-  static const _tabs = [
-    Tab(text: 'Watching'),
-    Tab(text: 'Plan to Watch'),
-    Tab(text: 'On Hold'),
-    Tab(text: 'Completed'),
-    Tab(text: 'Dropped'),
+  static const _tabLabels = [
+    'Watching',
+    'Plan to Watch',
+    'On Hold',
+    'Completed',
+    'Dropped',
   ];
 
   static const List<WatchStatus> _statuses = [
@@ -45,7 +47,7 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabLabels.length, vsync: this);
     _loadPrefs();
   }
 
@@ -105,56 +107,61 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Column(
       children: [
         // Tab bar
-        Row(
-          children: [
-            Expanded(
-              child: TabBar(
-                controller: _tabController,
-                tabs: _tabs,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            AppSpacing.xs,
+            AppSpacing.sm,
+            0,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: PillTabBar(
+                  controller: _tabController,
+                  tabs: [
+                    for (final label in _tabLabels)
+                      Tab(text: label, height: 40),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              icon: _isRefreshing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh),
-              tooltip: 'Refresh',
-              onPressed: _isRefreshing ? null : _handleRefresh,
-            ),
-          ],
+              const SizedBox(width: AppSpacing.xs),
+              IconButton(
+                icon: _isRefreshing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                tooltip: 'Refresh',
+                onPressed: _isRefreshing ? null : _handleRefresh,
+              ),
+            ],
+          ),
         ),
 
         // Filter bar
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            AppSpacing.sm,
+            AppSpacing.page,
+            AppSpacing.xs,
+          ),
           child: Row(
             children: [
-              // Sort dropdown
-              DropdownButton<ListSort>(
+              _MenuPill<ListSort>(
+                tooltip: 'Sort by',
                 value: _sortBy,
-                underline: const SizedBox.shrink(),
-                style: theme.textTheme.bodySmall,
-                items: ListSort.values
-                    .map(
-                      (s) => DropdownMenuItem(value: s, child: Text(s.label)),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) _saveSort(value);
-                },
+                values: ListSort.values,
+                labelOf: (s) => s.label,
+                onSelected: _saveSort,
               ),
-              const SizedBox(width: 4),
-              // ASC/DESC toggle
+              const SizedBox(width: AppSpacing.xs),
               IconButton(
                 iconSize: 20,
                 icon: Icon(
@@ -164,19 +171,12 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                 onPressed: () => _saveAscending(!_ascending),
               ),
               const Spacer(),
-              // Airing status filter
-              DropdownButton<AiringFilter>(
+              _MenuPill<AiringFilter>(
+                tooltip: 'Filter by airing status',
                 value: _airingFilter,
-                underline: const SizedBox.shrink(),
-                style: theme.textTheme.bodySmall,
-                items: AiringFilter.values
-                    .map(
-                      (f) => DropdownMenuItem(value: f, child: Text(f.label)),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) _saveAiringFilter(value);
-                },
+                values: AiringFilter.values,
+                labelOf: (f) => f.label,
+                onSelected: _saveAiringFilter,
               ),
             ],
           ),
@@ -188,42 +188,71 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
             child: TabBarView(
               controller: _tabController,
               children: [
-                AnimeListTab(
-                  status: WatchStatus.watching,
-                  sortBy: _sortBy,
-                  ascending: _ascending,
-                  airingFilter: _airingFilter,
-                ),
-                AnimeListTab(
-                  status: WatchStatus.planToWatch,
-                  sortBy: _sortBy,
-                  ascending: _ascending,
-                  airingFilter: _airingFilter,
-                ),
-                AnimeListTab(
-                  status: WatchStatus.onHold,
-                  sortBy: _sortBy,
-                  ascending: _ascending,
-                  airingFilter: _airingFilter,
-                ),
-                AnimeListTab(
-                  status: WatchStatus.completed,
-                  sortBy: _sortBy,
-                  ascending: _ascending,
-                  airingFilter: _airingFilter,
-                ),
-                AnimeListTab(
-                  status: WatchStatus.dropped,
-                  sortBy: _sortBy,
-                  ascending: _ascending,
-                  airingFilter: _airingFilter,
-                ),
+                for (final status in _statuses)
+                  AnimeListTab(
+                    status: status,
+                    sortBy: _sortBy,
+                    ascending: _ascending,
+                    airingFilter: _airingFilter,
+                  ),
               ],
             ),
           )
         else
           const Expanded(child: Center(child: CircularProgressIndicator())),
       ],
+    );
+  }
+}
+
+/// A tonal pill that opens a menu of [values].
+class _MenuPill<T> extends StatelessWidget {
+  const _MenuPill({
+    required this.tooltip,
+    required this.value,
+    required this.values,
+    required this.labelOf,
+    required this.onSelected,
+  });
+
+  final String tooltip;
+  final T value;
+  final List<T> values;
+  final String Function(T) labelOf;
+  final ValueChanged<T> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return PopupMenuButton<T>(
+      tooltip: tooltip,
+      initialValue: value,
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        for (final v in values)
+          PopupMenuItem(value: v, child: Text(labelOf(v))),
+      ],
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.fromLTRB(14, 0, 10, 0),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(labelOf(value), style: theme.textTheme.labelLarge),
+            const SizedBox(width: AppSpacing.xs),
+            Icon(
+              Icons.expand_more_rounded,
+              size: 18,
+              color: scheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

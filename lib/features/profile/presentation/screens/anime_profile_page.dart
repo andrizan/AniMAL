@@ -10,6 +10,7 @@ import 'package:animal/features/profile/presentation/widgets/profile_header.dart
 import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
+import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/section_card.dart';
 import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,7 @@ class AnimeProfilePage extends ConsumerWidget {
         ref.watch(authControllerProvider) == AuthStatus.authenticated;
     final themeMode = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
+    final statusColors = StatusColors.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
@@ -48,13 +50,15 @@ class AnimeProfilePage extends ConsumerWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.language),
+                  leading: const _SettingsIcon(Icons.language),
                   title: const Text('MyAnimeList Account'),
                   subtitle: Text(signedIn ? 'Connected' : 'Tap to login'),
                   trailing: signedIn
-                      ? const Icon(
-                          Icons.check_circle,
-                          color: AppColors.statusAiring,
+                      ? InfoChip(
+                          label: 'Active',
+                          icon: Icons.check_circle,
+                          color: statusColors.onAiringContainer,
+                          background: statusColors.airingContainer,
                         )
                       : const Icon(Icons.chevron_right),
                   onTap: () {
@@ -63,7 +67,7 @@ class AnimeProfilePage extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: Icon(
+                  leading: _SettingsIcon(
                     themeMode == ThemeMode.dark
                         ? Icons.dark_mode
                         : Icons.light_mode,
@@ -85,7 +89,7 @@ class AnimeProfilePage extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.info_outline),
+                  leading: const _SettingsIcon(Icons.info_outline),
                   title: const Text('About'),
                   subtitle: const Text('AniMAL'),
                   onTap: () async {
@@ -101,7 +105,7 @@ class AnimeProfilePage extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.code),
+                  leading: const _SettingsIcon(Icons.code),
                   title: const Text('GitHub'),
                   subtitle: const Text('View source code'),
                   trailing: const Icon(Icons.open_in_new, size: 20),
@@ -109,7 +113,7 @@ class AnimeProfilePage extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.system_update),
+                  leading: const _SettingsIcon(Icons.system_update),
                   title: const Text('Check for Update'),
                   subtitle: const Text('Check latest release'),
                   trailing: const Icon(Icons.chevron_right),
@@ -175,6 +179,22 @@ class AnimeProfilePage extends ConsumerWidget {
       ],
       const SizedBox(height: 24),
     ];
+  }
+}
+
+class _SettingsIcon extends StatelessWidget {
+  const _SettingsIcon(this.icon);
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: scheme.surfaceContainer,
+      child: Icon(icon, size: 20, color: scheme.onSurfaceVariant),
+    );
   }
 }
 

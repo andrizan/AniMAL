@@ -1,4 +1,3 @@
-import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,17 +25,6 @@ void main() {
       expect(AnimeLabels.statusLabel('weird'), 'weird');
       expect(AnimeLabels.statusLabel(null), '');
     });
-  });
-
-  test('statusColor uses the shared palette', () {
-    expect(AnimeLabels.statusColor('currently_airing'), AppColors.statusAiring);
-    expect(
-      AnimeLabels.statusColor('finished_airing'),
-      AppColors.statusFinished,
-    );
-    expect(AnimeLabels.statusColor('not_yet_aired'), AppColors.statusUpcoming);
-    expect(AnimeLabels.statusColor(null), AppColors.statusDefault);
-    expect(AnimeLabels.statusColor('other'), AppColors.statusDefault);
   });
 
   group('ratingLabel', () {

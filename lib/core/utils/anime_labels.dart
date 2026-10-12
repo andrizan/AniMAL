@@ -1,6 +1,3 @@
-import 'package:animal/core/theme/app_colors.dart';
-import 'package:material_ui/material_ui.dart';
-
 String cleanAniListDescription(String desc) {
   return desc
       .replaceAll(RegExp(r'\[/?[a-zA-Z]+\]'), '')
@@ -22,13 +19,6 @@ class AnimeLabels {
         'not_yet_aired' => compact ? 'UPCOMING' : 'Upcoming',
         _ => status ?? '',
       };
-
-  static Color statusColor(String? status) => switch (status) {
-    'currently_airing' => AppColors.statusAiring,
-    'finished_airing' => AppColors.statusFinished,
-    'not_yet_aired' => AppColors.statusUpcoming,
-    _ => AppColors.statusDefault,
-  };
 
   static String ratingLabel(String? rating, {bool compact = false}) =>
       switch (rating) {

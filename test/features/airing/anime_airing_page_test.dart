@@ -160,7 +160,7 @@ void main() {
       ),
     );
 
-    expect(find.text('3/12 ep'), findsOneWidget);
+    expect(find.text('3 / 12'), findsOneWidget);
     expect(find.text('Watching'), findsOneWidget);
   });
 

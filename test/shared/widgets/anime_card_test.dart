@@ -106,53 +106,40 @@ void main() {
     });
   });
 
-  group('badges', () {
-    testWidgets('maps the airing status to a compact badge', (tester) async {
+  group('meta line', () {
+    testWidgets('joins the media type, episodes and airing status', (
+      tester,
+    ) async {
       await pumpCard(
         tester,
-        anime(status: 'currently_airing', mediaType: 'tv'),
+        anime(status: 'currently_airing', mediaType: 'tv', episodes: 12),
       );
 
-      expect(find.text('AIRING'), findsOneWidget);
-      expect(find.text('TV'), findsOneWidget);
+      expect(find.text('TV · 12 eps · Airing'), findsOneWidget);
     });
 
-    testWidgets('shows finished and upcoming badges', (tester) async {
+    testWidgets('leaves out what is unknown', (tester) async {
       await pumpCard(
         tester,
         anime(status: 'finished_airing', mediaType: 'movie'),
       );
-      expect(find.text('FINISHED'), findsOneWidget);
-      expect(find.text('MOVIE'), findsOneWidget);
+      expect(find.text('Movie · Finished'), findsOneWidget);
 
       await pumpCard(tester, anime(status: 'not_yet_aired'));
-      expect(find.text('UPCOMING'), findsOneWidget);
+      expect(find.text('Upcoming'), findsOneWidget);
     });
 
-    testWidgets('shows the age rating compactly', (tester) async {
-      await pumpCard(tester, anime(rating: 'pg_13'));
-
-      expect(find.text('PG-13'), findsOneWidget);
-    });
-  });
-
-  group('genres', () {
-    testWidgets('shows at most three genres', (tester) async {
+    testWidgets('keeps the rating and genres off the card', (tester) async {
       await pumpCard(
         tester,
         anime(
-          genres: const [
-            Genre(id: 1, name: 'Action'),
-            Genre(id: 2, name: 'Drama'),
-            Genre(id: 3, name: 'Fantasy'),
-            Genre(id: 4, name: 'Romance'),
-          ],
+          rating: 'pg_13',
+          genres: const [Genre(id: 1, name: 'Action')],
         ),
       );
 
-      expect(find.text('Action'), findsOneWidget);
-      expect(find.text('Fantasy'), findsOneWidget);
-      expect(find.text('Romance'), findsNothing);
+      expect(find.text('PG-13'), findsNothing);
+      expect(find.text('Action'), findsNothing);
     });
   });
 
@@ -187,7 +174,7 @@ void main() {
       expect(find.byIcon(Icons.star), findsNothing);
     });
 
-    testWidgets('shows watched over total episodes for a listed anime', (
+    testWidgets('shows a progress bar with watched over total episodes', (
       tester,
     ) async {
       await pumpCard(
@@ -201,7 +188,12 @@ void main() {
         ),
       );
 
-      expect(find.text('12/28 ep'), findsOneWidget);
+      expect(find.text('12 / 28'), findsOneWidget);
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, closeTo(12 / 28, 0.001));
+      expect(bar.semanticsLabel, '12 of 28 episodes watched');
     });
 
     testWidgets('shows only the episode count when not in the list', (
@@ -209,7 +201,8 @@ void main() {
     ) async {
       await pumpCard(tester, anime(episodes: 28));
 
-      expect(find.text('28ep'), findsOneWidget);
+      expect(find.text('28 eps'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
     });
 
     testWidgets('shows no episode text when the count is unknown', (
@@ -245,7 +238,10 @@ void main() {
 
     expect(
       tester.widget<Card>(find.byType(Card)).margin,
-      const EdgeInsets.symmetric(vertical: 3, horizontal: AppSpacing.page),
+      const EdgeInsets.symmetric(
+        vertical: AppSpacing.md / 2,
+        horizontal: AppSpacing.page,
+      ),
     );
   });
 

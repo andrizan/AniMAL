@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/broadcast.dart';
@@ -6,6 +7,7 @@ import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/countdown_badge.dart';
 import 'package:animal/shared/widgets/empty_view.dart';
 import 'package:animal/shared/widgets/error_view.dart';
+import 'package:animal/shared/widgets/pill_tab_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -107,28 +109,37 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
         final isWeekEmpty = grouped.values.every((l) => l.isEmpty);
         return Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    tabs: _dayLabels.map((d) => Tab(text: d)).toList(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppSpacing.xs,
+                AppSpacing.sm,
+                AppSpacing.xs,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: PillTabBar(
+                      controller: _tabController,
+                      tabs: [
+                        for (final d in _dayLabels) Tab(text: d, height: 40),
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: _isRefreshing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh),
-                  tooltip: 'Refresh',
-                  onPressed: _isRefreshing ? null : _handleRefresh,
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.xs),
+                  IconButton(
+                    icon: _isRefreshing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh),
+                    tooltip: 'Refresh',
+                    onPressed: _isRefreshing ? null : _handleRefresh,
+                  ),
+                ],
+              ),
             ),
             if (isWeekEmpty)
               Expanded(
@@ -176,8 +187,9 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                     return RefreshIndicator(
                       onRefresh: _handleRefresh,
                       child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemExtent: 126,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
                         itemCount: animeForDay.length,
                         itemBuilder: (context, index) {
                           final entry = animeForDay[index];

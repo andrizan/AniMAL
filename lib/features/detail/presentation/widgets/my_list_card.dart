@@ -6,17 +6,11 @@ import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/widgets/score_picker.dart';
 import 'package:animal/shared/widgets/section_card.dart';
+import 'package:animal/shared/widgets/status_chip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-IconData _statusIcon(WatchStatus status) => switch (status) {
-  WatchStatus.watching => Icons.play_circle,
-  WatchStatus.completed => Icons.check_circle,
-  WatchStatus.onHold => Icons.pause_circle,
-  WatchStatus.dropped => Icons.cancel,
-  WatchStatus.planToWatch => Icons.bookmark,
-};
 
 class MyListCard extends ConsumerStatefulWidget {
   const MyListCard({
@@ -144,19 +138,39 @@ class _MyListCardState extends ConsumerState<MyListCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Text(
-                    'Change Status',
-                    style: theme.textTheme.titleMedium,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.page,
+                    0,
+                    AppSpacing.page,
+                    AppSpacing.sm,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Change Status',
+                      style: theme.textTheme.titleLarge,
+                    ),
                   ),
                 ),
                 for (final s in WatchStatus.values)
                   Builder(
-                    builder: (_) {
+                    builder: (context) {
                       final disabled =
                           _busy || (s == WatchStatus.completed && !isFinished);
+                      final colors = listStatusColors(context, s);
                       return ListTile(
-                        leading: Icon(_statusIcon(s)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.page,
+                        ),
+                        leading: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: colors.background,
+                          child: Icon(
+                            listStatusIcon(s),
+                            size: 20,
+                            color: colors.foreground,
+                          ),
+                        ),
                         title: Text(
                           s.label,
                           style: TextStyle(
@@ -195,6 +209,41 @@ class _MyListCardState extends ConsumerState<MyListCard> {
     );
   }
 
+  void _showScorePicker(BuildContext context) {
+    final theme = Theme.of(context);
+    final score = widget.detail.myListStatus!.score ?? 0;
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              0,
+              AppSpacing.page,
+              AppSpacing.xl,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Your score', style: theme.textTheme.titleLarge),
+                const SizedBox(height: AppSpacing.lg),
+                ScorePicker(
+                  value: score,
+                  onChanged: (value) {
+                    Navigator.pop(ctx);
+                    unawaited(_updateScore(value));
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -204,90 +253,86 @@ class _MyListCardState extends ConsumerState<MyListCard> {
     final watched = status.numEpisodesWatched ?? 0;
     final total = detail.numEpisodes != 0 ? detail.numEpisodes : null;
     final score = status.score ?? 0;
+    final statusColors = listStatusColors(context, status.status);
 
     return SectionCard(
-      color: scheme.primaryContainer.withValues(alpha: 0.3),
+      title: 'Your list',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(_statusIcon(status.status), color: scheme.primary),
-              const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(
-                  status.status.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium,
+                child: _PickerButton(
+                  tooltip: 'Change status',
+                  icon: listStatusIcon(status.status),
+                  label: status.status.label,
+                  background: statusColors.background,
+                  foreground: statusColors.foreground,
+                  onTap: _busy ? null : () => _showStatusPicker(context),
                 ),
               ),
-              TextButton.icon(
-                onPressed: _busy ? null : () => _showStatusPicker(context),
-                icon: const Icon(Icons.edit, size: 16),
-                label: const Text('Change'),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _PickerButton(
+                  tooltip: 'Change score',
+                  icon: Icons.star_rounded,
+                  iconColor: StatusColors.of(context).star,
+                  label: 'Score',
+                  value: score == 0 ? 'None' : '$score',
+                  background: scheme.surfaceContainer,
+                  foreground: scheme.onSurface,
+                  onTap: _busy ? null : () => _showScorePicker(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Episodes',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              Text(
+                total != null ? '$watched / $total' : '$watched',
+                style: theme.textTheme.labelLarge,
               ),
             ],
           ),
           if (total != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            ClipRRect(
+            LinearProgressIndicator(
+              value: (watched / total).clamp(0.0, 1.0),
               borderRadius: BorderRadius.circular(AppRadius.pill),
-              child: LinearProgressIndicator(
-                value: (watched / total).clamp(0.0, 1.0),
-                minHeight: 8,
-                backgroundColor: scheme.surfaceContainerHigh,
-              ),
+              semanticsLabel: '$watched of $total episodes watched',
             ),
           ],
-          const SizedBox(height: AppSpacing.sm),
-          const Divider(),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              Icon(
-                Icons.movie_outlined,
-                size: 20,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Episodes',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
+              IconButton.filledTonal(
+                tooltip: 'One episode less',
                 icon: const Icon(Icons.remove_circle_outline),
                 onPressed: (_busy || watched <= 0)
                     ? null
                     : () => _updateEpisodes(watched - 1),
               ),
-              SizedBox(
-                width: 60,
-                height: 36,
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
                 child: TextFormField(
                   key: ValueKey('episodes_$watched'),
                   initialValue: '$watched',
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   enabled: !_busy,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: theme.textTheme.titleMedium,
                   decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    isDense: true,
-                    suffixText: total != null ? '/$total' : null,
-                    suffixStyle: theme.textTheme.bodySmall,
+                    suffixText: total != null ? '/ $total' : null,
                   ),
                   onFieldSubmitted: (value) {
                     final parsed = int.tryParse(value);
@@ -297,8 +342,9 @@ class _MyListCardState extends ConsumerState<MyListCard> {
                   },
                 ),
               ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
+              const SizedBox(width: AppSpacing.md),
+              IconButton.filledTonal(
+                tooltip: 'One episode more',
                 icon: const Icon(Icons.add_circle_outline),
                 onPressed: (_busy || (total != null && watched >= total))
                     ? null
@@ -306,40 +352,7 @@ class _MyListCardState extends ConsumerState<MyListCard> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              const Icon(
-                Icons.star_rounded,
-                size: 20,
-                color: AppColors.starColor,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(child: Text('Score', style: theme.textTheme.bodyLarge)),
-              DropdownButton<int>(
-                value: score,
-                items: List.generate(11, (i) {
-                  return DropdownMenuItem(
-                    value: i,
-                    child: Text(
-                      i == 0 ? 'Not rated' : '$i',
-                      style: TextStyle(
-                        fontWeight: i == score
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  );
-                }),
-                onChanged: _busy
-                    ? null
-                    : (value) {
-                        if (value != null) unawaited(_updateScore(value));
-                      },
-              ),
-            ],
-          ),
-          const Divider(),
+          const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
@@ -352,10 +365,84 @@ class _MyListCardState extends ConsumerState<MyListCard> {
                     )
                   : const Icon(Icons.delete_outline),
               label: const Text('Remove from List'),
-              style: TextButton.styleFrom(foregroundColor: scheme.error),
+              style: TextButton.styleFrom(
+                foregroundColor: scheme.error,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A pill button that opens a picker sheet: icon, label, optional value.
+class _PickerButton extends StatelessWidget {
+  const _PickerButton({
+    required this.tooltip,
+    required this.icon,
+    required this.label,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+    this.iconColor,
+    this.value,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color? iconColor;
+  final String label;
+  final String? value;
+  final Color background;
+  final Color foreground;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final radius = BorderRadius.circular(AppRadius.pill);
+    final style = theme.textTheme.labelLarge?.copyWith(color: foreground);
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: background,
+        borderRadius: radius,
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onTap,
+          child: SizedBox(
+            height: 48,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Row(
+                children: [
+                  Icon(icon, size: 18, color: iconColor ?? foreground),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: style,
+                    ),
+                  ),
+                  if (value != null) ...[
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      value!,
+                      style: style?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                  const SizedBox(width: AppSpacing.xs),
+                  Icon(Icons.expand_more_rounded, size: 18, color: foreground),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -404,6 +491,7 @@ class _AddToListButtonState extends ConsumerState<AddToListButton> {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
+      height: 56,
       child: FilledButton.icon(
         onPressed: _busy ? null : _add,
         icon: _busy

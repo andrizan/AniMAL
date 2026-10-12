@@ -1,9 +1,11 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/core/utils/format_utils.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/shared/widgets/hero_panel.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/stat_highlight.dart';
+import 'package:animal/shared/widgets/status_chip.dart';
 import 'package:material_ui/material_ui.dart';
 
 class DetailHeader extends StatelessWidget {
@@ -19,21 +21,20 @@ class DetailHeader extends StatelessWidget {
 
     final chips = <Widget>[
       if (detail.mediaType != null)
-        InfoChip(label: AnimeLabels.mediaTypeLabel(detail.mediaType)),
+        InfoChip(
+          label: AnimeLabels.mediaTypeLabel(detail.mediaType),
+          background: scheme.surfaceContainerLow,
+        ),
       if (detail.numEpisodes != null && detail.numEpisodes != 0)
         InfoChip(
-          icon: Icons.movie_outlined,
           label: '${detail.numEpisodes} eps',
+          background: scheme.surfaceContainerLow,
         ),
-      if (detail.status != null)
-        InfoChip(
-          label: AnimeLabels.statusLabel(detail.status),
-          color: AnimeLabels.statusColor(detail.status),
-        ),
+      if (detail.status != null) AiringStatusChip(status: detail.status),
       if (detail.rating != null)
         InfoChip(
           label: AnimeLabels.ratingLabel(detail.rating),
-          color: scheme.error,
+          background: scheme.surfaceContainerLow,
         ),
     ];
 
@@ -57,10 +58,13 @@ class DetailHeader extends StatelessWidget {
       children: [
         if (native != null && native.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12, left: 4),
+            padding: const EdgeInsets.only(
+              bottom: AppSpacing.md,
+              left: AppSpacing.xs,
+            ),
             child: SelectableText(
               native,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodyLarge?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
             ),
@@ -72,12 +76,19 @@ class DetailHeader extends StatelessWidget {
                 if (chips.isNotEmpty)
                   SizedBox(
                     width: double.infinity,
-                    child: Wrap(spacing: 8, runSpacing: 8, children: chips),
+                    child: Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: chips,
+                    ),
                   ),
                 if (chips.isNotEmpty && highlights.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Divider(height: 1, color: scheme.outlineVariant),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
+                  Divider(
+                    height: 1,
+                    color: scheme.onPrimaryContainer.withValues(alpha: 0.18),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
                 if (highlights.isNotEmpty)
                   Row(

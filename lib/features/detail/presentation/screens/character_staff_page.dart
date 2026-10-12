@@ -10,6 +10,9 @@ import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
+import 'package:animal/shared/widgets/scrim_icon_button.dart';
+import 'package:animal/shared/widgets/section_card.dart';
+import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -22,7 +25,6 @@ class CharacterProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncChar = ref.watch(anilistCharacterDetailProvider(characterId));
-    final theme = Theme.of(context);
 
     return asyncChar.when(
       loading: () =>
@@ -35,161 +37,26 @@ class CharacterProfilePage extends ConsumerWidget {
               ref.invalidate(anilistCharacterDetailProvider(characterId)),
         ),
       ),
-      data: (character) {
-        return Scaffold(
-          body: CustomScrollView(
-            slivers: [
-              // App bar with character image
-              SliverAppBar(
-                expandedHeight: 300,
-                pinned: true,
-                foregroundColor: AppColors.iconLight,
-                backgroundColor: theme.colorScheme.surface,
-                leading: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.overlayDarker,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.iconLight,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  title: SelectableText(
-                    character.name,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  titlePadding: const EdgeInsets.only(
-                    left: AppSpacing.page,
-                    bottom: AppSpacing.lg,
-                  ),
-                  background: GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      if (character.imageUrl != null) {
-                        FullScreenImageViewer.show(
-                          context,
-                          imageUrl: character.imageUrl!,
-                          heroTag: 'character',
-                        );
-                      }
-                    },
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        AppCachedImage(imageUrl: character.imageUrl ?? ''),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                AppColors.transparent,
-                                AppColors.transparent,
-                                theme.colorScheme.surface.withValues(
-                                  alpha: 0.7,
-                                ),
-                                theme.colorScheme.surface,
-                              ],
-                              stops: const [0.0, 0.4, 0.75, 1.0],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.page),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Native name
-                      if (character.nativeName != null)
-                        SelectableText(
-                          character.nativeName!,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      const SizedBox(height: 16),
-
-                      // Info chips
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (character.gender != null)
-                            InfoChip(
-                              icon: Icons.person_outline,
-                              label: character.gender!,
-                            ),
-                          if (character.age != null)
-                            InfoChip(
-                              icon: Icons.cake_outlined,
-                              label: 'Age: ${character.age}',
-                            ),
-                          if (character.birthMonth != null)
-                            InfoChip(
-                              icon: Icons.calendar_today,
-                              label: _formatBirthday(character),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Description
-                      if (character.description != null &&
-                          character.description!.isNotEmpty) ...[
-                        Text('About', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        SelectableText(
-                          cleanAniListDescription(character.description!),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Media appearances
-                      if (character.mediaAppearances.isNotEmpty) ...[
-                        Text('Appears In', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        _WorksList(
-                          malIds: character.mediaAppearances
-                              .where(
-                                (m) => m.malId != null && m.type == 'ANIME',
-                              )
-                              .map((m) => m.malId!)
-                              .toList(),
-                          otherMedia: character.mediaAppearances
-                              .where(
-                                (m) => m.malId == null || m.type != 'ANIME',
-                              )
-                              .toList(),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+      data: (character) => _PersonScaffold(
+        name: character.name,
+        nativeName: character.nativeName,
+        imageUrl: character.imageUrl,
+        heroTag: 'character',
+        chips: [
+          if (character.gender != null)
+            InfoChip(icon: Icons.person_outline, label: character.gender!),
+          if (character.age != null)
+            InfoChip(icon: Icons.cake_outlined, label: 'Age: ${character.age}'),
+          if (character.birthMonth != null)
+            InfoChip(
+              icon: Icons.calendar_today,
+              label: _formatBirthday(character),
+            ),
+        ],
+        description: character.description,
+        worksTitle: 'Appears In',
+        works: character.mediaAppearances,
+      ),
     );
   }
 
@@ -211,7 +78,7 @@ class StaffProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncStaff = ref.watch(anilistStaffDetailProvider(staffId));
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return asyncStaff.when(
       loading: () =>
@@ -223,165 +90,196 @@ class StaffProfilePage extends ConsumerWidget {
           onRetry: () => ref.invalidate(anilistStaffDetailProvider(staffId)),
         ),
       ),
-      data: (staff) {
-        return Scaffold(
-          body: CustomScrollView(
-            slivers: [
-              // App bar
-              SliverAppBar(
-                expandedHeight: 300,
-                pinned: true,
-                foregroundColor: AppColors.iconLight,
-                backgroundColor: theme.colorScheme.surface,
-                leading: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.overlayDarker,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.iconLight,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  title: SelectableText(
-                    staff.name,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  titlePadding: const EdgeInsets.only(
-                    left: AppSpacing.page,
-                    bottom: AppSpacing.lg,
-                  ),
-                  background: GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      if (staff.imageUrl != null) {
-                        FullScreenImageViewer.show(
-                          context,
-                          imageUrl: staff.imageUrl!,
-                          heroTag: 'staff',
-                        );
-                      }
-                    },
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        AppCachedImage(imageUrl: staff.imageUrl ?? ''),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                AppColors.transparent,
-                                AppColors.transparent,
-                                theme.colorScheme.surface.withValues(
-                                  alpha: 0.7,
-                                ),
-                                theme.colorScheme.surface,
-                              ],
-                              stops: const [0.0, 0.4, 0.75, 1.0],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+      data: (staff) => _PersonScaffold(
+        name: staff.name,
+        nativeName: staff.nativeName,
+        imageUrl: staff.imageUrl,
+        heroTag: 'staff',
+        chips: [
+          if (staff.occupations != null && staff.occupations!.isNotEmpty)
+            for (final occ in staff.occupations!)
+              InfoChip(
+                icon: Icons.work_outline,
+                label: occ,
+                color: scheme.onPrimaryContainer,
+                background: scheme.primaryContainer,
               ),
+          if (staff.gender != null)
+            InfoChip(icon: Icons.person_outline, label: staff.gender!),
+          if (staff.age != null)
+            InfoChip(icon: Icons.cake_outlined, label: 'Age: ${staff.age}'),
+          if (staff.homeTown != null)
+            InfoChip(icon: Icons.location_on_outlined, label: staff.homeTown!),
+        ],
+        description: staff.description,
+        worksTitle: 'Works',
+        works: staff.mediaWorks,
+      ),
+    );
+  }
+}
 
-              // Content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.page),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Native name
-                      if (staff.nativeName != null)
-                        SelectableText(
-                          staff.nativeName!,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+/// Shared page for a character or staff member: portrait hero, names,
+/// chips, description and the media they are part of.
+class _PersonScaffold extends StatelessWidget {
+  const _PersonScaffold({
+    required this.name,
+    required this.nativeName,
+    required this.imageUrl,
+    required this.heroTag,
+    required this.chips,
+    required this.description,
+    required this.worksTitle,
+    required this.works,
+  });
+
+  final String name;
+  final String? nativeName;
+  final String? imageUrl;
+  final String heroTag;
+  final List<Widget> chips;
+  final String? description;
+  final String worksTitle;
+  final List<AniListMediaAppearance> works;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final hasDescription = description != null && description!.isNotEmpty;
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 320,
+            pinned: true,
+            foregroundColor: AppColors.iconLight,
+            backgroundColor: scheme.surface,
+            leading: ScrimIconButton(
+              icon: Icons.arrow_back_rounded,
+              tooltip: 'Back',
+              onPressed: () => Navigator.pop(context),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              title: SelectableText(name, style: theme.textTheme.titleMedium),
+              titlePadding: const EdgeInsets.only(
+                left: AppSpacing.page,
+                bottom: AppSpacing.lg,
+              ),
+              background: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  if (imageUrl != null) {
+                    FullScreenImageViewer.show(
+                      context,
+                      imageUrl: imageUrl!,
+                      heroTag: heroTag,
+                    );
+                  }
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    AppCachedImage(
+                      imageUrl: imageUrl ?? '',
+                      fallbackIcon: Icons.person,
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.transparent,
+                            AppColors.transparent,
+                            scheme.surface.withValues(alpha: 0.7),
+                            scheme.surface,
+                          ],
+                          stops: const [0.0, 0.45, 0.8, 1.0],
                         ),
-                      const SizedBox(height: 16),
-
-                      // Info chips
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (staff.occupations != null &&
-                              staff.occupations!.isNotEmpty)
-                            for (final occ in staff.occupations!)
-                              InfoChip(icon: Icons.work_outline, label: occ),
-                          if (staff.gender != null)
-                            InfoChip(
-                              icon: Icons.person_outline,
-                              label: staff.gender!,
-                            ),
-                          if (staff.age != null)
-                            InfoChip(
-                              icon: Icons.cake_outlined,
-                              label: 'Age: ${staff.age}',
-                            ),
-                          if (staff.homeTown != null)
-                            InfoChip(
-                              icon: Icons.location_on_outlined,
-                              label: staff.homeTown!,
-                            ),
-                        ],
                       ),
-                      const SizedBox(height: 20),
-
-                      // Description
-                      if (staff.description != null &&
-                          staff.description!.isNotEmpty) ...[
-                        Text('About', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        SelectableText(
-                          cleanAniListDescription(staff.description!),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Media works
-                      if (staff.mediaWorks.isNotEmpty) ...[
-                        Text('Works', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        _WorksList(
-                          malIds: staff.mediaWorks
-                              .where(
-                                (m) => m.malId != null && m.type == 'ANIME',
-                              )
-                              .map((m) => m.malId!)
-                              .toList(),
-                          otherMedia: staff.mediaWorks
-                              .where(
-                                (m) => m.malId == null || m.type != 'ANIME',
-                              )
-                              .toList(),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      const SizedBox(height: 32),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        );
-      },
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppSpacing.xs,
+                AppSpacing.page,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (nativeName != null)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xs,
+                        bottom: AppSpacing.md,
+                      ),
+                      child: SelectableText(
+                        nativeName!,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  if (chips.isNotEmpty)
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: chips,
+                    ),
+                  if (hasDescription) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    SectionCard(
+                      title: 'About',
+                      child: SelectableText(
+                        cleanAniListDescription(description!),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (works.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xs,
+                        AppSpacing.xl,
+                        AppSpacing.xs,
+                        0,
+                      ),
+                      child: SectionHeader(
+                        worksTitle,
+                        trailing: '${works.length} titles',
+                        bottomPadding: 2,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (works.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _WorksList(
+                malIds: works
+                    .where((m) => m.malId != null && m.type == 'ANIME')
+                    .map((m) => m.malId!)
+                    .toList(),
+                otherMedia: works
+                    .where((m) => m.malId == null || m.type != 'ANIME')
+                    .toList(),
+              ),
+            ),
+          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
+        ],
+      ),
     );
   }
 }

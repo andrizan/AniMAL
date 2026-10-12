@@ -4,6 +4,9 @@ import 'package:material_ui/material_ui.dart';
 
 const _chartAnimation = Duration(milliseconds: 650);
 
+Duration _animationFor(BuildContext context) =>
+    MediaQuery.disableAnimationsOf(context) ? Duration.zero : _chartAnimation;
+
 class ChartSegment {
   const ChartSegment({
     required this.label,
@@ -54,7 +57,7 @@ class DonutChart extends StatelessWidget {
         height: size,
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: 1),
-          duration: _chartAnimation,
+          duration: _animationFor(context),
           curve: Curves.easeOutCubic,
           builder: (context, progress, child) => CustomPaint(
             painter: _DonutPainter(
@@ -232,7 +235,7 @@ class BarChart extends StatelessWidget {
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: _chartAnimation,
+      duration: _animationFor(context),
       curve: Curves.easeOutCubic,
       builder: (context, t, _) => SizedBox(
         height: height,
@@ -357,7 +360,7 @@ class HorizontalBars extends StatelessWidget {
                           begin: 0,
                           end: peak > 0 ? bar.value / peak : 0,
                         ),
-                        duration: _chartAnimation,
+                        duration: _animationFor(context),
                         curve: Curves.easeOutCubic,
                         builder: (context, factor, _) => FractionallySizedBox(
                           widthFactor: factor,

@@ -5,7 +5,7 @@ class HeroPanel extends StatelessWidget {
   const HeroPanel({
     required this.child,
     super.key,
-    this.padding = const EdgeInsets.all(20),
+    this.padding = const EdgeInsets.all(AppSpacing.page),
   });
 
   final EdgeInsetsGeometry padding;
@@ -18,12 +18,18 @@ class HeroPanel extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.hero),
-        border: Border.all(color: scheme.outlineVariant),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [scheme.primaryContainer, scheme.surfaceContainer],
+          colors: [scheme.primaryContainer, scheme.surfaceContainerLow],
         ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.shadow.withValues(alpha: 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: child,
     );

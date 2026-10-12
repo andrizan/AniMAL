@@ -44,7 +44,7 @@ void main() {
   testWidgets('shows the title and the four destinations', (tester) async {
     await open(tester);
 
-    expect(find.text('AniMAL'), findsOneWidget);
+    expect(find.text('Library'), findsOneWidget);
     for (final label in ['Home', 'Airing', 'Calendar', 'Profile']) {
       expect(find.text(label), findsOneWidget, reason: label);
     }

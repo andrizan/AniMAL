@@ -5,6 +5,8 @@ import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
+import 'package:animal/shared/widgets/scrim_icon_button.dart';
+import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -17,6 +19,7 @@ class StudioProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncStudio = ref.watch(anilistStudioDetailProvider(studioId));
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return asyncStudio.when(
       loading: () =>
@@ -38,23 +41,14 @@ class StudioProfilePage extends ConsumerWidget {
           body: CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 250,
+                expandedHeight: 240,
                 pinned: true,
                 foregroundColor: AppColors.iconLight,
-                backgroundColor: theme.colorScheme.surface,
-                leading: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.overlayDarker,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.iconLight,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                backgroundColor: scheme.surface,
+                leading: ScrimIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'Back',
+                  onPressed: () => Navigator.pop(context),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   title: SelectableText(
@@ -67,14 +61,33 @@ class StudioProfilePage extends ConsumerWidget {
                   ),
                   background: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [scheme.primaryContainer, scheme.surface],
+                      ),
                     ),
                     child: Center(
-                      child: Icon(
-                        Icons.business,
-                        size: 64,
-                        color: theme.colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.3,
+                      child: Container(
+                        width: 104,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(
+                            AppRadius.sheet + AppSpacing.xs,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: scheme.shadow.withValues(alpha: 0.12),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.business_rounded,
+                          size: 48,
+                          color: scheme.primary,
                         ),
                       ),
                     ),
@@ -83,19 +96,25 @@ class StudioProfilePage extends ConsumerWidget {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.page),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.page,
+                    AppSpacing.xs,
+                    AppSpacing.page,
+                    0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
                         children: [
                           if (studio.isAnimationStudio)
                             InfoChip(
-                              icon: Icons.movie,
+                              icon: Icons.movie_outlined,
                               label: 'Animation Studio',
-                              color: theme.colorScheme.primary,
+                              color: scheme.onPrimaryContainer,
+                              background: scheme.primaryContainer,
                             ),
                           if (studio.favourites != null)
                             InfoChip(
@@ -104,19 +123,27 @@ class StudioProfilePage extends ConsumerWidget {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-
-                      if (malIds.isNotEmpty) ...[
-                        Text('Works', style: theme.textTheme.titleSmall),
-                        const SizedBox(height: 8),
-                        _AnimeWorksList(malIds: malIds),
-                        const SizedBox(height: 12),
-                      ],
-                      const SizedBox(height: 32),
+                      if (malIds.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.xs,
+                            AppSpacing.xl,
+                            AppSpacing.xs,
+                            0,
+                          ),
+                          child: SectionHeader(
+                            'Works',
+                            trailing: '${malIds.length} titles',
+                            bottomPadding: 2,
+                          ),
+                        ),
                     ],
                   ),
                 ),
               ),
+              if (malIds.isNotEmpty)
+                SliverToBoxAdapter(child: _AnimeWorksList(malIds: malIds)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
             ],
           ),
         );

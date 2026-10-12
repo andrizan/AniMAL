@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/features/auth/providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,96 +18,122 @@ class LoginPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final colors = StatusColors.of(context);
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // App icon
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                  ),
-                  child: Icon(
-                    Icons.movie_outlined,
-                    size: 40,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                const SizedBox(height: 24),
+      body: Stack(
+        children: [
+          Positioned(
+            top: -90,
+            right: -110,
+            child: _Blob(size: 320, color: scheme.primaryContainer),
+          ),
+          Positioned(
+            bottom: -70,
+            left: -120,
+            child: _Blob(size: 340, color: colors.airingContainer),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl + AppSpacing.xs,
+                AppSpacing.xxl,
+                AppSpacing.xl + AppSpacing.xs,
+                AppSpacing.xxl,
+              ),
+              child: Column(
+                children: [
+                  const Spacer(),
 
-                // Title
-                Text(
-                  'AniMAL',
-                  style: theme.textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  // App mark
+                  Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      color: scheme.primary,
+                      borderRadius: BorderRadius.circular(36),
+                      boxShadow: [
+                        BoxShadow(
+                          color: scheme.primary.withValues(alpha: 0.30),
+                          blurRadius: 36,
+                          offset: const Offset(0, 18),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.live_tv_rounded,
+                      size: 52,
+                      color: scheme.onPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Unofficial MyAnimeList client',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
+
+                  // Title
+                  Text('AniMAL', style: theme.textTheme.displaySmall),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Unofficial MyAnimeList client',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 48),
 
-                // Login button
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      final controller = ref.read(
-                        authControllerProvider.notifier,
-                      );
-                      final url = await controller.getAuthorizationUrl();
+                  const Spacer(flex: 2),
 
-                      try {
-                        final launched = await launchUrl(url);
-                        if (!launched && context.mounted) {
-                          _showUrlDialog(context, url.toString());
+                  // Login button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        final controller = ref.read(
+                          authControllerProvider.notifier,
+                        );
+                        final url = await controller.getAuthorizationUrl();
+
+                        try {
+                          final launched = await launchUrl(url);
+                          if (!launched && context.mounted) {
+                            _showUrlDialog(context, url.toString());
+                          }
+                        } on Exception {
+                          if (context.mounted) {
+                            _showUrlDialog(context, url.toString());
+                          }
                         }
-                      } on Exception {
-                        if (context.mounted) {
-                          _showUrlDialog(context, url.toString());
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.login),
-                    label: const Text('Login with MyAnimeList'),
+                      },
+                      icon: const Icon(Icons.login),
+                      label: const Text('Login with MyAnimeList'),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
-                // Info text
-                Text(
-                  'You will be redirected to MyAnimeList to authorize '
-                  'this app. After authorization, you will be '
-                  'redirected back here.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  // Manual code entry (fallback)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonal(
+                      onPressed: () => _showCodeInputDialog(context, ref),
+                      child: const Text('Enter code manually'),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.lg),
 
-                // Manual code entry (fallback)
-                OutlinedButton(
-                  onPressed: () => _showCodeInputDialog(context, ref),
-                  child: const Text('Enter code manually'),
-                ),
-              ],
+                  // Info text
+                  Text(
+                    'You will be redirected to MyAnimeList to authorize '
+                    'this app, then sent back here.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -161,6 +188,28 @@ class LoginPage extends ConsumerWidget {
   }
 }
 
+/// A soft radial tint behind the login content.
+class _Blob extends StatelessWidget {
+  const _Blob({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
+        ),
+      ),
+    );
+  }
+}
+
 class _CodeInputDialog extends StatefulWidget {
   const _CodeInputDialog();
 
@@ -183,10 +232,7 @@ class _CodeInputDialogState extends State<_CodeInputDialog> {
       title: const Text('Enter Authorization Code'),
       content: TextField(
         controller: _controller,
-        decoration: const InputDecoration(
-          hintText: 'Paste the code from MAL',
-          border: OutlineInputBorder(),
-        ),
+        decoration: const InputDecoration(hintText: 'Paste the code from MAL'),
       ),
       actions: [
         TextButton(

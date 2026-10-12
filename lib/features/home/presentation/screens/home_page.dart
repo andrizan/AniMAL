@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -8,6 +9,8 @@ class HomePage extends StatelessWidget {
   const HomePage({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
+
+  static const _titles = ['Library', 'Airing', 'Calendar', 'Profile'];
 
   static const _destinations = <NavigationDestination>[
     NavigationDestination(
@@ -34,21 +37,50 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    const topRadius = BorderRadius.vertical(
+      top: Radius.circular(AppRadius.hero),
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AniMAL'),
+        title: Text(_titles[navigationShell.currentIndex]),
+        titleTextStyle: theme.textTheme.headlineMedium,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => context.pushNamed('search'),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.md),
+            child: IconButton.filledTonal(
+              tooltip: 'Search',
+              iconSize: 22,
+              constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+              icon: const Icon(Icons.search),
+              onPressed: () => context.pushNamed('search'),
+            ),
           ),
         ],
       ),
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (i) => navigationShell.goBranch(i),
-        destinations: _destinations,
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLow,
+          borderRadius: topRadius,
+          boxShadow: [
+            BoxShadow(
+              color: scheme.shadow.withValues(alpha: 0.10),
+              blurRadius: 30,
+              offset: const Offset(0, -10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: topRadius,
+          child: NavigationBar(
+            selectedIndex: navigationShell.currentIndex,
+            onDestinationSelected: (i) => navigationShell.goBranch(i),
+            destinations: _destinations,
+          ),
+        ),
       ),
     );
   }

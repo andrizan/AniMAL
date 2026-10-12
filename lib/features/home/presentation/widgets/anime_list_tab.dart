@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
@@ -70,8 +71,7 @@ class AnimeListTab extends ConsumerWidget {
       onRefresh: () => ref.read(refreshUserAnimeListProvider)(status),
       child: ListView.builder(
         key: PageStorageKey<String>('anime_list_${status.value}'),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemExtent: 126,
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         itemCount: sorted.length,
         itemBuilder: (context, index) {
           final anime = sorted[index];

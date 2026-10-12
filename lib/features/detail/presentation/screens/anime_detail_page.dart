@@ -16,6 +16,7 @@ import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/empty_view.dart';
 import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
+import 'package:animal/shared/widgets/scrim_icon_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart';
@@ -148,34 +149,29 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              expandedHeight: 300,
+              expandedHeight: 320,
               pinned: true,
               foregroundColor: theme.colorScheme.onSurfaceVariant,
               backgroundColor: theme.colorScheme.surface,
-              leading: _OverlayButton(
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: AppColors.iconLight,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
+              leading: ScrimIconButton(
+                icon: Icons.arrow_back_rounded,
+                tooltip: 'Back',
+                onPressed: () => Navigator.pop(context),
               ),
               actions: [
                 if (nextAiring != null)
-                  _OverlayButton(
-                    child: _NotificationBell(
-                      animeId: animeId,
-                      title: detail.title,
-                      nextAiring: nextAiring,
-                    ),
+                  _NotificationBell(
+                    animeId: animeId,
+                    title: detail.title,
+                    nextAiring: nextAiring,
                   ),
-                _OverlayButton(
-                  child: IconButton(
-                    icon: const Icon(Icons.share, color: AppColors.iconLight),
-                    onPressed: () => _shareAnime(detail),
-                  ),
+                const SizedBox(width: AppSpacing.sm),
+                ScrimIconButton(
+                  icon: Icons.share_rounded,
+                  tooltip: 'Share',
+                  onPressed: () => _shareAnime(detail),
                 ),
+                const SizedBox(width: AppSpacing.sm),
               ],
               flexibleSpace: FlexibleSpaceBar(
                 title: SelectableText(
@@ -213,7 +209,7 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                               theme.colorScheme.surface.withValues(alpha: 0.6),
                               theme.colorScheme.surface,
                             ],
-                            stops: const [0.0, 0.45, 0.8, 1.0],
+                            stops: const [0.0, 0.5, 0.82, 1.0],
                           ),
                         ),
                       ),
@@ -260,24 +256,6 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
   }
 }
 
-class _OverlayButton extends StatelessWidget {
-  const _OverlayButton({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(AppSpacing.sm),
-      decoration: const BoxDecoration(
-        color: AppColors.overlayDarker,
-        shape: BoxShape.circle,
-      ),
-      child: child,
-    );
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // Notification Bell for airing anime
 // ═══════════════════════════════════════════════════════════════════
@@ -299,11 +277,10 @@ class _NotificationBell extends ConsumerWidget {
       animeNotificationProvider.select((s) => s.contains(animeId)),
     );
 
-    return IconButton(
-      icon: Icon(
-        enabled ? Icons.notifications_active : Icons.notifications_none,
-        color: enabled ? AppColors.starColor : AppColors.iconLight,
-      ),
+    return ScrimIconButton(
+      icon: enabled ? Icons.notifications_active : Icons.notifications_none,
+      color: enabled ? StatusColors.of(context).star : null,
+      tooltip: enabled ? 'Turn off reminder' : 'Remind me before it airs',
       onPressed: () async {
         final result = await ref
             .read(animeNotificationProvider.notifier)

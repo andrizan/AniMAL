@@ -488,7 +488,7 @@ void main() {
     ) async {
       await open(tester);
 
-      expect(find.text('Change'), findsNothing);
+      expect(find.byTooltip('Change status'), findsNothing);
       expect(find.text('Add to Watching'), findsOneWidget);
     });
 
@@ -496,9 +496,20 @@ void main() {
       await open(tester, detail: () => _detail(list: watching));
 
       expect(find.text('Watching'), findsOneWidget);
-      expect(find.text('Change'), findsOneWidget);
+      expect(find.byTooltip('Change status'), findsOneWidget);
+      expect(find.text('5 / 12'), findsOneWidget);
       expect(find.text('7'), findsWidgets);
       expect(find.text('Remove from List'), findsOneWidget);
+    });
+
+    testWidgets('an unrated anime says so on the score button', (tester) async {
+      await open(
+        tester,
+        detail: () =>
+            _detail(list: const MyListStatus(status: WatchStatus.watching)),
+      );
+
+      expect(find.text('None'), findsOneWidget);
     });
 
     testWidgets('fits a narrow screen with large text', (tester) async {
@@ -574,7 +585,7 @@ void main() {
     testWidgets('changing the score saves it', (tester) async {
       await open(tester, detail: () => _detail(list: watching));
 
-      await tapVisible(tester, find.byType(DropdownButton<int>));
+      await tapVisible(tester, find.byTooltip('Change score'));
       await tester.pumpAndSettle();
       await tapVisible(tester, find.text('9').last);
       await tester.pumpAndSettle();
@@ -583,10 +594,22 @@ void main() {
       expect(find.text('Score set to 9'), findsOneWidget);
     });
 
+    testWidgets('tapping the current score clears it', (tester) async {
+      await open(tester, detail: () => _detail(list: watching));
+
+      await tapVisible(tester, find.byTooltip('Change score'));
+      await tester.pumpAndSettle();
+      await tapVisible(tester, find.text('7').last);
+      await tester.pumpAndSettle();
+
+      expect(repo.updates.last['score'], 0);
+      expect(find.text('Score cleared'), findsOneWidget);
+    });
+
     testWidgets('the status picker changes the status', (tester) async {
       await open(tester, detail: () => _detail(list: watching));
 
-      await tapVisible(tester, find.text('Change'));
+      await tapVisible(tester, find.byTooltip('Change status'));
       await tester.pumpAndSettle();
       await tapVisible(tester, find.text('On Hold'));
       await tester.pumpAndSettle();
@@ -600,7 +623,7 @@ void main() {
     ) async {
       await open(tester, detail: () => _detail(list: watching));
 
-      await tapVisible(tester, find.text('Change'));
+      await tapVisible(tester, find.byTooltip('Change status'));
       await tester.pumpAndSettle();
       await tapVisible(tester, find.text('Completed'));
       await tester.pumpAndSettle();
@@ -615,7 +638,7 @@ void main() {
         detail: () => _detail(list: watching, status: 'currently_airing'),
       );
 
-      await tapVisible(tester, find.text('Change'));
+      await tapVisible(tester, find.byTooltip('Change status'));
       await tester.pumpAndSettle();
 
       expect(find.text('Only available for finished anime'), findsOneWidget);

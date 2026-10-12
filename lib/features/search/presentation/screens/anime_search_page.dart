@@ -4,6 +4,7 @@ import 'package:animal/features/search/providers/search_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/empty_view.dart';
 import 'package:animal/shared/widgets/error_view.dart';
+import 'package:animal/shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -25,8 +26,15 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
     super.dispose();
   }
 
+  OutlineInputBorder _pillBorder(Color color, double width) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderSide: BorderSide(color: color, width: width),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final asyncAnime = _query.isEmpty
         ? ref.watch(animeRankingProvider)
         : ref.watch(animeSearchProvider(_query));
@@ -38,21 +46,23 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.page,
-              AppSpacing.md,
+              AppSpacing.xs,
               AppSpacing.page,
               AppSpacing.md,
             ),
             child: TextField(
               controller: _searchController,
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search anime…',
+                hintText: 'Search anime',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
+                border: _pillBorder(scheme.outline, 1.5),
+                enabledBorder: _pillBorder(scheme.outline, 1.5),
+                focusedBorder: _pillBorder(scheme.primary, 2),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
+                        tooltip: 'Clear search',
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _query = '');
@@ -66,7 +76,8 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
           Expanded(
             child: asyncAnime.when(
               skipLoadingOnReload: true,
-              data: (list) => _AnimeListView(anime: list),
+              data: (list) =>
+                  _AnimeListView(anime: list, showRanking: _query.isEmpty),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => ErrorView(
                 message: 'Failed to load results',
@@ -85,9 +96,10 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
 }
 
 class _AnimeListView extends StatelessWidget {
-  const _AnimeListView({required this.anime});
+  const _AnimeListView({required this.anime, required this.showRanking});
 
   final List<Anime> anime;
+  final bool showRanking;
 
   @override
   Widget build(BuildContext context) {
@@ -95,12 +107,23 @@ class _AnimeListView extends StatelessWidget {
       return const EmptyView(icon: Icons.search_off, message: 'No results');
     }
 
+    final header = showRanking ? 1 : 0;
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemExtent: 126,
-      itemCount: anime.length,
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      itemCount: anime.length + header,
       itemBuilder: (context, index) {
-        return AnimeCard(anime: anime[index]);
+        if (showRanking && index == 0) {
+          return const Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.page + AppSpacing.xs,
+              AppSpacing.xs,
+              AppSpacing.page + AppSpacing.xs,
+              AppSpacing.xs,
+            ),
+            child: SectionHeader('Top ranking', trailing: 'MyAnimeList'),
+          );
+        }
+        return AnimeCard(anime: anime[index - header]);
       },
     );
   }

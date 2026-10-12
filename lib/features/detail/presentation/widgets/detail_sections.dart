@@ -1,3 +1,4 @@
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/core/utils/date_utils.dart';
@@ -7,6 +8,7 @@ import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
+import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/section_card.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -52,6 +54,16 @@ class _AboutCardState extends State<AboutCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (detail.genres.isNotEmpty)
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final genre in detail.genres) InfoChip(label: genre.name),
+              ],
+            ),
+          if (synopsis.isNotEmpty && detail.genres.isNotEmpty)
+            const SizedBox(height: AppSpacing.md),
           if (synopsis.isNotEmpty) ...[
             AnimatedSize(
               duration: const Duration(milliseconds: 200),
@@ -59,37 +71,21 @@ class _AboutCardState extends State<AboutCard> {
               child: SelectableText(
                 synopsis,
                 maxLines: collapsible && !_expanded ? 5 : null,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
               ),
             ),
             if (collapsible)
               TextButton(
                 onPressed: () => setState(() => _expanded = !_expanded),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
                   alignment: Alignment.centerLeft,
                 ),
                 child: Text(_expanded ? 'Show less' : 'Read more'),
               ),
           ],
-          if (synopsis.isNotEmpty && detail.genres.isNotEmpty)
-            const SizedBox(height: AppSpacing.md),
-          if (detail.genres.isNotEmpty)
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.xs,
-              children: [
-                for (final genre in detail.genres)
-                  Chip(
-                    label: Text(genre.name),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
         ],
       ),
     );
@@ -102,11 +98,12 @@ class InfoCard extends StatelessWidget {
   final AnimeDetail detail;
   final List<AniListStudio> studios;
 
-  List<({IconData icon, String label, Widget value})> _facts(
-    BuildContext context,
-  ) {
+  List<({String label, Widget value})> _facts(BuildContext context) {
     final theme = Theme.of(context);
-    Widget text(String value) => Text(value, style: theme.textTheme.bodyMedium);
+    Widget text(String value) => Text(
+      value,
+      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+    );
 
     final start = detail.startDate;
     final end = detail.endDate;
@@ -117,7 +114,6 @@ class InfoCard extends StatelessWidget {
     return [
       if (start != null)
         (
-          icon: Icons.calendar_today,
           label: end != null ? 'Aired' : 'Airing',
           value: text(
             end != null
@@ -126,40 +122,22 @@ class InfoCard extends StatelessWidget {
           ),
         )
       else if (end != null)
-        (
-          icon: Icons.calendar_today,
-          label: 'Ended',
-          value: text(formatDate(end)),
-        ),
+        (label: 'Ended', value: text(formatDate(end))),
       if (season != null)
         (
-          icon: Icons.calendar_month,
           label: 'Season',
           value: text(
             '${AnimeLabels.seasonLabel(season.season)} ${season.year}',
           ),
         ),
       if (detail.broadcast?.dayOfWeek != null)
-        (
-          icon: Icons.access_time,
-          label: 'Broadcast',
-          value: text(broadcastLabel(detail.broadcast!)),
-        ),
+        (label: 'Broadcast', value: text(broadcastLabel(detail.broadcast!))),
       if (duration != null && duration > 0)
-        (
-          icon: Icons.timer_outlined,
-          label: 'Duration',
-          value: text(AnimeLabels.durationLabel(duration)),
-        ),
+        (label: 'Duration', value: text(AnimeLabels.durationLabel(duration))),
       if (source != null && source.isNotEmpty)
-        (
-          icon: Icons.book_outlined,
-          label: 'Source',
-          value: text(AnimeLabels.sourceLabel(source)),
-        ),
+        (label: 'Source', value: text(AnimeLabels.sourceLabel(source))),
       if (studios.isNotEmpty)
         (
-          icon: Icons.business,
           label: 'Studios',
           value: Wrap(
             spacing: AppSpacing.md,
@@ -186,30 +164,34 @@ class InfoCard extends StatelessWidget {
 
     return SectionCard(
       title: 'Information',
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
       child: Column(
         children: [
           for (final (i, fact) in facts.indexed) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.md),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  fact.icon,
-                  size: 18,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                SizedBox(
-                  width: 84,
-                  child: Text(
-                    fact.label,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+            if (i > 0) const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 96,
+                    child: Text(
+                      fact.label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(child: fact.value),
-              ],
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(child: fact.value),
+                ],
+              ),
             ),
           ],
         ],
@@ -232,11 +214,26 @@ class _StudioLink extends StatelessWidget {
         'studioProfile',
         pathParameters: {'id': '${studio.id}'},
       ),
-      child: Text(
-        studio.name,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w600,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              studio.name,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.underline,
+                decorationColor: theme.colorScheme.primary,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+          ],
         ),
       ),
     );
@@ -252,13 +249,8 @@ class NextEpisodeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final colors = StatusColors.of(context);
     final urgent = next.isUrgent;
-    final background = urgent
-        ? scheme.errorContainer
-        : scheme.primaryContainer.withValues(alpha: 0.5);
-    final foreground = urgent
-        ? scheme.onErrorContainer
-        : scheme.onPrimaryContainer;
     final local = next.airingAt.toLocal();
     final time =
         '${local.hour.toString().padLeft(2, '0')}:'
@@ -266,40 +258,37 @@ class NextEpisodeCard extends StatelessWidget {
     final date = '${local.day}/${local.month} at $time';
 
     return SectionCard(
-      color: background,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: 'Next Episode',
+      child: Row(
         children: [
-          Text(
-            'Next Episode',
-            style: theme.textTheme.titleSmall?.copyWith(color: foreground),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Icon(Icons.upcoming, size: 20, color: foreground),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Episode ${next.episode}',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: foreground,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$date · ${next.countdown}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: foreground,
-                      ),
-                    ),
-                  ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Episode ${next.episode}',
+                  style: theme.textTheme.titleMedium,
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  date,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          InfoChip(
+            icon: urgent ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+            label: 'in ${next.countdown}',
+            color: urgent
+                ? colors.onDroppedContainer
+                : scheme.onPrimaryContainer,
+            background: urgent
+                ? colors.droppedContainer
+                : scheme.primaryContainer,
           ),
         ],
       ),
@@ -340,9 +329,9 @@ class RelatedCard extends StatelessWidget {
                   children: [
                     AppCachedImage(
                       imageUrl: item.node.mainPicture?.medium ?? '',
-                      width: 40,
-                      height: 56,
-                      borderRadius: BorderRadius.circular(AppRadius.sm / 2),
+                      width: 44,
+                      height: 60,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       fallbackSize: 16,
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -354,7 +343,9 @@ class RelatedCard extends StatelessWidget {
                             item.node.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           if ((item.relationTypeFormatted ?? '').isNotEmpty)
                             Text(
@@ -366,7 +357,11 @@ class RelatedCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, size: 20),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ],
                 ),
               ),
@@ -404,23 +399,26 @@ class AltTitlesCard extends StatelessWidget {
         children: [
           for (final row in rows)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: 72,
+                    width: 96,
                     child: Text(
                       row.label,
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: SelectableText(
                       row.title,
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -458,8 +456,8 @@ class LinksCard extends StatelessWidget {
       ),
       'SOCIAL': (
         icon: Icons.public,
-        color: scheme.secondaryContainer,
-        text: scheme.onSecondaryContainer,
+        color: scheme.surfaceContainer,
+        text: scheme.onSurface,
       ),
     };
 
@@ -501,25 +499,16 @@ class _LinkChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async => launchUrl(Uri.parse(url)),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: textColor),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelMedium
-                  ?.copyWith(color: textColor),
-            ),
-          ],
+    return Semantics(
+      link: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        onTap: () async => launchUrl(Uri.parse(url)),
+        child: InfoChip(
+          label: label,
+          icon: icon,
+          color: textColor,
+          background: color,
         ),
       ),
     );

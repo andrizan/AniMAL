@@ -82,12 +82,12 @@ class _ApiStatusRow extends ConsumerWidget {
     final theme = Theme.of(context);
     final status = _resolveStatus(health);
     return ListTile(
-      leading: Icon(_iconFor(status), color: _colorFor(status, theme)),
+      leading: Icon(_iconFor(status), color: _colorFor(status, context)),
       title: Text(apiSourceLabel(health.source)),
       subtitle: Text(
         _subtitleFor(health),
         style: theme.textTheme.bodySmall?.copyWith(
-          color: _colorFor(status, theme),
+          color: _colorFor(status, context),
         ),
       ),
       trailing: Row(
@@ -172,11 +172,13 @@ class _ApiStatusRow extends ConsumerWidget {
     };
   }
 
-  Color _colorFor(ApiStatus status, ThemeData theme) {
+  Color _colorFor(ApiStatus status, BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = StatusColors.of(context);
     return switch (status) {
-      ApiStatus.healthy => AppColors.statusHealthy,
+      ApiStatus.healthy => colors.listWatching,
       ApiStatus.error => theme.colorScheme.error,
-      ApiStatus.rateLimited => AppColors.statusRateLimited,
+      ApiStatus.rateLimited => colors.listOnHold,
       ApiStatus.unknown => theme.colorScheme.onSurfaceVariant,
     };
   }

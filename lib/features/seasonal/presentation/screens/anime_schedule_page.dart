@@ -4,6 +4,7 @@ import 'package:animal/features/seasonal/providers/seasonal_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/empty_view.dart';
 import 'package:animal/shared/widgets/error_view.dart';
+import 'package:animal/shared/widgets/pill_tab_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -69,23 +70,29 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
     return Column(
       children: [
         // Year selector
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.page,
-            vertical: AppSpacing.sm,
-          ),
-          color: theme.colorScheme.surface,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left),
+                tooltip: 'Previous year',
                 onPressed: _selectedYear > _currentYear - 50
                     ? () => setState(() => _selectedYear--)
                     : null,
               ),
-              GestureDetector(
-                onTap: () => _showYearPicker(context),
+              FilledButton.tonal(
+                onPressed: () => _showYearPicker(context),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(64, 48),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.page,
+                    0,
+                    AppSpacing.md,
+                    0,
+                  ),
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -95,16 +102,14 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_drop_down,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    const Icon(Icons.expand_more_rounded, size: 20),
                   ],
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
+                tooltip: 'Next year',
                 onPressed: _selectedYear < _currentYear + 1
                     ? () => setState(() => _selectedYear++)
                     : null,
@@ -114,15 +119,27 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
         ),
 
         // Season + Later tabs
-        TabBar(
-          controller: _seasonTabController,
-          tabs: List.generate(_seasonLabels.length, (i) {
-            return Tab(
-              key: ValueKey('${_seasonLabels[i]}_$_selectedYear'),
-              icon: Icon(_seasonIcons[i], size: 22),
-              text: _seasonLabels[i],
-            );
-          }),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            AppSpacing.sm,
+            AppSpacing.page,
+            AppSpacing.xs,
+          ),
+          child: PillTabBar(
+            controller: _seasonTabController,
+            scrollable: false,
+            segmented: true,
+            tabs: List.generate(_seasonLabels.length, (i) {
+              return Tab(
+                key: ValueKey('${_seasonLabels[i]}_$_selectedYear'),
+                height: 60,
+                iconMargin: const EdgeInsets.only(bottom: 2),
+                icon: Icon(_seasonIcons[i], size: 20),
+                text: _seasonLabels[i],
+              );
+            }),
+          ),
         ),
 
         // Tab content
@@ -252,33 +269,36 @@ class _SeasonAnimeList extends ConsumerWidget {
           onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
           child: CustomScrollView(
             slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
 
               // Anime grouped by day
               for (int i = 0; i < _days.length; i++) ...[
                 if (grouped[_days[i]]!.isNotEmpty) ...[
                   SliverToBoxAdapter(child: _DayHeader(day: _dayLabels[i])),
-                  SliverFixedExtentList(
-                    itemExtent: 126,
-                    delegate: SliverChildBuilderDelegate((context, index) {
+                  SliverList.builder(
+                    itemCount: grouped[_days[i]]!.length,
+                    itemBuilder: (context, index) {
                       final anime = grouped[_days[i]]![index];
                       return AnimeCard(anime: anime);
-                    }, childCount: grouped[_days[i]]!.length),
+                    },
                   ),
                 ],
               ],
 
               // Anime without broadcast info
               if (noBroadcast.isNotEmpty) ...[
-                SliverFixedExtentList(
-                  itemExtent: 126,
-                  delegate: SliverChildBuilderDelegate((context, index) {
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: AppSpacing.sm),
+                ),
+                SliverList.builder(
+                  itemCount: noBroadcast.length,
+                  itemBuilder: (context, index) {
                     return AnimeCard(anime: noBroadcast[index]);
-                  }, childCount: noBroadcast.length),
+                  },
                 ),
               ],
 
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             ],
           ),
         );
@@ -313,8 +333,7 @@ class _LaterAnimeList extends ConsumerWidget {
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(undatedAnimeProvider),
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemExtent: 126,
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             itemCount: animeList.length,
             itemBuilder: (context, index) {
               return AnimeCard(anime: animeList[index]);
@@ -336,16 +355,17 @@ class _DayHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.page,
-        AppSpacing.lg,
+        AppSpacing.page + AppSpacing.xs,
+        AppSpacing.md,
         AppSpacing.page,
         AppSpacing.xs,
       ),
       child: Text(
         day,
-        style: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: theme.colorScheme.primary,
+        style: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );

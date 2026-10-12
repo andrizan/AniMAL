@@ -14,8 +14,7 @@ import 'package:material_ui/material_ui.dart';
 const _topGenreCount = 6;
 
 Color _statusColor(BuildContext context, WatchStatus status) {
-  final colors =
-      Theme.of(context).extension<StatusColors>() ?? AppColors.lightStatus;
+  final colors = StatusColors.of(context);
   return switch (status) {
     WatchStatus.watching => colors.listWatching,
     WatchStatus.completed => colors.listCompleted,
@@ -60,7 +59,8 @@ class LibrarySection extends StatelessWidget {
           Row(
             children: [
               DonutChart(
-                size: 112,
+                size: 124,
+                strokeWidth: 18,
                 semanticsLabel: [
                   for (final s in WatchStatus.values) '${s.label} ${counts[s]}',
                 ].join(', '),
@@ -77,14 +77,13 @@ class LibrarySection extends StatelessWidget {
                   children: [
                     Text(
                       formatCount(total),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: theme.textTheme.headlineSmall,
                     ),
                     Text(
                       'total',
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -151,15 +150,15 @@ class _LegendRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 10,
+            height: 10,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               label,
@@ -170,17 +169,18 @@ class _LegendRow extends StatelessWidget {
           ),
           Text(
             formatCount(count),
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           SizedBox(
-            width: 36,
+            width: 40,
             child: Text(
               '${percent.round()}%',
               textAlign: TextAlign.end,
-              style: theme.textTheme.labelSmall?.copyWith(
+              style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -200,10 +200,13 @@ class _MiniStat extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 2,
+      ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,8 +220,9 @@ class _MiniStat extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: theme.textTheme.labelSmall?.copyWith(
+            style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -380,8 +384,8 @@ class _ScoreCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 BarChart(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.75),
-                  highlightColor: AppColors.starColor,
+                  color: theme.colorScheme.primary,
+                  highlightColor: StatusColors.of(context).star,
                   bars: [
                     for (var i = 0; i < insights.scoreCounts.length; i++)
                       BarDatum(
@@ -431,8 +435,13 @@ class _FormatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const palette = AppColors.chartPalette;
-    Color colorAt(int i) => palette[i % palette.length];
+    final theme = Theme.of(context);
+    final palette = theme.brightness == Brightness.dark
+        ? AppColors.chartPaletteDark
+        : AppColors.chartPalette;
+    Color colorAt(int i) => i < palette.length
+        ? palette[i]
+        : theme.colorScheme.surfaceContainerHighest;
 
     return SectionCard(
       title: 'Formats',
@@ -491,8 +500,8 @@ class _ActivityCard extends StatelessWidget {
         children: [
           BarChart(
             height: 130,
-            color: theme.colorScheme.secondary.withValues(alpha: 0.75),
-            highlightColor: theme.colorScheme.secondary,
+            color: theme.colorScheme.secondary,
+            highlightColor: StatusColors.of(context).star,
             bars: [
               for (var i = 0; i < months.length; i++)
                 BarDatum(

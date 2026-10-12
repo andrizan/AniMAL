@@ -1,4 +1,6 @@
+import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/shared/providers/clock_provider.dart';
+import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -6,6 +8,8 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// Shows the remaining time until [airingAt] together with the
 /// [episode] number. Once the air time has passed it shows "Aired".
+/// Under six hours it switches to the alert icon and the dropped tint, so
+/// urgency is not carried by colour alone.
 class CountdownBadge extends ConsumerWidget {
   const CountdownBadge({
     required this.airingAt,
@@ -22,27 +26,26 @@ class CountdownBadge extends ConsumerWidget {
         .watch(clockProvider)
         .maybeWhen(data: (t) => t.toUtc(), orElse: DateTime.now().toUtc);
     final remaining = airingAt.toUtc().difference(now).inSeconds;
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final colors = StatusColors.of(context);
 
     if (remaining <= 0) {
-      return _Badge(
-        episode: episode,
-        label: 'Aired',
-        color: theme.colorScheme.secondaryContainer,
-        textColor: theme.colorScheme.onSecondaryContainer,
+      return InfoChip(
+        dense: true,
+        icon: Icons.check_rounded,
+        label: 'Ep $episode · Aired',
+        color: colors.onPlanContainer,
+        background: colors.planContainer,
       );
     }
 
     final isUrgent = remaining < 21600;
-    return _Badge(
-      episode: episode,
-      label: _formatCountdown(remaining),
-      color: isUrgent
-          ? theme.colorScheme.errorContainer
-          : theme.colorScheme.primaryContainer,
-      textColor: isUrgent
-          ? theme.colorScheme.onErrorContainer
-          : theme.colorScheme.onPrimaryContainer,
+    return InfoChip(
+      dense: true,
+      icon: isUrgent ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+      label: 'Ep $episode · in ${_formatCountdown(remaining)}',
+      color: isUrgent ? colors.onDroppedContainer : scheme.onPrimaryContainer,
+      background: isUrgent ? colors.droppedContainer : scheme.primaryContainer,
     );
   }
 
@@ -53,46 +56,5 @@ class CountdownBadge extends ConsumerWidget {
     if (days > 0) return '${days}d ${hours}h';
     if (hours > 0) return '${hours}h ${minutes}m';
     return '${minutes}m';
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.episode,
-    required this.label,
-    required this.color,
-    required this.textColor,
-  });
-
-  final int episode;
-  final String label;
-  final Color color;
-  final Color textColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.timer, size: 12, color: textColor),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              'Ep $episode · $label',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(color: textColor),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

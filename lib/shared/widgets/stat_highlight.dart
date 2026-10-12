@@ -24,15 +24,10 @@ class StatHighlight extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 18, color: AppColors.starColor),
+                Icon(icon, size: 20, color: StatusColors.of(context).star),
                 const SizedBox(width: 3),
               ],
-              Text(
-                value,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              Text(value, style: theme.textTheme.headlineSmall),
             ],
           ),
         ),
@@ -41,7 +36,8 @@ class StatHighlight extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.labelSmall?.copyWith(
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w500,
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),

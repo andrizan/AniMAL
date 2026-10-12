@@ -249,6 +249,7 @@ void main() {
       tester,
     ) async {
       await open(tester);
+      await tester.ensureVisible(find.widgetWithText(Tab, 'Dropped'));
       await tester.tap(find.widgetWithText(Tab, 'Dropped'));
       await tester.pumpAndSettle();
 

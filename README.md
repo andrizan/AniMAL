@@ -38,7 +38,7 @@ Track your anime, discover seasonal charts, follow weekly airing schedules, and 
 | Auth | `flutter_secure_storage` |
 | Prefs | `shared_preferences` |
 | UI | `material_ui`, `cached_network_image`, custom-painted charts (no chart package) |
-| Fonts | `google_fonts` with Inter 400/500/600/700 bundled in `assets/google_fonts/` (runtime fetching disabled) |
+| Fonts | `google_fonts` with Figtree 400/500/600/700 bundled in `assets/google_fonts/` (runtime fetching disabled) |
 | Notifications | `flutter_local_notifications` + `timezone` |
 | Misc | `url_launcher`, `share_plus`, `package_info_plus`, `logger` |
 | Tests | `flutter_test`, `sqflite_common_ffi` (host SQLite) |
@@ -102,7 +102,8 @@ lib/
 ├── shared/
 │   ├── providers/                     # AnimeRepository, user lists, airing, AniList, theme, notifications
 │   └── widgets/                       # anime_card, section_card, section_header, hero_panel, stat_highlight,
-│                                      # error_view, empty_view, info_chip, countdown_badge, app_cached_image, full_screen_image
+│                                      # error_view, empty_view, info_chip, status_chip, countdown_badge, pill_tab_bar,
+│                                      # score_picker, scrim_icon_button, app_cached_image, full_screen_image
 └── features/
     ├── home/ airing/ seasonal/ profile/ auth/ detail/ search/
 ```
@@ -111,10 +112,11 @@ lib/
 
 One look across every screen, enforced by `test/core/theme/design_rules_test.dart`:
 
-- **Colors** only from `core/theme/app_colors.dart` (`AppColors`, `StatusColors`, `chartPalette`) — never `Colors.*`.
-- **Typography** only from the theme text styles; no raw `fontSize`. `labelSmall` (10) is the micro size.
+- **Colors** only from `core/theme/app_colors.dart` (`AppColors`, `StatusColors.of(context)`, `chartPalette`) — never `Colors.*`. Every text pair meets WCAG 2.2 AA (4.5:1), icons and chart marks 3:1, and the chart palette is validated for colour-vision deficiency.
+- **Typography** only from the theme text styles (Figtree); no raw `fontSize`. `labelSmall` (12) is the micro size.
 - **Spacing and radius** from `AppSpacing` (`page` is the page gutter) and `AppRadius` in `core/theme/app_spacing.dart`.
-- **Cards** are plain `Card`s styled once in `cardTheme`; use `SectionCard` for a titled block and `HeroPanel` for a highlighted one.
+- **Cards** are plain, borderless `Card`s styled once in `cardTheme`; use `SectionCard` for a titled block and `HeroPanel` for a highlighted one.
+- **Status** always pairs a tonal tint with an icon and a word (`ListStatusChip`, `AiringStatusChip`, `CountdownBadge`); tabs are `PillTabBar`s.
 - **Error and empty states** use `ErrorView` / `EmptyView`; section titles use `SectionHeader`.
 
 ### Caching

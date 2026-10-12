@@ -110,22 +110,26 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 ## UI / UX Rules
 
 ### Shared UI
-- **Cards**: use plain `Card`; the look (radius `appCardRadius` = 20, `surfaceContainer` fill, outline border) comes from `cardTheme` in `core/theme/app_theme.dart`. Do not override colour or shape per screen.
+- **Cards**: use plain `Card`; the look (radius `AppRadius.card` = 24, `surfaceContainerLow` fill, no border, a soft shadow in light mode only) comes from `cardTheme` in `core/theme/app_theme.dart`. Do not override colour or shape per screen. Layers are separated by tone, never by borders.
 - **Error / empty states**: use `ErrorView` (message + optional Retry) and `EmptyView` (icon, message, optional hint/Retry) from `shared/widgets/`. Do not hand-roll icon + text + button columns.
-- **Section titles**: use `SectionHeader` (`titleSmall`, optional trailing caption).
+- **Section titles**: use `SectionHeader` (`titleMedium` w700, optional trailing caption).
 - **Loading**: a full-area load is a centred `CircularProgressIndicator`; inside a card use a skeleton or `LinearProgressIndicator`.
-- **Spacing and radius**: use `AppSpacing` (`xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32; `page` is the horizontal gutter of every page and list card) and `AppRadius` (`sm`, `md`, `card`, `hero`, `pill`) from `core/theme/app_spacing.dart` for page, card and container paddings and corners. Micro offsets inside a component may stay literal.
-- **Typography**: never set `fontSize`; pick a slot from `Theme.of(context).textTheme` and adjust only weight or colour with `copyWith`. `labelSmall` (10, w600) is the micro size for badges and chart labels. Tab labels come from `tabBarTheme`.
+- **Chips**: `InfoChip` is the only pill (tonal by default, `dense` for cards). Status is never colour alone: `ListStatusChip` / `AiringStatusChip` in `shared/widgets/status_chip.dart` pair a tonal `StatusColors` container with an icon and a word; `CountdownBadge` switches to the alert icon and the dropped tint under six hours.
+- **Tabs**: `PillTabBar` wraps a `TabBar` in a tonal track with a primary pill (or a raised card pill when `segmented`). Keep `Tab` widgets inside it so tests can find them.
+- **Controls on imagery**: `ScrimIconButton` (48px circle on `AppColors.overlayDarker`).
+- **Spacing and radius**: use `AppSpacing` (`xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32; `page` = 20 is the horizontal gutter of every page and list card) and `AppRadius` (`sm` 8, `md` 12, `lg` 16 inputs, `cover` 18, `card` 24, `hero` 28, `sheet` 32, `pill`) from `core/theme/app_spacing.dart` for page, card and container paddings and corners. Micro offsets inside a component may stay literal.
+- **Typography**: never set `fontSize`; pick a slot from `Theme.of(context).textTheme` and adjust only weight or colour with `copyWith`. `labelSmall` (12, w600) is the micro size for badges and chart labels; nothing is smaller than 12px. Tab labels come from `tabBarTheme`.
+- **Targets and semantics**: every control has a 48px hit area (`IconButton` inside a 44–48px box, `SizedBox(height: 48)` buttons). Icon-only buttons carry a `tooltip`; progress bars carry a `semanticsLabel` (the value must stay numeric, Flutter validates it).
 - `test/core/theme/design_rules_test.dart` fails on raw `fontSize`, `Colors.*`, `Color(0x...)` and hand-rolled error icons outside their allowed files.
 
 ### Cards
 - **Unified card widget** (`anime_card.dart`) used across all pages.
-- **Full-height image** (left side), info (right side).
-- **Image radius**: left side only (`topLeft` + `bottomLeft`).
+- **Inset cover** (84×120, radius `AppRadius.cover`) on the left, info on the right. The card sizes to its content: never give lists a fixed `itemExtent`.
+- Info rows: title (2 lines) + ⋮, Japanese title, then `★ mean`, the personal score pill and the `ListStatusChip`. A listed anime shows a progress bar with `watched / total`; a browse card shows `TV · 12 eps · Airing` instead. The footer holds the countdown, reminder bell and broadcast time. Genres, rating and media-type badges stay off the card.
 - **Edit modal** on all cards: via ⋮ button or long press.
-- Modal allows: change status, edit episodes (text input + +/-), change score (dropdown 0–10).
-- **Broadcast time**: convert JST → local OS time via `core/utils/date_utils.dart`.
-- **Score**: `anime.mean` from MAL (star icon, amber). Personal score from `myListStatus?.score` (star icon, primary color).
+- Modal allows: change status (chips), edit episodes (stepper + text input), change score (`ScorePicker`, tap the score again to clear).
+- **Broadcast time**: convert JST → local OS time via `core/utils/date_utils.dart` (`Fri 23:30` when the day is known).
+- **Score**: `anime.mean` from MAL (`StatusColors.star`). Personal score from `myListStatus?.score` (star icon on `primaryContainer`).
 
 ### Tabs
 - Tabs should be **scrollable** when there are many.
@@ -145,7 +149,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - Data from AniList schedule + MAL scores.
 - Grouped by day (Mon–Sun).
 - Countdown timer: `2d 5h`, `3h 20m`, `45m` (via `core/utils/date_utils.dart`).
-- Urgent (< 6h): red color.
+- Urgent (< 6h): dropped tint plus the alert icon, never colour alone.
 - **No header info** above tabs.
 - Sort by airing time (earliest first).
 
@@ -155,7 +159,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - **Full-screen image viewer** on cover tap (zoom supported).
 - **Order = importance**, one `SectionCard` per block, 12 apart:
   1. Header: Japanese title, `HeroPanel` with type/episodes/status/rating chips and score, rank, popularity.
-  2. Your list: `MyListCard` (status, progress bar, episode stepper, score, remove) or the Add to Watching button. The page edits the list only through these.
+  2. Your list: `MyListCard` (status and score picker buttons, progress bar, episode stepper, remove) or the Add to Watching button. The page edits the list only through these.
   3. Next episode (AniList, when airing).
   4. Synopsis with genres (long synopsis collapses behind Read more).
   5. Information: aired/airing, season, broadcast, duration, source, studios.
@@ -174,19 +178,20 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 
 ## Font
 
-- **Primary**: Inter (400 body, 500 label, 600 title, 700 heading).
+- **Primary**: Figtree (400 body, 500 label, 600 title, 700 heading).
 - **Fallback**: platform system font (Japanese text uses the OS CJK font).
 - Configured via `google_fonts` package in `core/theme/app_text_styles.dart`.
-- Inter is bundled in `assets/google_fonts/` (400/500/600/700) and runtime
+- Figtree is bundled in `assets/google_fonts/` (400/500/600/700) and runtime
   fetching is disabled in `main.dart`. Adding another weight requires adding
-  its `Inter-<Weight>.ttf` file there.
+  its `Figtree-<Weight>.ttf` file there.
 
 ## Theme
 
 - **Dark mode** by default (`ThemeMode.dark`).
-- Material 3 with indigo seed color.
+- Material 3 with hand-tuned lavender neutrals and an indigo accent (`primary`); the schemes in `app_colors.dart` are explicit, not seeded.
 - Theme built in `core/theme/app_theme.dart` (not hardcoded in `app.dart`).
-- **Colors**: ALL colors MUST be defined in `lib/core/theme/app_colors.dart` — NEVER use raw `Colors.blue`, `Colors.green`, etc. Use `AppColors.*` static constants (e.g., `AppColors.listWatching`, `AppColors.statusAiring`). For theme-aware colors, extend `StatusColors` with both light and dark variants.
+- **Colors**: ALL colors MUST be defined in `lib/core/theme/app_colors.dart` — NEVER use raw `Colors.blue`, `Colors.green`, etc. Theme-aware colours come from `StatusColors.of(context)` (solid `list*` marks, `star`, and the `*Container` / `on*Container` pairs); static `AppColors.*` is only for overlays on imagery and the chart palettes.
+- **WCAG 2.2 AA**: every text pair is at least 4.5:1 and every icon, border or chart mark at least 3:1. When adding a colour, check it with the same formula and keep the five chart colours as a set (they are validated for colour-vision deficiency together).
 
 ## Environment
 
