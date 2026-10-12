@@ -6,6 +6,7 @@ import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/features/auth/providers/auth_providers.dart';
 import 'package:animal/shared/widgets/app_mark.dart';
 import 'package:animal/shared/widgets/tonal_button.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -140,6 +141,7 @@ class LoginPage extends ConsumerWidget {
   }
 
   void _showUrlDialog(BuildContext context, String url) {
+    final messenger = ScaffoldMessenger.of(context);
     unawaited(
       showDialog<void>(
         context: context,
@@ -161,6 +163,16 @@ class LoginPage extends ConsumerWidget {
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Close'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                if (ctx.mounted) Navigator.pop(ctx);
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Link copied')),
+                );
+              },
+              child: const Text('Copy'),
             ),
           ],
         ),

@@ -96,6 +96,32 @@ void main() {
       expect(find.text('Open URL'), findsNothing);
     });
 
+    testWidgets('the fallback copies the url to the clipboard', (tester) async {
+      String? copied;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied = (call.arguments as Map)['text'] as String?;
+            }
+            return null;
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+      launchResult = false;
+      await open(tester);
+
+      await tester.tap(find.text('Login with MyAnimeList'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Copy'));
+      await tester.pumpAndSettle();
+
+      expect(copied, 'https://auth.test/authorize');
+      expect(find.text('Open URL'), findsNothing);
+      expect(find.text('Link copied'), findsOneWidget);
+    });
+
     testWidgets('falls back the same way when launching throws', (
       tester,
     ) async {
