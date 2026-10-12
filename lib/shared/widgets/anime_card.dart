@@ -624,7 +624,7 @@ class _UpdateListStatusModalState
                     decoration: InputDecoration(
                       suffixText: totalEps != null ? '/ $totalEps' : null,
                     ),
-                    onSubmitted: (v) {
+                    onChanged: (v) {
                       final parsed = int.tryParse(v);
                       if (parsed != null && parsed >= 0) {
                         setState(() => _selectedEps = parsed);
