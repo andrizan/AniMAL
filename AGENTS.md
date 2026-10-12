@@ -115,7 +115,9 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - **Section titles**: use `SectionHeader` (`titleMedium` w700, optional trailing caption).
 - **Loading**: a full-area load is a centred `CircularProgressIndicator`; inside a card use a skeleton or `LinearProgressIndicator`.
 - **Chips**: `InfoChip` is the only pill (tonal by default, `dense` for cards). Status is never colour alone: `ListStatusChip` / `AiringStatusChip` in `shared/widgets/status_chip.dart` pair a tonal `StatusColors` container with an icon and a word; `CountdownBadge` switches to the alert icon and the dropped tint under six hours.
-- **Tabs**: `PillTabBar` wraps a `TabBar` in a tonal track with a primary pill (or a raised card pill when `segmented`). Keep `Tab` widgets inside it so tests can find them.
+- **Tabs**: `PillTabBar` takes `labels` (and `icons`) and builds the `Tab`s itself: the selected tab is the primary pill from `tabBarTheme`, the others get their own tonal pill; `segmented` swaps that for a tonal track with a raised card pill. Tests find tabs with `find.widgetWithText(Tab, label)`.
+- **Search**: no app bar; a tonal back button and the pill field share one row. Ranking cards carry `AnimeCard.rank` as a badge on the cover.
+- **Focus**: keyboard focus draws a 2px ring (`_focusRing` in `app_theme.dart`) on buttons, chips and segments and a primary tint on tabs and ink surfaces.
 - **Controls on imagery**: `ScrimIconButton` (48px circle on `AppColors.overlayDarker`).
 - **Spacing and radius**: use `AppSpacing` (`xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32; `page` = 20 is the horizontal gutter of every page and list card) and `AppRadius` (`sm` 8, `md` 12, `lg` 16 inputs, `cover` 18, `card` 24, `hero` 28, `sheet` 32, `pill`) from `core/theme/app_spacing.dart` for page, card and container paddings and corners. Micro offsets inside a component may stay literal.
 - **Typography**: never set `fontSize`; pick a slot from `Theme.of(context).textTheme` and adjust only weight or colour with `copyWith`. `labelSmall` (12, w600) is the micro size for badges and chart labels; nothing is smaller than 12px. Tab labels come from `tabBarTheme`.
@@ -125,7 +127,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 ### Cards
 - **Unified card widget** (`anime_card.dart`) used across all pages.
 - **Inset cover** (84×120, radius `AppRadius.cover`) on the left, info on the right. The card sizes to its content: never give lists a fixed `itemExtent`.
-- Info rows: title (2 lines) + ⋮, Japanese title, then `★ mean`, the personal score pill and the `ListStatusChip`. A listed anime shows a progress bar with `watched / total`; a browse card shows `TV · 12 eps · Airing` instead. The footer holds the countdown, reminder bell and broadcast time. Genres, rating and media-type badges stay off the card.
+- Info rows: optional `header` line, title (2 lines) + ⋮, Japanese title, then `★ mean`, the personal score pill and the `ListStatusChip`. A listed anime shows a progress bar with `watched / total`; a browse card shows `TV · 12 eps · Airing` instead. The footer holds the countdown, reminder bell and broadcast time; an optional `note` (why the card cannot open) goes under it. Genres, rating and media-type badges stay off the card.
 - **Edit modal** on all cards: via ⋮ button or long press.
 - Modal allows: change status (chips), edit episodes (stepper + text input), change score (`ScorePicker`, tap the score again to clear).
 - **Broadcast time**: convert JST → local OS time via `core/utils/date_utils.dart` (`Fri 23:30` when the day is known).
@@ -143,24 +145,27 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - Default year: current year.
 - Auto-scroll to selected year in picker dialog.
 - Anime without broadcast info shown at bottom without header.
+- Day headers are upper-cased visually (`semanticsLabel` keeps the plain word) and are semantic headers.
 - **No summary text** above cards (e.g. "100 anime · Spring 2026").
 
 ### Airing Page
 - Data from AniList schedule + MAL scores.
 - Grouped by day (Mon–Sun).
+- Each card carries the airing time and episode above the title (`AnimeCard.header`); the countdown pill below omits the episode.
+- The refresh button lives in the home shell's header (Airing tab only). It and the page's pull-to-refresh share `airingRefreshProvider` in `shared/providers/airing_refresh_providers.dart`, which wraps `refreshWeeklySchedule`, invalidates `weeklyAiringProvider` and reports empty/failed results for the snackbar.
 - Countdown timer: `2d 5h`, `3h 20m`, `45m` (via `core/utils/date_utils.dart`).
 - Urgent (< 6h): dropped tint plus the alert icon, never colour alone.
 - **No header info** above tabs.
 - Sort by airing time (earliest first).
 
 ### Detail Page
-- Cover image with gradient overlay (transparent top → surface bottom).
-- Back button: visible circle with white arrow.
+- Cover image with gradient overlay (transparent top → surface bottom). The app bar title is hidden while the cover is expanded and fades in as it collapses (`_CollapsedTitle`), because the heading sits under the cover.
+- Back button: visible circle with white arrow (`ScrimIconButton`).
 - **Full-screen image viewer** on cover tap (zoom supported).
 - **Order = importance**, one `SectionCard` per block, 12 apart:
-  1. Header: Japanese title, `HeroPanel` with type/episodes/status/rating chips and score, rank, popularity.
-  2. Your list: `MyListCard` (status and score picker buttons, progress bar, episode stepper, remove) or the Add to Watching button. The page edits the list only through these.
-  3. Next episode (AniList, when airing).
+  1. Header: `headlineMedium` title (a semantic header), Japanese title, `HeroPanel` with type/episodes/status/rating chips and score, rank, popularity.
+  2. Your list: `MyListCard` (status and score picker buttons, compact episode field, progress bar, −/"Mark episode N watched"/+ row, remove) or the Add to Watching button. The page edits the list only through these.
+  3. Next episode (AniList, when airing) with the reminder `SwitchListTile`; there is no bell in the app bar.
   4. Synopsis with genres (long synopsis collapses behind Read more).
   5. Information: aired/airing, season, broadcast, duration, source, studios.
   6. Characters & voice actors, then staff (AniList).
@@ -173,7 +178,8 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 ### Profile Page
 - Real data from MAL `/users/@me`.
 - Header: avatar, name, member-since, location, plus days watched, episodes and mean score.
-- Library donut (per-status counts), time invested (days per status), then insight charts: score distribution, top genres, formats, activity. Insights are computed from the cached user lists by `GetProfileInsights` (`profileInsightsProvider`), never from extra API calls.
+- Library donut centred over 44px legend rows (dot, label, count, share), then completion rate and episodes per anime; time invested as one bar per status sorted by days; then insight charts: score distribution, top genres, formats, activity. Insights are computed from the cached user lists by `GetProfileInsights` (`profileInsightsProvider`), never from extra API calls.
+- Settings: the theme is a `SegmentedButton<ThemeMode>` (Light | Dark), styled by `segmentedButtonTheme`.
 - Charts are custom-painted widgets in `profile_charts.dart` (no chart dependency, to keep the APK small). Chart colours come from `AppColors` (`chartPalette`, status colours).
 
 ## Font

@@ -73,18 +73,19 @@ class AnimeProfilePage extends ConsumerWidget {
                         : Icons.light_mode,
                   ),
                   title: const Text('Theme'),
-                  subtitle: Text(
-                    themeMode == ThemeMode.dark ? 'Dark' : 'Light',
-                  ),
-                  trailing: Switch(
-                    value: themeMode == ThemeMode.dark,
-                    onChanged: (value) {
-                      ref
-                          .read(themeModeProvider.notifier)
-                          .setThemeMode(
-                            value ? ThemeMode.dark : ThemeMode.light,
-                          );
-                    },
+                  trailing: SegmentedButton<ThemeMode>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        label: Text('Light'),
+                      ),
+                      ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                    ],
+                    selected: {themeMode},
+                    onSelectionChanged: (selection) => ref
+                        .read(themeModeProvider.notifier)
+                        .setThemeMode(selection.first),
                   ),
                 ),
                 const Divider(height: 1),

@@ -254,6 +254,7 @@ class _MyListCardState extends ConsumerState<MyListCard> {
     final total = detail.numEpisodes != 0 ? detail.numEpisodes : null;
     final score = status.score ?? 0;
     final statusColors = listStatusColors(context, status.status);
+    final canAdvance = total == null || watched < total;
 
     return SectionCard(
       title: 'Your list',
@@ -298,9 +299,30 @@ class _MyListCardState extends ConsumerState<MyListCard> {
                   ),
                 ),
               ),
-              Text(
-                total != null ? '$watched / $total' : '$watched',
-                style: theme.textTheme.labelLarge,
+              SizedBox(
+                width: 120,
+                child: TextFormField(
+                  key: ValueKey('episodes_$watched'),
+                  initialValue: '$watched',
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  enabled: !_busy,
+                  style: theme.textTheme.labelLarge,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    suffixText: total != null ? '/ $total' : null,
+                  ),
+                  onFieldSubmitted: (value) {
+                    final parsed = int.tryParse(value);
+                    if (parsed != null && parsed >= 0) {
+                      unawaited(_updateEpisodes(parsed));
+                    }
+                  },
+                ),
               ),
             ],
           ),
@@ -324,29 +346,30 @@ class _MyListCardState extends ConsumerState<MyListCard> {
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: TextFormField(
-                  key: ValueKey('episodes_$watched'),
-                  initialValue: '$watched',
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  enabled: !_busy,
-                  style: theme.textTheme.titleMedium,
-                  decoration: InputDecoration(
-                    suffixText: total != null ? '/ $total' : null,
+                child: FilledButton(
+                  onPressed: (_busy || !canAdvance)
+                      ? null
+                      : () => _updateEpisodes(watched + 1),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
                   ),
-                  onFieldSubmitted: (value) {
-                    final parsed = int.tryParse(value);
-                    if (parsed != null && parsed >= 0) {
-                      unawaited(_updateEpisodes(parsed));
-                    }
-                  },
+                  child: Text(
+                    canAdvance
+                        ? 'Mark episode ${watched + 1} watched'
+                        : 'All episodes watched',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
               IconButton.filledTonal(
                 tooltip: 'One episode more',
                 icon: const Icon(Icons.add_circle_outline),
-                onPressed: (_busy || (total != null && watched >= total))
+                onPressed: (_busy || !canAdvance)
                     ? null
                     : () => _updateEpisodes(watched + 1),
               ),

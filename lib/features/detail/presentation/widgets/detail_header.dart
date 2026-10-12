@@ -56,20 +56,33 @@ class DetailHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (native != null && native.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(
-              bottom: AppSpacing.md,
-              left: AppSpacing.xs,
-            ),
-            child: SelectableText(
-              native,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Semantics(
+                header: true,
+                child: SelectableText(
+                  detail.title,
+                  style: theme.textTheme.headlineMedium,
+                ),
               ),
-            ),
+              if (native != null && native.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: SelectableText(
+                    native,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+            ],
           ),
-        if (chips.isNotEmpty || highlights.isNotEmpty)
+        ),
+        if (chips.isNotEmpty || highlights.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.lg),
           HeroPanel(
             child: Column(
               children: [
@@ -100,6 +113,7 @@ class DetailHeader extends StatelessWidget {
               ],
             ),
           ),
+        ],
       ],
     );
   }

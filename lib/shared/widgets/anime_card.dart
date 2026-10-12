@@ -21,6 +21,7 @@ const _coverWidth = 84.0;
 const _coverHeight = 120.0;
 const _cardInset = 14.0;
 const _titleTopInset = 10.0;
+const double _infoRightInset = _cardInset - AppSpacing.xs;
 
 /// Unified anime card used across all pages.
 ///
@@ -31,18 +32,30 @@ class AnimeCard extends ConsumerWidget {
   const AnimeCard({
     required this.anime,
     super.key,
+    this.header,
     this.trailing,
     this.nextAiring,
+    this.rank,
+    this.note,
     this.onTap,
   });
 
   final Anime anime;
+
+  /// Optional line above the title, e.g. the airing time on the Airing page.
+  final Widget? header;
 
   /// Optional trailing widget in the footer row (e.g. countdown).
   final Widget? trailing;
 
   /// Optional next airing info from AniList schedule.
   final AiringEntry? nextAiring;
+
+  /// Optional ranking position shown on the cover.
+  final int? rank;
+
+  /// Optional muted note under the footer, e.g. why the card cannot open.
+  final String? note;
 
   /// Optional tap callback. When provided, replaces the default navigation.
   final VoidCallback? onTap;
@@ -63,6 +76,12 @@ class AnimeCard extends ConsumerWidget {
     final time = _broadcastTime();
     final notifEnabled = ref.watch(
       animeNotificationProvider.select((s) => s.contains(anime.id)),
+    );
+    final title = Text(
+      anime.title,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleMedium,
     );
 
     final stats = <Widget>[
@@ -86,7 +105,7 @@ class AnimeCard extends ConsumerWidget {
     final footer = <Widget>[
       if (nextAiring case final next?)
         CountdownBadge(airingAt: next.airingAt, episode: next.episode),
-      if (trailing case final trailing?) trailing,
+      ?trailing,
       if (notifEnabled && anime.status != 'finished_airing')
         Semantics(
           label: 'Reminder on',
@@ -133,7 +152,7 @@ class AnimeCard extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: _titleTopInset),
-                child: _Cover(anime: anime),
+                child: _Cover(anime: anime, rank: rank),
               ),
               const SizedBox(width: _cardInset),
               Expanded(
@@ -147,12 +166,7 @@ class AnimeCard extends ConsumerWidget {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(top: _titleTopInset),
-                            child: Text(
-                              anime.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleMedium,
-                            ),
+                            child: header ?? title,
                           ),
                         ),
                         if (onTap == null)
@@ -171,16 +185,15 @@ class AnimeCard extends ConsumerWidget {
                             ),
                           )
                         else
-                          const SizedBox(width: _cardInset - AppSpacing.xs),
+                          const SizedBox(width: _infoRightInset),
                       ],
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(
-                        right: _cardInset - AppSpacing.xs,
-                      ),
+                      padding: const EdgeInsets.only(right: _infoRightInset),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (header != null) title,
                           if (jaTitle != null && jaTitle.isNotEmpty)
                             Text(
                               jaTitle,
@@ -242,6 +255,21 @@ class AnimeCard extends ConsumerWidget {
                               runSpacing: AppSpacing.xs,
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: footer,
+                            ),
+                          ],
+                          if (note case final note?) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 14,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Expanded(child: Text(note, style: muted)),
+                              ],
                             ),
                           ],
                         ],
@@ -650,11 +678,12 @@ class _SheetLabel extends StatelessWidget {
   }
 }
 
-/// Inset cover with rounded corners.
+/// Inset cover with rounded corners and an optional rank badge.
 class _Cover extends StatelessWidget {
-  const _Cover({required this.anime});
+  const _Cover({required this.anime, this.rank});
 
   final Anime anime;
+  final int? rank;
 
   @override
   Widget build(BuildContext context) {
@@ -663,10 +692,38 @@ class _Cover extends StatelessWidget {
       child: SizedBox(
         width: _coverWidth,
         height: _coverHeight,
-        child: AppCachedImage(
-          imageUrl: anime.mainPicture?.medium ?? '',
-          fallbackSize: 20,
-          memCacheWidth: 252,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AppCachedImage(
+              imageUrl: anime.mainPicture?.medium ?? '',
+              fallbackSize: 20,
+              memCacheWidth: 252,
+            ),
+            if (rank case final rank?)
+              Positioned(
+                top: 6,
+                left: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.overlayDarker,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    '#$rank',
+                    semanticsLabel: 'Rank $rank',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.iconLight,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

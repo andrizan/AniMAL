@@ -40,56 +40,75 @@ class _AnimeSearchPageState extends ConsumerState<AnimeSearchPage> {
         : ref.watch(animeSearchProvider(_query));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              AppSpacing.xs,
-              AppSpacing.page,
-              AppSpacing.md,
-            ),
-            child: TextField(
-              controller: _searchController,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: 'Search anime',
-                prefixIcon: const Icon(Icons.search),
-                border: _pillBorder(scheme.outline, 1.5),
-                enabledBorder: _pillBorder(scheme.outline, 1.5),
-                focusedBorder: _pillBorder(scheme.primary, 2),
-                suffixIcon: _query.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        tooltip: 'Clear search',
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _query = '');
-                        },
-                      )
-                    : null,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.page,
+                AppSpacing.md,
               ),
-              onSubmitted: (value) => setState(() => _query = value),
+              child: Row(
+                children: [
+                  IconButton.filledTonal(
+                    tooltip: 'Back',
+                    iconSize: 22,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 48,
+                      height: 48,
+                    ),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: () => Navigator.maybePop(context),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: 'Search anime',
+                        prefixIcon: const Icon(Icons.search),
+                        border: _pillBorder(scheme.outline, 1.5),
+                        enabledBorder: _pillBorder(scheme.outline, 1.5),
+                        focusedBorder: _pillBorder(scheme.primary, 2),
+                        suffixIcon: _query.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                tooltip: 'Clear search',
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _query = '');
+                                },
+                              )
+                            : null,
+                      ),
+                      onSubmitted: (value) => setState(() => _query = value),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: asyncAnime.when(
-              skipLoadingOnReload: true,
-              data: (list) =>
-                  _AnimeListView(anime: list, showRanking: _query.isEmpty),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => ErrorView(
-                message: 'Failed to load results',
-                onRetry: () => ref.invalidate(
-                  _query.isEmpty
-                      ? animeRankingProvider
-                      : animeSearchProvider(_query),
+            Expanded(
+              child: asyncAnime.when(
+                skipLoadingOnReload: true,
+                data: (list) =>
+                    _AnimeListView(anime: list, showRanking: _query.isEmpty),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, _) => ErrorView(
+                  message: 'Failed to load results',
+                  onRetry: () => ref.invalidate(
+                    _query.isEmpty
+                        ? animeRankingProvider
+                        : animeSearchProvider(_query),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -123,7 +142,12 @@ class _AnimeListView extends StatelessWidget {
             child: SectionHeader('Top ranking', trailing: 'MyAnimeList'),
           );
         }
-        return AnimeCard(anime: anime[index - header]);
+        final position = index - header;
+        final item = anime[position];
+        return AnimeCard(
+          anime: item,
+          rank: showRanking ? (item.rank ?? position + 1) : null,
+        );
       },
     );
   }

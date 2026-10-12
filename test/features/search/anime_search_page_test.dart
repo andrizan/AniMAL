@@ -72,9 +72,23 @@ void main() {
   ) async {
     await open(tester);
 
-    expect(find.text('Search'), findsOneWidget);
+    expect(find.text('Search anime'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsOneWidget);
+    expect(find.text('Top ranking'), findsOneWidget);
     expect(find.text('Top Ranked'), findsOneWidget);
+    expect(find.text('#1'), findsOneWidget);
     expect(repo.searches, isEmpty);
+  });
+
+  testWidgets('the ranking badge uses the MAL rank when known', (tester) async {
+    repo.ranking = [
+      const Anime(id: 100, title: 'First', rank: 7),
+      const Anime(id: 101, title: 'Second'),
+    ];
+    await open(tester);
+
+    expect(find.text('#7'), findsOneWidget);
+    expect(find.text('#2'), findsOneWidget);
   });
 
   testWidgets('shows the results of a submitted query', (tester) async {
@@ -89,6 +103,8 @@ void main() {
     expect(repo.searches, ['frieren']);
     expect(find.byType(AnimeCard), findsNWidgets(2));
     expect(find.text('Top Ranked'), findsNothing);
+    expect(find.text('Top ranking'), findsNothing);
+    expect(find.textContaining('#'), findsNothing);
   });
 
   testWidgets('typing alone does not search until it is submitted', (

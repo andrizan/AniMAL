@@ -130,15 +130,8 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
             controller: _seasonTabController,
             scrollable: false,
             segmented: true,
-            tabs: List.generate(_seasonLabels.length, (i) {
-              return Tab(
-                key: ValueKey('${_seasonLabels[i]}_$_selectedYear'),
-                height: 60,
-                iconMargin: const EdgeInsets.only(bottom: 2),
-                icon: Icon(_seasonIcons[i], size: 20),
-                text: _seasonLabels[i],
-              );
-            }),
+            labels: _seasonLabels,
+            icons: _seasonIcons,
           ),
         ),
 
@@ -360,12 +353,16 @@ class _DayHeader extends StatelessWidget {
         AppSpacing.page,
         AppSpacing.xs,
       ),
-      child: Text(
-        day,
-        style: theme.textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.6,
-          color: theme.colorScheme.onSurfaceVariant,
+      child: Semantics(
+        header: true,
+        child: Text(
+          day.toUpperCase(),
+          semanticsLabel: day,
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );

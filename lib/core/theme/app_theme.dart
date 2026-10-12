@@ -9,10 +9,19 @@ ThemeData buildLightTheme() =>
 
 ThemeData buildDarkTheme() => _buildTheme(AppColors.dark, AppColors.darkStatus);
 
+/// A 2px ring drawn inside a control while it has keyboard focus.
+WidgetStateProperty<BorderSide?> _focusRing(Color color) =>
+    WidgetStateProperty.resolveWith(
+      (states) => states.contains(WidgetState.focused)
+          ? BorderSide(color: color, width: 2)
+          : null,
+    );
+
 ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
   final textTheme = AppTextStyles.build(scheme);
   final dark = scheme.brightness == Brightness.dark;
   final pill = BorderRadius.circular(AppRadius.pill);
+  final focusTint = scheme.primary.withValues(alpha: 0.16);
 
   return ThemeData(
     useMaterial3: true,
@@ -21,6 +30,7 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
     textTheme: textTheme,
     fontFamily: GoogleFonts.figtree().fontFamily,
     scaffoldBackgroundColor: scheme.surface,
+    focusColor: focusTint,
     cardTheme: CardThemeData(
       elevation: dark ? 0 : 2,
       shadowColor: scheme.shadow.withValues(alpha: 0.35),
@@ -73,15 +83,21 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
       unselectedLabelStyle: textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w500,
       ),
-      labelPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      overlayColor: WidgetStatePropertyAll(
-        scheme.primary.withValues(alpha: 0.08),
+      labelPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      overlayColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.focused)
+            ? focusTint
+            : scheme.primary.withValues(alpha: 0.08),
       ),
       splashBorderRadius: pill,
     ),
     chipTheme: ChipThemeData(
       shape: const StadiumBorder(),
-      side: BorderSide.none,
+      side: WidgetStateBorderSide.resolveWith(
+        (states) => states.contains(WidgetState.focused)
+            ? BorderSide(color: scheme.primary, width: 2)
+            : BorderSide.none,
+      ),
       backgroundColor: scheme.surfaceContainer,
       selectedColor: scheme.primary,
       disabledColor: scheme.surfaceContainer,
@@ -105,22 +121,67 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
         );
       }),
     ),
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(64, 52),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-        shape: const StadiumBorder(),
-        textStyle: textTheme.titleMedium,
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: ButtonStyle(
+        shape: const WidgetStatePropertyAll(StadiumBorder()),
+        side: _focusRing(scheme.primary),
+        visualDensity: VisualDensity.compact,
+        minimumSize: const WidgetStatePropertyAll(Size(64, 40)),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        ),
+        textStyle: WidgetStateProperty.resolveWith(
+          (states) => textTheme.labelMedium!.copyWith(
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w600,
+          ),
+        ),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? scheme.primaryContainer
+              : scheme.surfaceContainer,
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? scheme.onPrimaryContainer
+              : scheme.onSurfaceVariant,
+        ),
       ),
     ),
+    filledButtonTheme: FilledButtonThemeData(
+      style:
+          FilledButton.styleFrom(
+            minimumSize: const Size(64, 52),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            shape: const StadiumBorder(),
+            textStyle: textTheme.titleMedium,
+          ).copyWith(
+            side: _focusRing(scheme.onSurface),
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? scheme.onPrimary.withValues(alpha: 0.2)
+                  : null,
+            ),
+          ),
+    ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(64, 52),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-        shape: const StadiumBorder(),
-        side: BorderSide(color: scheme.outline, width: 1.5),
-        textStyle: textTheme.titleMedium,
-      ),
+      style:
+          OutlinedButton.styleFrom(
+            minimumSize: const Size(64, 52),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            shape: const StadiumBorder(),
+            textStyle: textTheme.titleMedium,
+          ).copyWith(
+            side: WidgetStateProperty.resolveWith(
+              (states) => BorderSide(
+                color: states.contains(WidgetState.focused)
+                    ? scheme.primary
+                    : scheme.outline,
+                width: states.contains(WidgetState.focused) ? 2 : 1.5,
+              ),
+            ),
+          ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
@@ -128,7 +189,10 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         shape: const StadiumBorder(),
         textStyle: textTheme.labelLarge,
-      ),
+      ).copyWith(side: _focusRing(scheme.primary)),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(side: _focusRing(scheme.primary)),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,

@@ -10,7 +10,6 @@ import 'package:animal/features/detail/presentation/widgets/detail_people.dart';
 import 'package:animal/features/detail/presentation/widgets/detail_sections.dart';
 import 'package:animal/features/detail/presentation/widgets/my_list_card.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
-import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/empty_view.dart';
@@ -130,7 +129,12 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
         )
       else
         AddToListButton(animeId: animeId, onAdded: _onListStatusUpdated),
-      if (nextAiring != null) NextEpisodeCard(next: nextAiring),
+      if (nextAiring != null)
+        NextEpisodeCard(
+          next: nextAiring,
+          animeId: animeId,
+          title: detail.title,
+        ),
       if (AboutCard.hasContent(detail)) AboutCard(detail: detail),
       if (InfoCard.hasContent(detail, studios))
         InfoCard(detail: detail, studios: studios),
@@ -159,13 +163,6 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                 onPressed: () => Navigator.pop(context),
               ),
               actions: [
-                if (nextAiring != null)
-                  _NotificationBell(
-                    animeId: animeId,
-                    title: detail.title,
-                    nextAiring: nextAiring,
-                  ),
-                const SizedBox(width: AppSpacing.sm),
                 ScrimIconButton(
                   icon: Icons.share_rounded,
                   tooltip: 'Share',
@@ -174,15 +171,13 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                 const SizedBox(width: AppSpacing.sm),
               ],
               flexibleSpace: FlexibleSpaceBar(
-                title: SelectableText(
-                  detail.title,
-                  maxLines: 2,
-                  style: theme.textTheme.titleMedium,
+                centerTitle: false,
+                titlePadding: const EdgeInsetsDirectional.only(
+                  start: 64,
+                  end: AppSpacing.lg,
+                  bottom: 18,
                 ),
-                titlePadding: const EdgeInsets.only(
-                  left: AppSpacing.page,
-                  bottom: AppSpacing.lg,
-                ),
+                title: _CollapsedTitle(detail.title),
                 background: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onTap: () {
@@ -256,50 +251,36 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Notification Bell for airing anime
-// ═══════════════════════════════════════════════════════════════════
+/// The app bar title: hidden while the cover is expanded, fading in as the
+/// bar collapses so the heading under the cover is not shown twice.
+class _CollapsedTitle extends StatelessWidget {
+  const _CollapsedTitle(this.title);
 
-class _NotificationBell extends ConsumerWidget {
-  const _NotificationBell({
-    required this.animeId,
-    required this.title,
-    required this.nextAiring,
-  });
-
-  final int animeId;
   final String title;
-  final AniListNextAiring nextAiring;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(
-      animeNotificationProvider.select((s) => s.contains(animeId)),
-    );
-
-    return ScrimIconButton(
-      icon: enabled ? Icons.notifications_active : Icons.notifications_none,
-      color: enabled ? StatusColors.of(context).star : null,
-      tooltip: enabled ? 'Turn off reminder' : 'Remind me before it airs',
-      onPressed: () async {
-        final result = await ref
-            .read(animeNotificationProvider.notifier)
-            .toggle(
-              animeId: animeId,
-              title: title,
-              episode: nextAiring.episode,
-              airingAt: nextAiring.airingAt,
-            );
-
-        if (!context.mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.message(nextAiring.episode)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
+  Widget build(BuildContext context) {
+    final settings = context
+        .dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+    var opacity = 1.0;
+    if (settings != null) {
+      final range = settings.maxExtent - settings.minExtent;
+      final expanded = range > 0
+          ? ((settings.currentExtent - settings.minExtent) / range).clamp(
+              0.0,
+              1.0,
+            )
+          : 0.0;
+      opacity = (1 - expanded * 4).clamp(0.0, 1.0);
+    }
+    return Opacity(
+      opacity: opacity,
+      child: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
     );
   }
 }

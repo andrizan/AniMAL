@@ -141,7 +141,28 @@ void main() {
     final cards = tester.widgetList<AnimeCard>(find.byType(AnimeCard)).toList();
     expect(cards.map((c) => c.anime.title), ['Show 1', 'Show 2']);
     expect(find.byType(CountdownBadge), findsNWidgets(2));
-    expect(find.textContaining('Ep 4'), findsNWidgets(2));
+    expect(find.text('Episode 4'), findsNWidgets(2));
+    expect(find.textContaining('Ep 4'), findsNothing);
+  });
+
+  testWidgets('an entry without a MAL id says so on the card', (tester) async {
+    await open(
+      tester,
+      () => week(
+        onToday: [
+          AiringEntry(
+            anilistId: 9,
+            title: 'AniList only',
+            airingAt: DateTime.now().toUtc().add(const Duration(hours: 1)),
+            episode: 1,
+            timeUntilAiring: 3600,
+          ),
+        ],
+      ),
+    );
+
+    expect(find.text('Not on MyAnimeList yet'), findsOneWidget);
+    expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 
   testWidgets('shows the personal list progress on the card', (tester) async {
@@ -225,30 +246,19 @@ void main() {
     });
   });
 
-  group('refresh button', () {
-    testWidgets('refreshes the schedule', (tester) async {
+  group('pull to refresh', () {
+    testWidgets('refreshes the schedule without a header button', (
+      tester,
+    ) async {
       await open(tester, () => week(onToday: [_entry(1)]));
       airing.result = week(onToday: [_entry(1)]);
+      expect(find.byTooltip('Refresh'), findsNothing);
 
-      await tester.tap(find.byTooltip('Refresh'));
+      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
       await tester.pumpAndSettle();
 
       expect(airing.refreshes, 1);
       expect(find.textContaining('empty'), findsNothing);
-    });
-
-    testWidgets('warns when the refreshed schedule is empty', (tester) async {
-      await open(tester, () => week(onToday: [_entry(1)]));
-      airing.result = week();
-
-      await tester.tap(find.byTooltip('Refresh'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(
-        find.text('Airing schedule is empty, try again later'),
-        findsOneWidget,
-      );
     });
 
     testWidgets('reports a failure and keeps showing the cached schedule', (
@@ -257,35 +267,14 @@ void main() {
       await open(tester, () => week(onToday: [_entry(1)]));
       airing.failure = Exception('offline');
 
-      await tester.tap(find.byTooltip('Refresh'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+      await tester.pumpAndSettle();
 
       expect(
         find.text('Refresh failed, showing cached schedule'),
         findsOneWidget,
       );
       expect(find.byType(AnimeCard), findsOneWidget);
-    });
-
-    testWidgets('shows a spinner and ignores taps while refreshing', (
-      tester,
-    ) async {
-      await open(tester, () => week(onToday: [_entry(1)]));
-      airing.gate = Completer<void>();
-
-      await tester.tap(find.byTooltip('Refresh'));
-      await tester.pump(const Duration(milliseconds: 50));
-
-      final button = find.byWidgetPredicate(
-        (w) => w is IconButton && w.tooltip == 'Refresh',
-      );
-      expect(find.byIcon(Icons.refresh), findsNothing);
-      expect(tester.widget<IconButton>(button).onPressed, isNull);
-
-      airing.gate!.complete();
-      await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
     });
   });
 }

@@ -284,6 +284,13 @@ class _PersonScaffold extends StatelessWidget {
   }
 }
 
+String _unsupportedNote(AniListMediaAppearance media) {
+  final type = media.type;
+  if (type == null || type == 'ANIME') return 'Not available on MyAnimeList';
+  final label = '${type[0]}${type.substring(1).toLowerCase()}';
+  return '$label is not supported in this app';
+}
+
 class _WorksList extends ConsumerWidget {
   const _WorksList({required this.malIds, required this.otherMedia});
 
@@ -323,6 +330,7 @@ class _WorksList extends ConsumerWidget {
                   : null,
               mediaType: media.type?.toLowerCase(),
             ),
+            note: _unsupportedNote(media),
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

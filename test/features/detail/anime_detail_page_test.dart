@@ -194,6 +194,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Failed to load anime detail'), findsNothing);
+      await scrollTo(tester, find.text('Synopsis'));
       expect(find.text('Synopsis'), findsOneWidget);
     });
   });
@@ -497,9 +498,20 @@ void main() {
 
       expect(find.text('Watching'), findsOneWidget);
       expect(find.byTooltip('Change status'), findsOneWidget);
-      expect(find.text('5 / 12'), findsOneWidget);
+      expect(find.text('/ 12'), findsOneWidget);
+      expect(find.text('Mark episode 6 watched'), findsOneWidget);
       expect(find.text('7'), findsWidgets);
       expect(find.text('Remove from List'), findsOneWidget);
+    });
+
+    testWidgets('the mark button advances one episode', (tester) async {
+      await open(tester, detail: () => _detail(list: watching));
+
+      await tapVisible(tester, find.text('Mark episode 6 watched'));
+      await tester.pumpAndSettle();
+
+      expect(repo.updates.last['eps'], 6);
+      expect(find.text('Mark episode 7 watched'), findsOneWidget);
     });
 
     testWidgets('an unrated anime says so on the score button', (tester) async {
@@ -570,6 +582,15 @@ void main() {
         find.widgetWithIcon(IconButton, Icons.add_circle_outline),
       );
       expect(plus.onPressed, isNull);
+      expect(find.text('All episodes watched'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'All episodes watched'),
+            )
+            .onPressed,
+        isNull,
+      );
     });
 
     testWidgets('typing an episode number submits it', (tester) async {
@@ -797,9 +818,28 @@ void main() {
         ),
       );
 
+      await scrollTo(tester, find.text('Next Episode'));
       expect(find.text('Next Episode'), findsOneWidget);
       expect(find.text('Episode 7'), findsOneWidget);
       expect(find.textContaining('2h 0m'), findsOneWidget);
+      expect(find.text('Remind me before it airs'), findsOneWidget);
+      expect(find.byType(SwitchListTile), findsOneWidget);
+    });
+
+    testWidgets('the heading sits under the cover and the bar title is '
+        'hidden while expanded', (tester) async {
+      await open(tester);
+
+      final titles = find.text('Sousou no Frieren');
+      expect(titles, findsNWidgets(2));
+      final opacity = tester.widget<Opacity>(
+        find.ancestor(of: titles.first, matching: find.byType(Opacity)),
+      );
+      expect(opacity.opacity, 0);
+      expect(
+        tester.getTopLeft(titles.last).dy,
+        greaterThan(tester.getTopLeft(titles.first).dy),
+      );
     });
 
     testWidgets('groups external links and names them by site', (tester) async {

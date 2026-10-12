@@ -160,9 +160,9 @@ void main() {
 
       expect(find.text('Time invested'), findsOneWidget);
       expect(find.text('738 hours'), findsOneWidget);
-      expect(find.text('27.5d'), findsOneWidget);
-      expect(find.text('2.0d'), findsOneWidget);
-      expect(find.text('1.3d'), findsOneWidget);
+      expect(find.text('27.5 days'), findsOneWidget);
+      expect(find.text('2.0 days'), findsOneWidget);
+      expect(find.text('1.3 days'), findsOneWidget);
       expect(find.text('On Hold'), findsNothing);
     });
 

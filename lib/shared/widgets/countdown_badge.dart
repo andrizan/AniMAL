@@ -6,19 +6,21 @@ import 'package:material_ui/material_ui.dart';
 
 /// A live countdown badge driven by the shared [clockProvider].
 ///
-/// Shows the remaining time until [airingAt] together with the
-/// [episode] number. Once the air time has passed it shows "Aired".
-/// Under six hours it switches to the alert icon and the dropped tint, so
-/// urgency is not carried by colour alone.
+/// Shows the remaining time until [airingAt], prefixed with the [episode]
+/// number unless [showEpisode] is false. Once the air time has passed it
+/// shows "Aired". Under six hours it switches to the alert icon and the
+/// dropped tint, so urgency is not carried by colour alone.
 class CountdownBadge extends ConsumerWidget {
   const CountdownBadge({
     required this.airingAt,
     required this.episode,
     super.key,
+    this.showEpisode = true,
   });
 
   final DateTime airingAt;
   final int episode;
+  final bool showEpisode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,12 +30,13 @@ class CountdownBadge extends ConsumerWidget {
     final remaining = airingAt.toUtc().difference(now).inSeconds;
     final scheme = Theme.of(context).colorScheme;
     final colors = StatusColors.of(context);
+    final prefix = showEpisode ? 'Ep $episode · ' : '';
 
     if (remaining <= 0) {
       return InfoChip(
         dense: true,
         icon: Icons.check_rounded,
-        label: 'Ep $episode · Aired',
+        label: '${prefix}Aired',
         color: colors.onPlanContainer,
         background: colors.planContainer,
       );
@@ -43,7 +46,7 @@ class CountdownBadge extends ConsumerWidget {
     return InfoChip(
       dense: true,
       icon: isUrgent ? Icons.warning_amber_rounded : Icons.schedule_rounded,
-      label: 'Ep $episode · in ${_formatCountdown(remaining)}',
+      label: '${prefix}in ${_formatCountdown(remaining)}',
       color: isUrgent ? colors.onDroppedContainer : scheme.onPrimaryContainer,
       background: isUrgent ? colors.droppedContainer : scheme.primaryContainer,
     );

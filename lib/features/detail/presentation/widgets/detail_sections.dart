@@ -7,9 +7,11 @@ import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/broadcast.dart';
+import 'package:animal/shared/providers/anime_notification_providers.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/section_card.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -240,13 +242,38 @@ class _StudioLink extends StatelessWidget {
   }
 }
 
-class NextEpisodeCard extends StatelessWidget {
-  const NextEpisodeCard({required this.next, super.key});
+class NextEpisodeCard extends ConsumerWidget {
+  const NextEpisodeCard({
+    required this.next,
+    required this.animeId,
+    required this.title,
+    super.key,
+  });
 
   final AniListNextAiring next;
+  final int animeId;
+  final String title;
+
+  Future<void> _toggleReminder(BuildContext context, WidgetRef ref) async {
+    final result = await ref
+        .read(animeNotificationProvider.notifier)
+        .toggle(
+          animeId: animeId,
+          title: title,
+          episode: next.episode,
+          airingAt: next.airingAt,
+        );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result.message(next.episode)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final colors = StatusColors.of(context);
@@ -256,39 +283,76 @@ class NextEpisodeCard extends StatelessWidget {
         '${local.hour.toString().padLeft(2, '0')}:'
         '${local.minute.toString().padLeft(2, '0')}';
     final date = '${local.day}/${local.month} at $time';
+    final reminderOn = ref.watch(
+      animeNotificationProvider.select((s) => s.contains(animeId)),
+    );
 
     return SectionCard(
       title: 'Next Episode',
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Episode ${next.episode}',
-                  style: theme.textTheme.titleMedium,
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Episode ${next.episode}',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      date,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  date,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              InfoChip(
+                icon: urgent
+                    ? Icons.warning_amber_rounded
+                    : Icons.schedule_rounded,
+                label: 'in ${next.countdown}',
+                color: urgent
+                    ? colors.onDroppedContainer
+                    : scheme.onPrimaryContainer,
+                background: urgent
+                    ? colors.droppedContainer
+                    : scheme.primaryContainer,
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.sm),
-          InfoChip(
-            icon: urgent ? Icons.warning_amber_rounded : Icons.schedule_rounded,
-            label: 'in ${next.countdown}',
-            color: urgent
-                ? colors.onDroppedContainer
-                : scheme.onPrimaryContainer,
-            background: urgent
-                ? colors.droppedContainer
-                : scheme.primaryContainer,
+          const SizedBox(height: AppSpacing.md),
+          SwitchListTile(
+            value: reminderOn,
+            onChanged: (_) => _toggleReminder(context, ref),
+            tileColor: scheme.surfaceContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.card - 4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.xs,
+            ),
+            secondary: Icon(
+              reminderOn
+                  ? Icons.notifications_active
+                  : Icons.notifications_none,
+              color: reminderOn ? colors.star : scheme.onSurfaceVariant,
+            ),
+            title: Text(
+              reminderOn
+                  ? 'Reminder on for episode ${next.episode}'
+                  : 'Remind me before it airs',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

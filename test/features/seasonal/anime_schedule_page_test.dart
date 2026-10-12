@@ -101,9 +101,9 @@ void main() {
   ) async {
     await open(tester);
 
-    expect(find.text('Monday'), findsOneWidget);
-    expect(find.text('Friday'), findsOneWidget);
-    expect(find.text('Tuesday'), findsNothing);
+    expect(find.text('MONDAY'), findsOneWidget);
+    expect(find.text('FRIDAY'), findsOneWidget);
+    expect(find.text('TUESDAY'), findsNothing);
     final order = tester
         .widgetList<AnimeCard>(find.byType(AnimeCard))
         .map((c) => c.anime.id)

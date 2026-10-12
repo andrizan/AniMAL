@@ -56,57 +56,51 @@ class LibrarySection extends StatelessWidget {
       trailing: '${formatCount(total)} anime',
       child: Column(
         children: [
-          Row(
-            children: [
-              DonutChart(
-                size: 124,
-                strokeWidth: 18,
-                semanticsLabel: [
-                  for (final s in WatchStatus.values) '${s.label} ${counts[s]}',
-                ].join(', '),
-                segments: [
-                  for (final status in WatchStatus.values)
-                    ChartSegment(
-                      label: status.label,
-                      value: counts[status]!.toDouble(),
-                      color: _statusColor(context, status),
+          Center(
+            child: DonutChart(
+              size: 168,
+              strokeWidth: 22,
+              semanticsLabel: [
+                for (final s in WatchStatus.values) '${s.label} ${counts[s]}',
+              ].join(', '),
+              segments: [
+                for (final status in WatchStatus.values)
+                  ChartSegment(
+                    label: status.label,
+                    value: counts[status]!.toDouble(),
+                    color: _statusColor(context, status),
+                  ),
+              ],
+              center: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    formatCount(total),
+                    style: theme.textTheme.headlineMedium,
+                  ),
+                  Text(
+                    'anime',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
                     ),
+                  ),
                 ],
-                center: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      formatCount(total),
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                    Text(
-                      'total',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    for (final status in WatchStatus.values)
-                      _LegendRow(
-                        color: _statusColor(context, status),
-                        label: status.label,
-                        count: counts[status]!,
-                        percent: sum > 0 ? counts[status]! * 100 / sum : 0,
-                      ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
+          const SizedBox(height: AppSpacing.lg),
+          for (final (i, status) in WatchStatus.values.indexed) ...[
+            if (i > 0) const Divider(height: 1),
+            _LegendRow(
+              color: _statusColor(context, status),
+              label: status.label,
+              count: counts[status]!,
+              percent: sum > 0 ? counts[status]! * 100 / sum : 0,
+            ),
+          ],
           if (started > 0) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 Expanded(
@@ -115,7 +109,7 @@ class LibrarySection extends StatelessWidget {
                     value: '${(completed * 100 / started).round()}%',
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.sm + 2),
                 Expanded(
                   child: _MiniStat(
                     label: 'Episodes per anime',
@@ -149,32 +143,27 @@ class _LegendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    return SizedBox(
+      height: 44,
       child: Row(
         children: [
           Container(
-            width: 10,
-            height: 10,
+            width: 14,
+            height: 14,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall,
+              style: theme.textTheme.bodyMedium,
             ),
           ),
-          Text(
-            formatCount(count),
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text(formatCount(count), style: theme.textTheme.labelLarge),
           SizedBox(
-            width: 40,
+            width: 48,
             child: Text(
               '${percent.round()}%',
               textAlign: TextAlign.end,
@@ -238,6 +227,7 @@ class TimeInvestedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final days = <WatchStatus, double>{
       WatchStatus.completed: stats.numDaysCompleted ?? 0,
       WatchStatus.watching: stats.numDaysWatching ?? 0,
@@ -247,37 +237,56 @@ class TimeInvestedSection extends StatelessWidget {
     final sum = days.values.fold<double>(0, (a, b) => a + b);
     if (sum <= 0) return const SizedBox.shrink();
     final hours = ((stats.numDaysWatched ?? sum) * 24).round();
+    final rows = days.entries.where((e) => e.value > 0).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final peak = rows.first.value;
 
     return SectionCard(
       title: 'Time invested',
       trailing: '${formatCount(hours)} hours',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SegmentedBar(
-            segments: [
-              for (final entry in days.entries)
-                ChartSegment(
-                  label: entry.key.label,
-                  value: entry.value,
-                  color: _statusColor(context, entry.key),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              for (final entry in days.entries)
-                if (entry.value > 0)
-                  ChartLegendItem(
-                    color: _statusColor(context, entry.key),
-                    label: entry.key.label,
-                    value: '${entry.value.toStringAsFixed(1)}d',
+          for (final (i, row) in rows.indexed) ...[
+            if (i > 0) const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    row.key.label,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-            ],
-          ),
+                ),
+                Text(
+                  '${row.value.toStringAsFixed(1)} days',
+                  style: theme.textTheme.labelLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Semantics(
+              label: '${row.key.label}, ${row.value.toStringAsFixed(1)} days',
+              child: Container(
+                height: 10,
+                alignment: Alignment.centerLeft,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: (row.value / peak).clamp(0.02, 1.0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: _statusColor(context, row.key),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

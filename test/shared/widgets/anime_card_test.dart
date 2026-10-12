@@ -29,16 +29,22 @@ void main() {
   Future<void> pumpCard(
     WidgetTester tester,
     Anime anime, {
+    Widget? header,
     Widget? trailing,
     AiringEntry? nextAiring,
+    int? rank,
+    String? note,
     VoidCallback? onTap,
     Set<int> notifying = const {},
     GoRouter? router,
   }) async {
     final card = AnimeCard(
       anime: anime,
+      header: header,
       trailing: trailing,
       nextAiring: nextAiring,
+      rank: rank,
+      note: note,
       onTap: onTap,
     );
     final app = router != null
@@ -296,6 +302,35 @@ void main() {
       await pumpCard(tester, anime(), trailing: const Text('TRAILING'));
 
       expect(find.text('TRAILING'), findsOneWidget);
+    });
+  });
+
+  group('header, rank and note', () {
+    testWidgets('a header goes above the title and keeps the edit button', (
+      tester,
+    ) async {
+      await pumpCard(tester, anime(), header: const Text('HEADER'));
+
+      expect(find.text('HEADER'), findsOneWidget);
+      expect(find.text('Frieren'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('HEADER')).dy,
+        lessThan(tester.getTopLeft(find.text('Frieren')).dy),
+      );
+      expect(find.byIcon(Icons.more_vert), findsOneWidget);
+    });
+
+    testWidgets('a rank is shown as a badge on the cover', (tester) async {
+      await pumpCard(tester, anime(), rank: 3);
+
+      expect(find.text('#3'), findsOneWidget);
+    });
+
+    testWidgets('a note is shown under the footer', (tester) async {
+      await pumpCard(tester, anime(), note: 'Not on MyAnimeList yet');
+
+      expect(find.text('Not on MyAnimeList yet'), findsOneWidget);
+      expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
     });
   });
 

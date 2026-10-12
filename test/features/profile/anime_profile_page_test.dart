@@ -321,15 +321,21 @@ void main() {
       expect(openedRoute, isNull);
     });
 
-    testWidgets('the theme switch flips the theme and remembers it', (
+    Set<ThemeMode> selectedTheme(WidgetTester tester) => tester
+        .widget<SegmentedButton<ThemeMode>>(
+          find.byType(SegmentedButton<ThemeMode>),
+        )
+        .selected;
+
+    testWidgets('the theme segments flip the theme and remember it', (
       tester,
     ) async {
       await open(tester);
-      expect(find.text('Dark'), findsOneWidget);
+      expect(selectedTheme(tester), {ThemeMode.dark});
 
-      await tapVisible(tester, find.byType(Switch));
+      await tapVisible(tester, find.text('Light'));
 
-      expect(find.text('Light'), findsOneWidget);
+      expect(selectedTheme(tester), {ThemeMode.light});
       expect(
         (await SharedPreferences.getInstance()).getString('theme_mode'),
         'light',
@@ -339,7 +345,7 @@ void main() {
     testWidgets('a saved light theme is shown', (tester) async {
       await open(tester, prefs: {'theme_mode': 'light'});
 
-      expect(find.text('Light'), findsOneWidget);
+      expect(selectedTheme(tester), {ThemeMode.light});
     });
 
     testWidgets('About shows the installed version', (tester) async {

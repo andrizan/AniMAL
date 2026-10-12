@@ -100,7 +100,7 @@ lib/
 │   │   └── airing_cache.dart          # merged weekly schedule
 │   └── models/                        # @freezed DTOs (MAL) + plain Dart (AniList)
 ├── shared/
-│   ├── providers/                     # AnimeRepository, user lists, airing, AniList, theme, notifications
+│   ├── providers/                     # AnimeRepository, user lists, airing (+ shared refresh), AniList, theme, notifications
 │   └── widgets/                       # anime_card, section_card, section_header, hero_panel, stat_highlight,
 │                                      # error_view, empty_view, info_chip, status_chip, countdown_badge, pill_tab_bar,
 │                                      # score_picker, scrim_icon_button, app_cached_image, full_screen_image

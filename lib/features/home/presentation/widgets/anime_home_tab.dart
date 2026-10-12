@@ -122,10 +122,7 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
               Expanded(
                 child: PillTabBar(
                   controller: _tabController,
-                  tabs: [
-                    for (final label in _tabLabels)
-                      Tab(text: label, height: 40),
-                  ],
+                  labels: _tabLabels,
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),

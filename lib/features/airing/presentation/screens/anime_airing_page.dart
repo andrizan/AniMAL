@@ -1,8 +1,8 @@
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
-import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/features/airing/providers/airing_providers.dart';
+import 'package:animal/shared/providers/airing_refresh_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/countdown_badge.dart';
 import 'package:animal/shared/widgets/empty_view.dart';
@@ -15,6 +15,9 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// Data: AniList schedule (airingAt, episode, countdown)
 ///       + MAL score (mean).
+///
+/// The explicit refresh button lives in the home shell's header; it and the
+/// pull-to-refresh here share [airingRefreshProvider].
 class AnimeAiringPage extends ConsumerStatefulWidget {
   const AnimeAiringPage({super.key});
 
@@ -25,7 +28,6 @@ class AnimeAiringPage extends ConsumerStatefulWidget {
 class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  bool _isRefreshing = false;
 
   static const _days = [
     'monday',
@@ -56,43 +58,16 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
     super.dispose();
   }
 
-  Future<void> _handleRefresh() async {
-    if (_isRefreshing) return;
-    setState(() => _isRefreshing = true);
-    try {
-      final result = await ref
-          .read(airingRepositoryProvider)
-          .refreshWeeklySchedule();
-      ref.invalidate(weeklyAiringProvider);
-      if (mounted && result.values.every((l) => l.isEmpty)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Airing schedule is empty, try again later'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } on Object {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Refresh failed, showing cached schedule'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isRefreshing = false);
-    }
+  Future<void> _refresh() async {
+    final result = await ref.read(airingRefreshProvider.notifier).refresh();
+    final message = airingRefreshMessage(result);
+    if (message == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+    );
   }
 
-  Future<void> _handleRetry() async {
-    try {
-      await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
-      // ignore: empty_catches
-    } on Object {}
-    ref.invalidate(weeklyAiringProvider);
-  }
+  Future<void> _retry() => ref.read(airingRefreshProvider.notifier).refresh();
 
   @override
   Widget build(BuildContext context) {
@@ -101,10 +76,8 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
     return asyncSchedule.when(
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => ErrorView(
-        message: 'Failed to load airing schedule',
-        onRetry: _handleRetry,
-      ),
+      error: (error, _) =>
+          ErrorView(message: 'Failed to load airing schedule', onRetry: _retry),
       data: (grouped) {
         final isWeekEmpty = grouped.values.every((l) => l.isEmpty);
         return Column(
@@ -113,38 +86,15 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.page,
                 AppSpacing.xs,
-                AppSpacing.sm,
+                AppSpacing.page,
                 AppSpacing.xs,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: PillTabBar(
-                      controller: _tabController,
-                      tabs: [
-                        for (final d in _dayLabels) Tab(text: d, height: 40),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  IconButton(
-                    icon: _isRefreshing
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh),
-                    tooltip: 'Refresh',
-                    onPressed: _isRefreshing ? null : _handleRefresh,
-                  ),
-                ],
-              ),
+              child: PillTabBar(controller: _tabController, labels: _dayLabels),
             ),
             if (isWeekEmpty)
               Expanded(
                 child: RefreshIndicator(
-                  onRefresh: _handleRefresh,
+                  onRefresh: _refresh,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: SizedBox(
@@ -152,7 +102,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                       child: EmptyView(
                         icon: Icons.tv_off,
                         message: 'No airing schedule yet',
-                        onRetry: _handleRetry,
+                        onRetry: _retry,
                       ),
                     ),
                   ),
@@ -169,7 +119,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
 
                     if (animeForDay.isEmpty) {
                       return RefreshIndicator(
-                        onRefresh: _handleRefresh,
+                        onRefresh: _refresh,
                         child: SingleChildScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
@@ -185,7 +135,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
                     }
 
                     return RefreshIndicator(
-                      onRefresh: _handleRefresh,
+                      onRefresh: _refresh,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.sm,
@@ -212,7 +162,7 @@ class _AnimeAiringPageState extends ConsumerState<AnimeAiringPage>
   }
 }
 
-/// Airing card with countdown trailing widget.
+/// Airing card: airing time and episode above the title, countdown below.
 class _AiringCard extends StatefulWidget {
   const _AiringCard({required this.entry, super.key});
 
@@ -227,7 +177,6 @@ class _AiringCardState extends State<_AiringCard> {
   late final VoidCallback? _onTap;
 
   Anime _buildAnime(AiringEntry entry) {
-    final airingTime = _formatAiringTime(entry.airingAt);
     final malId = entry.malId;
     return Anime(
       id: malId ?? entry.anilistId,
@@ -239,7 +188,6 @@ class _AiringCardState extends State<_AiringCard> {
       numEpisodes: entry.episodes,
       status: _mapAniListStatus(entry.status),
       genres: entry.genres.map((g) => Genre(id: 0, name: g)).toList(),
-      broadcast: airingTime != null ? Broadcast(startTime: airingTime) : null,
       alternativeTitles: AlternativeTitles(
         en: entry.titleEnglish,
         ja: entry.titleNative,
@@ -274,20 +222,18 @@ class _AiringCardState extends State<_AiringCard> {
 
   @override
   Widget build(BuildContext context) {
+    final entry = widget.entry;
     return AnimeCard(
       anime: _anime,
+      header: _AiringHeader(airingAt: entry.airingAt, episode: entry.episode),
       trailing: CountdownBadge(
-        airingAt: widget.entry.airingAt,
-        episode: widget.entry.episode,
+        airingAt: entry.airingAt,
+        episode: entry.episode,
+        showEpisode: false,
       ),
+      note: entry.malId == null ? 'Not on MyAnimeList yet' : null,
       onTap: _onTap,
     );
-  }
-
-  String? _formatAiringTime(DateTime airingAt) {
-    final local = airingAt.toLocal();
-    return '${local.hour.toString().padLeft(2, '0')}:'
-        '${local.minute.toString().padLeft(2, '0')}';
   }
 
   String? _mapAniListStatus(String? status) => switch (status) {
@@ -297,4 +243,47 @@ class _AiringCardState extends State<_AiringCard> {
     'CANCELLED' => 'finished_airing',
     _ => status,
   };
+}
+
+class _AiringHeader extends StatelessWidget {
+  const _AiringHeader({required this.airingAt, required this.episode});
+
+  final DateTime airingAt;
+  final int episode;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final local = airingAt.toLocal();
+    final time =
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
+
+    return Row(
+      children: [
+        Icon(Icons.schedule_rounded, size: 14, color: scheme.primary),
+        const SizedBox(width: AppSpacing.xs),
+        Text(
+          time,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: scheme.primary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: Text(
+            'Episode $episode',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
