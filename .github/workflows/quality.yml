@@ -55,3 +55,73 @@ jobs:
 
       - name: Test
         run: flutter test --reporter expanded
+
+  build-apk:
+    name: Build APKs
+    needs: quality
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool/pub
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Fetch Flutter dependencies
+        run: flutter pub get
+
+      - name: Regenerate freezed/json_serializable
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build APK per ABI
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.jvmargs=-Xmx4g"
+        run: |
+          set -euo pipefail
+          flutter build apk --release --split-per-abi --no-pub \
+            --target-platform android-arm,android-arm64,android-x64
+          mkdir -p dist-apk
+          SHA="${GITHUB_SHA::7}"
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            mv "build/app/outputs/flutter-apk/app-${abi}-release.apk" \
+              "dist-apk/animal-${SHA}-${abi}.apk"
+          done
+
+      - name: Build universal APK
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.jvmargs=-Xmx4g"
+        run: |
+          set -euo pipefail
+          flutter build apk --release --no-pub
+          mv build/app/outputs/flutter-apk/app-release.apk \
+            "dist-apk/animal-${GITHUB_SHA::7}-universal.apk"
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v7
+        with:
+          name: animal-apk-${{ github.sha }}
+          path: dist-apk/*.apk
+          retention-days: 14
+          if-no-files-found: error
