@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:animal/core/config/env.dart';
 import 'package:animal/core/network/api_health_interceptor.dart';
 import 'package:animal/core/network/api_health_tracker.dart';
-import 'package:animal/core/network/auth_interceptor.dart';
 import 'package:animal/core/network/dio_client.dart';
 import 'package:animal/core/storage/secure_token_storage.dart';
 import 'package:dio/dio.dart';

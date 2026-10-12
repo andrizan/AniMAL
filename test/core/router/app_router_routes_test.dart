@@ -1,6 +1,5 @@
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/router/app_router.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +25,7 @@ void main() {
 
   GoRoute? routeOf(String location) {
     final match = router().configuration.findMatch(Uri.parse(location));
-    return match.isError ? null : match.last.route as GoRoute;
+    return match.isError ? null : match.last.route;
   }
 
   Future<void> pumpRouter(WidgetTester tester) async {

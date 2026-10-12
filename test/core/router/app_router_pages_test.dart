@@ -50,7 +50,7 @@ void main() {
   /// What the route at [location] builds, without building it.
   Object pageAt(String location) {
     final match = router.configuration.findMatch(Uri.parse(location));
-    final route = match.last.route as GoRoute;
+    final route = match.last.route;
     final state = GoRouterState(
       router.configuration,
       uri: match.uri,
