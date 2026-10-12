@@ -61,11 +61,12 @@ abstract final class AniListQueries {
   ''';
 
   static const characterDetail = r'''
-    query ($id: Int) {
+    query ($id: Int, $perPage: Int) {
       Character(id: $id) {
         id name { full native } image { large medium }
         description dateOfBirth { year month day } age gender
-        media(sort: POPULARITY_DESC, perPage: 10) {
+        media(sort: POPULARITY_DESC, perPage: $perPage) {
+          pageInfo { hasNextPage }
           edges {
             characterRole
             node { id idMal title { romaji english } coverImage { medium } type }
@@ -76,13 +77,14 @@ abstract final class AniListQueries {
   ''';
 
   static const staffDetail = r'''
-    query ($id: Int) {
+    query ($id: Int, $perPage: Int) {
       Staff(id: $id) {
         id name { full native } image { large medium }
         description primaryOccupations gender
         dateOfBirth { year month day } dateOfDeath { year month day }
         age yearsActive homeTown
-        staffMedia(sort: POPULARITY_DESC, perPage: 10) {
+        staffMedia(sort: POPULARITY_DESC, perPage: $perPage) {
+          pageInfo { hasNextPage }
           edges {
             staffRole
             node { id idMal title { romaji english } coverImage { medium } type }
@@ -93,10 +95,56 @@ abstract final class AniListQueries {
   ''';
 
   static const studioDetail = r'''
-    query ($id: Int) {
+    query ($id: Int, $perPage: Int) {
       Studio(id: $id) {
         id name isAnimationStudio siteUrl favourites
-        media(sort: POPULARITY_DESC, perPage: 10) {
+        media(sort: POPULARITY_DESC, perPage: $perPage) {
+          pageInfo { hasNextPage }
+          edges {
+            node { id idMal title { romaji english } coverImage { medium } type }
+          }
+        }
+      }
+    }
+  ''';
+
+  // Later pages of the works lists. The detail queries above already carry
+  // page 1 with the same sort and a `perPage` of `AniListClient.worksPageSize`
+  // (AniList's maximum), so page 2 starts exactly where the detail stopped.
+
+  static const characterWorksPage = r'''
+    query ($id: Int, $page: Int, $perPage: Int) {
+      Character(id: $id) {
+        media(sort: POPULARITY_DESC, page: $page, perPage: $perPage) {
+          pageInfo { hasNextPage total }
+          edges {
+            characterRole
+            node { id idMal title { romaji english } coverImage { medium } type }
+          }
+        }
+      }
+    }
+  ''';
+
+  static const staffWorksPage = r'''
+    query ($id: Int, $page: Int, $perPage: Int) {
+      Staff(id: $id) {
+        staffMedia(sort: POPULARITY_DESC, page: $page, perPage: $perPage) {
+          pageInfo { hasNextPage total }
+          edges {
+            staffRole
+            node { id idMal title { romaji english } coverImage { medium } type }
+          }
+        }
+      }
+    }
+  ''';
+
+  static const studioWorksPage = r'''
+    query ($id: Int, $page: Int, $perPage: Int) {
+      Studio(id: $id) {
+        media(sort: POPULARITY_DESC, page: $page, perPage: $perPage) {
+          pageInfo { hasNextPage total }
           edges {
             node { id idMal title { romaji english } coverImage { medium } type }
           }

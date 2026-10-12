@@ -1,12 +1,12 @@
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
+import 'package:animal/data/anilist/anilist_client.dart'
+    show AniListWorksSource;
 import 'package:animal/shared/providers/anilist_providers.dart';
-import 'package:animal/shared/providers/anime_providers.dart';
-import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/scrim_icon_button.dart';
-import 'package:animal/shared/widgets/section_header.dart';
+import 'package:animal/shared/widgets/works_sliver.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -32,11 +32,6 @@ class StudioProfilePage extends ConsumerWidget {
         ),
       ),
       data: (studio) {
-        final malIds = studio.mediaWorks
-            .where((m) => m.malId != null)
-            .map((m) => m.malId!)
-            .toList();
-
         return Scaffold(
           body: CustomScrollView(
             slivers: [
@@ -123,55 +118,21 @@ class StudioProfilePage extends ConsumerWidget {
                             ),
                         ],
                       ),
-                      if (malIds.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.xs,
-                            AppSpacing.xl,
-                            AppSpacing.xs,
-                            0,
-                          ),
-                          child: SectionHeader(
-                            'Works',
-                            trailing: '${malIds.length} titles',
-                            bottomPadding: 2,
-                          ),
-                        ),
                     ],
                   ),
                 ),
               ),
-              if (malIds.isNotEmpty)
-                SliverToBoxAdapter(child: _AnimeWorksList(malIds: malIds)),
+              WorksSliver(
+                title: 'Works',
+                source: AniListWorksSource.studio,
+                id: studioId,
+                onlyWithMalId: true,
+              ),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
             ],
           ),
         );
       },
-    );
-  }
-}
-
-class _AnimeWorksList extends ConsumerWidget {
-  const _AnimeWorksList({required this.malIds});
-
-  final List<int> malIds;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAnime = ref.watch(animeListProvider(malIds.join(',')));
-
-    return asyncAnime.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xl),
-          child: CircularProgressIndicator(),
-        ),
-      ),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (animeList) => Column(
-        children: animeList.map((anime) => AnimeCard(anime: anime)).toList(),
-      ),
     );
   }
 }

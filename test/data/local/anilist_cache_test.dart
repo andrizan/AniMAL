@@ -203,6 +203,245 @@ void main() {
     });
   });
 
+  group('AniListCache.works lists', () {
+    AniListMediaAppearance work(int n, {String? role}) =>
+        AniListMediaAppearance(
+          anilistId: n,
+          malId: n + 1000,
+          title: 'Work $n',
+          titleEnglish: 'English $n',
+          imageUrl: 'w$n.jpg',
+          type: 'ANIME',
+          role: role,
+        );
+
+    List<AniListMediaAppearance> works(int from, int count) => [
+      for (var i = from; i < from + count; i++) work(i),
+    ];
+
+    AniListWorksPage page(int from, int count, {bool next = true}) =>
+        AniListWorksPage(items: works(from, count), hasNextPage: next);
+
+    Future<void> save(
+      AniListWorksSource source,
+      int id,
+      List<AniListMediaAppearance> items, {
+      AniListWorksCursor cursor = const AniListWorksCursor(hasMore: true),
+    }) => switch (source) {
+      AniListWorksSource.character => cache.saveCharacter(
+        AniListCharacterDetail(
+          id: id,
+          name: 'C',
+          mediaAppearances: items,
+          worksCursor: cursor,
+        ),
+      ),
+      AniListWorksSource.staff => cache.saveStaff(
+        AniListStaffDetail(
+          id: id,
+          name: 'S',
+          mediaWorks: items,
+          worksCursor: cursor,
+        ),
+      ),
+      AniListWorksSource.studio => cache.saveStudio(
+        AniListStudioDetail(
+          id: id,
+          name: 'Z',
+          mediaWorks: items,
+          worksCursor: cursor,
+        ),
+      ),
+    };
+
+    Future<(List<AniListMediaAppearance>, AniListWorksCursor)?> read(
+      AniListWorksSource source,
+      int id,
+    ) async => switch (source) {
+      AniListWorksSource.character => switch (await cache.getCharacter(id)) {
+        final d? => (d.mediaAppearances, d.worksCursor),
+        null => null,
+      },
+      AniListWorksSource.staff => switch (await cache.getStaff(id)) {
+        final d? => (d.mediaWorks, d.worksCursor),
+        null => null,
+      },
+      AniListWorksSource.studio => switch (await cache.getStudio(id)) {
+        final d? => (d.mediaWorks, d.worksCursor),
+        null => null,
+      },
+    };
+
+    List<int> ids(List<AniListMediaAppearance> items) => [
+      for (final m in items) m.anilistId,
+    ];
+
+    for (final source in AniListWorksSource.values) {
+      group(source.name, () {
+        test('the cursor saved with a detail comes back with it', () async {
+          await save(
+            source,
+            5,
+            works(1, 3),
+            cursor: const AniListWorksCursor(nextPage: 4, hasMore: true),
+          );
+
+          final (items, cursor) = (await read(source, 5))!;
+
+          expect(items, hasLength(3));
+          expect(cursor.nextPage, 4);
+          expect(cursor.hasMore, isTrue);
+        });
+
+        test('a detail saved without a cursor has no more pages', () async {
+          await save(
+            source,
+            5,
+            works(1, 3),
+            cursor: const AniListWorksCursor(),
+          );
+
+          final (_, cursor) = (await read(source, 5))!;
+
+          expect(cursor.hasMore, isFalse);
+          expect(cursor.nextPage, 2);
+        });
+
+        test(
+          'appends the next page after the stored works, in order',
+          () async {
+            await save(source, 5, works(1, 3));
+
+            await cache.appendWorks(source, 5, 2, page(4, 3));
+
+            final (items, cursor) = (await read(source, 5))!;
+            expect(ids(items), [1, 2, 3, 4, 5, 6]);
+            expect(cursor.nextPage, 3);
+            expect(cursor.hasMore, isTrue);
+          },
+        );
+
+        test('keeps appending page after page', () async {
+          await save(source, 5, works(1, 2));
+
+          await cache.appendWorks(source, 5, 2, page(3, 2));
+          await cache.appendWorks(source, 5, 3, page(5, 2));
+          await cache.appendWorks(source, 5, 4, page(7, 1, next: false));
+
+          final (items, cursor) = (await read(source, 5))!;
+          expect(ids(items), [1, 2, 3, 4, 5, 6, 7]);
+          expect(cursor.nextPage, 5);
+          expect(cursor.hasMore, isFalse);
+        });
+
+        test('the last page closes the list', () async {
+          await save(source, 5, works(1, 2));
+
+          await cache.appendWorks(source, 5, 2, page(3, 1, next: false));
+
+          final (_, cursor) = (await read(source, 5))!;
+          expect(cursor.hasMore, isFalse);
+        });
+
+        test('an empty page closes the list whatever AniList says', () async {
+          await save(source, 5, works(1, 2));
+
+          await cache.appendWorks(source, 5, 2, page(3, 0));
+
+          final (items, cursor) = (await read(source, 5))!;
+          expect(items, hasLength(2));
+          expect(cursor.hasMore, isFalse);
+        });
+
+        test('works already stored are not stored twice', () async {
+          await save(source, 5, works(1, 3));
+
+          await cache.appendWorks(source, 5, 2, page(2, 4));
+
+          final (items, cursor) = (await read(source, 5))!;
+          expect(ids(items), [1, 2, 3, 4, 5]);
+          expect(cursor.nextPage, 3);
+        });
+
+        test('only the page right after the stored ones is accepted', () async {
+          await save(source, 5, works(1, 2));
+
+          await cache.appendWorks(source, 5, 3, page(3, 2));
+          await cache.appendWorks(source, 5, 1, page(3, 2));
+          await cache.appendWorks(source, 5, 2, page(3, 2));
+          await cache.appendWorks(source, 5, 2, page(5, 2));
+
+          final (items, cursor) = (await read(source, 5))!;
+          expect(ids(items), [1, 2, 3, 4]);
+          expect(cursor.nextPage, 3);
+        });
+
+        test('nothing is stored for a detail that is not cached', () async {
+          await cache.appendWorks(source, 99, 2, page(1, 3));
+
+          expect(await read(source, 99), isNull);
+          expect(await appDb.raw.query('anilist_works_progress'), isEmpty);
+        });
+
+        test('saving the detail again starts the list over', () async {
+          await save(source, 5, works(1, 3));
+          await cache.appendWorks(source, 5, 2, page(4, 3));
+
+          await save(source, 5, works(1, 3));
+
+          final (items, cursor) = (await read(source, 5))!;
+          expect(items, hasLength(3));
+          expect(cursor.nextPage, 2);
+          expect(cursor.hasMore, isTrue);
+        });
+
+        test('keeps roles, titles and images of appended works', () async {
+          await save(source, 5, works(1, 1));
+
+          await cache.appendWorks(
+            source,
+            5,
+            2,
+            AniListWorksPage(
+              items: [work(2, role: 'Music')],
+              hasNextPage: false,
+            ),
+          );
+
+          final (items, _) = (await read(source, 5))!;
+          expect(items.last.role, 'Music');
+          expect(items.last.title, 'Work 2');
+          expect(items.last.titleEnglish, 'English 2');
+          expect(items.last.imageUrl, 'w2.jpg');
+          expect(items.last.malId, 1002);
+          expect(items.last.type, 'ANIME');
+        });
+
+        test('another entity of the same kind is left alone', () async {
+          await save(source, 5, works(1, 2));
+          await save(source, 6, works(1, 2));
+
+          await cache.appendWorks(source, 5, 2, page(3, 2));
+
+          final (other, cursor) = (await read(source, 6))!;
+          expect(other, hasLength(2));
+          expect(cursor.nextPage, 2);
+        });
+      });
+    }
+
+    test('lists of different kinds with the same id stay apart', () async {
+      await save(AniListWorksSource.staff, 5, works(1, 2));
+      await save(AniListWorksSource.studio, 5, works(1, 2));
+
+      await cache.appendWorks(AniListWorksSource.staff, 5, 2, page(3, 2));
+
+      final (studio, cursor) = (await read(AniListWorksSource.studio, 5))!;
+      expect(studio, hasLength(2));
+      expect(cursor.nextPage, 2);
+    });
+  });
+
   group('AniListCache.animeExtra', () {
     test('save and read preserves next airing, links, studios', () async {
       // FK constraint: anilist_anime_extra.mal_id references anime.mal_id.

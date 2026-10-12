@@ -8,7 +8,7 @@ class AppDatabase {
 
   Database get raw => _db;
 
-  static const _schemaVersion = 3;
+  static const _schemaVersion = 4;
   static const _fileName = 'animal_cache.db';
 
   static Future<AppDatabase> open({
@@ -30,6 +30,9 @@ class AppDatabase {
         }
         if (oldVersion < 3) {
           await _migrateV2ToV3(db);
+        }
+        if (oldVersion < 4) {
+          await _migrateV3ToV4(db);
         }
       },
     );
@@ -406,6 +409,16 @@ class AppDatabase {
     ''');
 
     await db.execute('''
+      CREATE TABLE IF NOT EXISTS anilist_works_progress (
+        source     TEXT NOT NULL,
+        id         INTEGER NOT NULL,
+        next_page  INTEGER NOT NULL,
+        has_more   INTEGER NOT NULL,
+        PRIMARY KEY (source, id)
+      );
+    ''');
+
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS airing_schedule (
         anilist_id              INTEGER NOT NULL,
         episode                 INTEGER NOT NULL,
@@ -523,6 +536,19 @@ class AppDatabase {
           'ALTER TABLE $table ADD COLUMN next_airing_time_until INTEGER',
         );
       }
+    }
+  }
+
+  /// Works lists were cached 10 at a time with no record of where they
+  /// stopped. Forgetting those details makes the next visit fetch a full page
+  /// and store its cursor; the stale rows are replaced when that happens.
+  static Future<void> _migrateV3ToV4(Database db) async {
+    for (final prefix in ['character_%', 'staff_%', 'studio_%']) {
+      await db.delete(
+        'cache_meta',
+        where: 'cache_key LIKE ?',
+        whereArgs: [prefix],
+      );
     }
   }
 

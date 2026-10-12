@@ -53,6 +53,14 @@ class AniListStaff {
   final String? role;
 }
 
+/// Where a works list stopped: the next 1-based page to request and whether
+/// AniList reported more after the pages stored so far.
+class AniListWorksCursor {
+  const AniListWorksCursor({this.nextPage = 2, this.hasMore = false});
+  final int nextPage;
+  final bool hasMore;
+}
+
 class AniListCharacterDetail {
   const AniListCharacterDetail({
     required this.id,
@@ -66,6 +74,7 @@ class AniListCharacterDetail {
     this.age,
     this.gender,
     this.mediaAppearances = const [],
+    this.worksCursor = const AniListWorksCursor(),
   });
   final int id;
   final String name;
@@ -78,6 +87,7 @@ class AniListCharacterDetail {
   final String? age;
   final String? gender;
   final List<AniListMediaAppearance> mediaAppearances;
+  final AniListWorksCursor worksCursor;
 }
 
 class AniListStaffDetail {
@@ -99,6 +109,7 @@ class AniListStaffDetail {
     this.homeTown,
     this.occupations,
     this.mediaWorks = const [],
+    this.worksCursor = const AniListWorksCursor(),
   });
   final int id;
   final String name;
@@ -117,6 +128,7 @@ class AniListStaffDetail {
   final String? homeTown;
   final List<String>? occupations;
   final List<AniListMediaAppearance> mediaWorks;
+  final AniListWorksCursor worksCursor;
 }
 
 class AniListMediaAppearance {
@@ -136,6 +148,22 @@ class AniListMediaAppearance {
   final String? imageUrl;
   final String? type;
   final String? role;
+}
+
+/// Which AniList entity a works list belongs to.
+enum AniListWorksSource { character, staff, studio }
+
+/// One page of a character's appearances, a staff member's works or a
+/// studio's productions, in popularity order.
+class AniListWorksPage {
+  const AniListWorksPage({
+    required this.items,
+    required this.hasNextPage,
+    this.total,
+  });
+  final List<AniListMediaAppearance> items;
+  final bool hasNextPage;
+  final int? total;
 }
 
 class AniListScheduleEntry {
@@ -266,6 +294,7 @@ class AniListStudioDetail {
     this.siteUrl,
     this.favourites,
     this.mediaWorks = const [],
+    this.worksCursor = const AniListWorksCursor(),
   });
   final int id;
   final String name;
@@ -273,4 +302,5 @@ class AniListStudioDetail {
   final String? siteUrl;
   final int? favourites;
   final List<AniListMediaAppearance> mediaWorks;
+  final AniListWorksCursor worksCursor;
 }

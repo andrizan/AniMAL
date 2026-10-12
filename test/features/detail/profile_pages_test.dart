@@ -168,6 +168,10 @@ void main() {
     testWidgets(
       'lists MAL anime as cards and other media as unsupported tiles',
       (tester) async {
+        // The list is lazy, so give it room to build all three cards.
+        tester.view.physicalSize = const Size(1080, 6000);
+        tester.view.devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
         await _open(tester, const CharacterProfilePage(characterId: 7), [
           ...character(
             () => AniListCharacterDetail(
@@ -186,10 +190,13 @@ void main() {
         ]);
 
         expect(find.text('Appears In'), findsOneWidget);
+        expect(find.text('3 titles'), findsOneWidget);
         expect(find.text('FMA Brotherhood'), findsOneWidget);
         expect(find.text('Manga Work'), findsOneWidget);
         expect(find.text('Title 3'), findsOneWidget);
         expect(find.byType(AnimeCard), findsNWidgets(3));
+        expect(find.text('Manga is not supported in this app'), findsOneWidget);
+        expect(find.text('Not available on MyAnimeList'), findsOneWidget);
 
         await tester.ensureVisible(find.text('Manga Work'));
         await tester.tap(find.text('Manga Work'));

@@ -398,29 +398,17 @@ class AniListClient {
   Future<AniListCharacterDetail> _fetchCharacter(int id) async {
     final data = await _query(AniListQueries.characterDetail, {
       'id': id,
+      'perPage': worksPageSize,
     }) as Map<String, dynamic>;
     final c = data['Character'] as Map<String, dynamic>;
     final name = c['name'] as Map<String, dynamic>;
     final image = c['image'] as Map<String, dynamic>;
     final dob = c['dateOfBirth'] as Map<String, dynamic>?;
-    final mediaEdges =
-        (c['media'] as Map<String, dynamic>)['edges'] as List<dynamic>;
-
-    final media = mediaEdges.map((e) {
-      final edge = e as Map<String, dynamic>;
-      final node = edge['node'] as Map<String, dynamic>;
-      final title = node['title'] as Map<String, dynamic>;
-      final cover = node['coverImage'] as Map<String, dynamic>;
-      return AniListMediaAppearance(
-        anilistId: node['id'] as int,
-        malId: node['idMal'] as int?,
-        title: title['romaji'] as String,
-        titleEnglish: title['english'] as String?,
-        imageUrl: cover['medium'] as String?,
-        type: node['type'] as String?,
-        role: edge['characterRole'] as String?,
-      );
-    }).toList();
+    final connection = c['media'] as Map<String, dynamic>;
+    final media = _parseWorks(
+      connection['edges'] as List<dynamic>,
+      roleKey: 'characterRole',
+    );
 
     return AniListCharacterDetail(
       id: c['id'] as int,
@@ -434,6 +422,7 @@ class AniListClient {
       age: c['age'] as String?,
       gender: c['gender'] as String?,
       mediaAppearances: media,
+      worksCursor: _firstPageCursor(connection, media.length),
     );
   }
 
@@ -452,30 +441,18 @@ class AniListClient {
   Future<AniListStaffDetail> _fetchStaff(int id) async {
     final data = await _query(AniListQueries.staffDetail, {
       'id': id,
+      'perPage': worksPageSize,
     }) as Map<String, dynamic>;
     final s = data['Staff'] as Map<String, dynamic>;
     final name = s['name'] as Map<String, dynamic>;
     final image = s['image'] as Map<String, dynamic>;
     final dob = s['dateOfBirth'] as Map<String, dynamic>?;
     final dod = s['dateOfDeath'] as Map<String, dynamic>?;
-    final mediaEdges =
-        (s['staffMedia'] as Map<String, dynamic>)['edges'] as List<dynamic>;
-
-    final works = mediaEdges.map((e) {
-      final edge = e as Map<String, dynamic>;
-      final node = edge['node'] as Map<String, dynamic>;
-      final title = node['title'] as Map<String, dynamic>;
-      final cover = node['coverImage'] as Map<String, dynamic>;
-      return AniListMediaAppearance(
-        anilistId: node['id'] as int,
-        malId: node['idMal'] as int?,
-        title: title['romaji'] as String,
-        titleEnglish: title['english'] as String?,
-        imageUrl: cover['medium'] as String?,
-        type: node['type'] as String?,
-        role: edge['staffRole'] as String?,
-      );
-    }).toList();
+    final connection = s['staffMedia'] as Map<String, dynamic>;
+    final works = _parseWorks(
+      connection['edges'] as List<dynamic>,
+      roleKey: 'staffRole',
+    );
 
     return AniListStaffDetail(
       id: s['id'] as int,
@@ -495,6 +472,7 @@ class AniListClient {
       homeTown: s['homeTown'] as String?,
       occupations: (s['primaryOccupations'] as List<dynamic>?)?.cast<String>(),
       mediaWorks: works,
+      worksCursor: _firstPageCursor(connection, works.length),
     );
   }
 
@@ -513,12 +491,50 @@ class AniListClient {
   Future<AniListStudioDetail> _fetchStudio(int id) async {
     final data = await _query(AniListQueries.studioDetail, {
       'id': id,
+      'perPage': worksPageSize,
     }) as Map<String, dynamic>;
     final s = data['Studio'] as Map<String, dynamic>;
 
-    final mediaEdges =
-        (s['media'] as Map<String, dynamic>)['edges'] as List<dynamic>;
-    final media = mediaEdges.map((e) {
+    final connection = s['media'] as Map<String, dynamic>;
+    final media = _parseWorks(connection['edges'] as List<dynamic>);
+
+    return AniListStudioDetail(
+      id: s['id'] as int,
+      name: s['name'] as String,
+      isAnimationStudio: s['isAnimationStudio'] as bool? ?? false,
+      siteUrl: s['siteUrl'] as String?,
+      favourites: s['favourites'] as int?,
+      mediaWorks: media,
+      worksCursor: _firstPageCursor(connection, media.length),
+    );
+  }
+
+  // ---------- Works lists (infinite scroll) ----------
+
+  /// How many works one page holds: the most AniList serves per request. The
+  /// three detail queries ask for the same size, so page 2 starts where the
+  /// detail stopped.
+  static const worksPageSize = 50;
+
+  /// Where a works list stands after the detail query's first page. A server
+  /// that leaves out `pageInfo` is judged by whether the page came back full.
+  static AniListWorksCursor _firstPageCursor(
+    Map<String, dynamic> connection,
+    int count,
+  ) {
+    final info = connection['pageInfo'] as Map<String, dynamic>?;
+    return AniListWorksCursor(
+      hasMore: info?['hasNextPage'] as bool? ?? count >= worksPageSize,
+    );
+  }
+
+  final Map<String, ({DateTime at, AniListWorksPage page})> _worksPages = {};
+
+  static List<AniListMediaAppearance> _parseWorks(
+    List<dynamic> edges, {
+    String? roleKey,
+  }) {
+    return edges.map((e) {
       final edge = e as Map<String, dynamic>;
       final node = edge['node'] as Map<String, dynamic>;
       final title = node['title'] as Map<String, dynamic>;
@@ -530,17 +546,83 @@ class AniListClient {
         titleEnglish: title['english'] as String?,
         imageUrl: cover['medium'] as String?,
         type: node['type'] as String?,
+        role: roleKey == null ? null : edge[roleKey] as String?,
       );
     }).toList();
+  }
 
-    return AniListStudioDetail(
-      id: s['id'] as int,
-      name: s['name'] as String,
-      isAnimationStudio: s['isAnimationStudio'] as bool? ?? false,
-      siteUrl: s['siteUrl'] as String?,
-      favourites: s['favourites'] as int?,
-      mediaWorks: media,
-    );
+  /// One page (1-based) of the works of a character, staff member or studio.
+  ///
+  /// Pages are kept in memory for the detail TTL, so scrolling back and forth
+  /// or reopening the page never repeats a request, and a page that is already
+  /// being fetched is shared rather than requested twice. A failed request is
+  /// not remembered.
+  Future<AniListWorksPage> getWorksPage(
+    AniListWorksSource source,
+    int id,
+    int page,
+  ) {
+    final key = '${source.name}_works_${id}_$page';
+    final hit = _worksPages[key];
+    if (hit != null && DateTime.now().difference(hit.at) < _ttlDetail) {
+      return Future.value(hit.page);
+    }
+    return _runDeduped(key, () async {
+      final (query, root, field, roleKey) = switch (source) {
+        AniListWorksSource.character => (
+          AniListQueries.characterWorksPage,
+          'Character',
+          'media',
+          'characterRole',
+        ),
+        AniListWorksSource.staff => (
+          AniListQueries.staffWorksPage,
+          'Staff',
+          'staffMedia',
+          'staffRole',
+        ),
+        AniListWorksSource.studio => (
+          AniListQueries.studioWorksPage,
+          'Studio',
+          'media',
+          null,
+        ),
+      };
+      final data = await _query(query, {
+        'id': id,
+        'page': page,
+        'perPage': worksPageSize,
+      }) as Map<String, dynamic>;
+      final connection =
+          (data[root] as Map<String, dynamic>)[field] as Map<String, dynamic>;
+      final info = connection['pageInfo'] as Map<String, dynamic>?;
+      final result = AniListWorksPage(
+        items: _parseWorks(
+          connection['edges'] as List<dynamic>,
+          roleKey: roleKey,
+        ),
+        hasNextPage: info?['hasNextPage'] as bool? ?? false,
+        total: info?['total'] as int?,
+      );
+      _worksPages[key] = (at: DateTime.now(), page: result);
+      await _storeWorksPage(source, id, page, result);
+      return result;
+    });
+  }
+
+  /// Appends a fetched page to the stored list so the next visit starts from
+  /// SQLite. Storage trouble must never fail a page that was fetched fine.
+  Future<void> _storeWorksPage(
+    AniListWorksSource source,
+    int id,
+    int pageNumber,
+    AniListWorksPage page,
+  ) async {
+    try {
+      await cache.appendWorks(source, id, pageNumber, page);
+    } on Object catch (e) {
+      _logger.w('Could not store works page $pageNumber of $source $id: $e');
+    }
   }
 
   // ---------- Force refresh (bypass TTL, merge into cache) ----------

@@ -16,7 +16,7 @@ void main() {
   }
 
   group('AppDatabase', () {
-    test('opens in-memory DB and reports schema version 1', () async {
+    test('opens in-memory DB and reports schema version 4', () async {
       final db = await AppDatabase.open(
         pathOverride: inMemoryDatabasePath,
         runMigrations: false,
@@ -24,7 +24,7 @@ void main() {
       addTearDown(db.close);
 
       final version = await db.raw.getVersion();
-      expect(version, 3);
+      expect(version, 4);
     });
 
     test('foreign keys are enabled', () async {
@@ -67,6 +67,7 @@ void main() {
           'anilist_anime_extra_link',
           'anilist_anime_extra_studio',
           'anilist_anime_extra_voice_actor',
+          'anilist_works_progress',
           'anilist_character',
           'anilist_character_media',
           'anilist_staff',

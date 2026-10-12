@@ -2,17 +2,14 @@ import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/anime_labels.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
-import 'package:animal/data/models/anime.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
-import 'package:animal/shared/providers/anime_providers.dart';
-import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/scrim_icon_button.dart';
 import 'package:animal/shared/widgets/section_card.dart';
-import 'package:animal/shared/widgets/section_header.dart';
+import 'package:animal/shared/widgets/works_sliver.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -55,7 +52,8 @@ class CharacterProfilePage extends ConsumerWidget {
         ],
         description: character.description,
         worksTitle: 'Appears In',
-        works: character.mediaAppearances,
+        worksSource: AniListWorksSource.character,
+        worksId: characterId,
       ),
     );
   }
@@ -113,7 +111,8 @@ class StaffProfilePage extends ConsumerWidget {
         ],
         description: staff.description,
         worksTitle: 'Works',
-        works: staff.mediaWorks,
+        worksSource: AniListWorksSource.staff,
+        worksId: staffId,
       ),
     );
   }
@@ -130,7 +129,8 @@ class _PersonScaffold extends StatelessWidget {
     required this.chips,
     required this.description,
     required this.worksTitle,
-    required this.works,
+    required this.worksSource,
+    required this.worksId,
   });
 
   final String name;
@@ -140,7 +140,8 @@ class _PersonScaffold extends StatelessWidget {
   final List<Widget> chips;
   final String? description;
   final String worksTitle;
-  final List<AniListMediaAppearance> works;
+  final AniListWorksSource worksSource;
+  final int worksId;
 
   @override
   Widget build(BuildContext context) {
@@ -247,100 +248,14 @@ class _PersonScaffold extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (works.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.xs,
-                        AppSpacing.xl,
-                        AppSpacing.xs,
-                        0,
-                      ),
-                      child: SectionHeader(
-                        worksTitle,
-                        trailing: '${works.length} titles',
-                        bottomPadding: 2,
-                      ),
-                    ),
                 ],
               ),
             ),
           ),
-          if (works.isNotEmpty)
-            SliverToBoxAdapter(
-              child: _WorksList(
-                malIds: works
-                    .where((m) => m.malId != null && m.type == 'ANIME')
-                    .map((m) => m.malId!)
-                    .toList(),
-                otherMedia: works
-                    .where((m) => m.malId == null || m.type != 'ANIME')
-                    .toList(),
-              ),
-            ),
+          WorksSliver(title: worksTitle, source: worksSource, id: worksId),
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
         ],
       ),
-    );
-  }
-}
-
-String _unsupportedNote(AniListMediaAppearance media) {
-  final type = media.type;
-  if (type == null || type == 'ANIME') return 'Not available on MyAnimeList';
-  final label = '${type[0]}${type.substring(1).toLowerCase()}';
-  return '$label is not supported in this app';
-}
-
-class _WorksList extends ConsumerWidget {
-  const _WorksList({required this.malIds, required this.otherMedia});
-
-  final List<int> malIds;
-  final List<AniListMediaAppearance> otherMedia;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAnime = malIds.isNotEmpty
-        ? ref.watch(animeListProvider(malIds.join(',')))
-        : null;
-
-    return Column(
-      children: [
-        if (asyncAnime != null)
-          asyncAnime.when(
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.all(AppSpacing.xl),
-                child: CircularProgressIndicator(),
-              ),
-            ),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (animeList) => Column(
-              children: animeList
-                  .map((anime) => AnimeCard(anime: anime))
-                  .toList(),
-            ),
-          ),
-        for (final media in otherMedia)
-          AnimeCard(
-            anime: Anime(
-              id: media.malId ?? media.anilistId,
-              title: media.titleEnglish ?? media.title,
-              mainPicture: media.imageUrl != null
-                  ? MainPicture(medium: media.imageUrl)
-                  : null,
-              mediaType: media.type?.toLowerCase(),
-            ),
-            note: _unsupportedNote(media),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('This app does not support this media type'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
-      ],
     );
   }
 }

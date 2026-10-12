@@ -97,6 +97,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 | AniList character/staff | 30 min | Very stable data |
 | Airing schedule | 15 min | Already cached in AiringRepository |
 
+- **AniList works lists** (a character's appearances, a staff member's works, a studio's productions) load `AniListClient.worksPageSize` (50, AniList's maximum) per request. The detail carries page 1 and a cursor (`worksCursor`); every further page is appended to SQLite by `AniListCache.appendWorks`, so the next visit starts from everything already loaded and requests only the pages after it. Never change the page size without bumping the schema and dropping the stored details, as `_migrateV3ToV4` did.
 - **Invalidate user list cache** on `updateAnimeListStatus` / `deleteAnimeFromList`.
 - **Never make uncached API calls** in widget build methods — always go through a cached repository/provider.
 - **Avoid per-request methods** when a batched/cached alternative exists (e.g., use cached `getWeeklyAiringSchedule` instead of per-day queries).

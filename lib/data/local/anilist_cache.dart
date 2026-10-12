@@ -33,6 +33,17 @@ abstract interface class AniListCache {
   // Studio
   Future<AniListStudioDetail?> getStudio(int id);
   Future<void> saveStudio(AniListStudioDetail detail);
+
+  /// Appends [page] (1-based) to the stored works of a character, staff member
+  /// or studio, so later visits start from everything loaded so far. Only the
+  /// page right after the stored ones is accepted, and nothing is stored for
+  /// an entity whose detail is not cached.
+  Future<void> appendWorks(
+    AniListWorksSource source,
+    int id,
+    int pageNumber,
+    AniListWorksPage page,
+  );
 }
 
 class SqliteAniListCache implements AniListCache {
@@ -85,6 +96,117 @@ class SqliteAniListCache implements AniListCache {
       'cache_key': key,
       'fetched_at': DateTime.now().millisecondsSinceEpoch,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // ---------- Works lists ----------
+
+  static ({String table, String owner, String parent}) _worksStore(
+    AniListWorksSource source,
+  ) => switch (source) {
+    AniListWorksSource.character => (
+      table: 'anilist_character_media',
+      owner: 'character_id',
+      parent: 'anilist_character',
+    ),
+    AniListWorksSource.staff => (
+      table: 'anilist_staff_media',
+      owner: 'staff_id',
+      parent: 'anilist_staff',
+    ),
+    AniListWorksSource.studio => (
+      table: 'anilist_studio_media',
+      owner: 'studio_id',
+      parent: 'anilist_studio',
+    ),
+  };
+
+  Future<AniListWorksCursor> _readCursor(
+    DatabaseExecutor db,
+    AniListWorksSource source,
+    int id,
+  ) async {
+    final rows = await db.query(
+      'anilist_works_progress',
+      where: 'source = ? AND id = ?',
+      whereArgs: [source.name, id],
+      limit: 1,
+    );
+    if (rows.isEmpty) return const AniListWorksCursor();
+    return AniListWorksCursor(
+      nextPage: rows.first['next_page']! as int,
+      hasMore: (rows.first['has_more']! as int) == 1,
+    );
+  }
+
+  Future<void> _writeCursor(
+    DatabaseExecutor db,
+    AniListWorksSource source,
+    int id,
+    AniListWorksCursor cursor,
+  ) async {
+    await db.insert('anilist_works_progress', {
+      'source': source.name,
+      'id': id,
+      'next_page': cursor.nextPage,
+      'has_more': cursor.hasMore ? 1 : 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  @override
+  Future<void> appendWorks(
+    AniListWorksSource source,
+    int id,
+    int pageNumber,
+    AniListWorksPage page,
+  ) async {
+    final store = _worksStore(source);
+    await _db.transaction((txn) async {
+      final parent = await txn.query(
+        store.parent,
+        columns: ['id'],
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      if (parent.isEmpty) return;
+      final cursor = await _readCursor(txn, source, id);
+      if (pageNumber != cursor.nextPage) return;
+
+      final stored = await txn.query(
+        store.table,
+        columns: ['anilist_id', 'position'],
+        where: '${store.owner} = ?',
+        whereArgs: [id],
+      );
+      final known = {for (final r in stored) r['anilist_id']! as int};
+      var position = stored.fold<int>(0, (next, r) {
+        final taken = r['position']! as int;
+        return taken >= next ? taken + 1 : next;
+      });
+      for (final m in page.items) {
+        if (!known.add(m.anilistId)) continue;
+        await txn.insert(store.table, {
+          store.owner: id,
+          'anilist_id': m.anilistId,
+          'mal_id': m.malId,
+          'title': m.title,
+          'title_english': m.titleEnglish,
+          'image_url': m.imageUrl,
+          'type': m.type,
+          'role': m.role,
+          'position': position++,
+        });
+      }
+      await _writeCursor(
+        txn,
+        source,
+        id,
+        AniListWorksCursor(
+          nextPage: pageNumber + 1,
+          hasMore: page.hasNextPage && page.items.isNotEmpty,
+        ),
+      );
+    });
   }
 
   // ---------- Weekly schedule ----------
@@ -640,7 +762,8 @@ class SqliteAniListCache implements AniListCache {
       whereArgs: [id],
       orderBy: 'position ASC',
     );
-    return _characterFromRow(rows.first, media);
+    final cursor = await _readCursor(_db, AniListWorksSource.character, id);
+    return _characterFromRow(rows.first, media, cursor);
   }
 
   @override
@@ -683,6 +806,12 @@ class SqliteAniListCache implements AniListCache {
           'position': i,
         });
       }
+      await _writeCursor(
+        txn,
+        AniListWorksSource.character,
+        detail.id,
+        detail.worksCursor,
+      );
       await _upsertMeta(txn, key);
     });
   }
@@ -690,6 +819,7 @@ class SqliteAniListCache implements AniListCache {
   AniListCharacterDetail _characterFromRow(
     Map<String, Object?> row,
     List<Map<String, Object?>> mediaRows,
+    AniListWorksCursor cursor,
   ) {
     return AniListCharacterDetail(
       id: row['id']! as int,
@@ -715,6 +845,7 @@ class SqliteAniListCache implements AniListCache {
             ),
           )
           .toList(),
+      worksCursor: cursor,
     );
   }
 
@@ -737,7 +868,8 @@ class SqliteAniListCache implements AniListCache {
       whereArgs: [id],
       orderBy: 'position ASC',
     );
-    return _staffFromRow(rows.first, media);
+    final cursor = await _readCursor(_db, AniListWorksSource.staff, id);
+    return _staffFromRow(rows.first, media, cursor);
   }
 
   @override
@@ -790,6 +922,12 @@ class SqliteAniListCache implements AniListCache {
           'position': i,
         });
       }
+      await _writeCursor(
+        txn,
+        AniListWorksSource.staff,
+        detail.id,
+        detail.worksCursor,
+      );
       await _upsertMeta(txn, key);
     });
   }
@@ -797,6 +935,7 @@ class SqliteAniListCache implements AniListCache {
   AniListStaffDetail _staffFromRow(
     Map<String, Object?> row,
     List<Map<String, Object?>> mediaRows,
+    AniListWorksCursor cursor,
   ) {
     final yearsJson = row['years_active_json'] as String?;
     final occJson = row['occupations_json'] as String?;
@@ -834,6 +973,7 @@ class SqliteAniListCache implements AniListCache {
             ),
           )
           .toList(),
+      worksCursor: cursor,
     );
   }
 
@@ -856,6 +996,7 @@ class SqliteAniListCache implements AniListCache {
       whereArgs: [id],
       orderBy: 'position ASC',
     );
+    final cursor = await _readCursor(_db, AniListWorksSource.studio, id);
     return AniListStudioDetail(
       id: rows.first['id']! as int,
       name: rows.first['name']! as String,
@@ -875,6 +1016,7 @@ class SqliteAniListCache implements AniListCache {
             ),
           )
           .toList(),
+      worksCursor: cursor,
     );
   }
 
@@ -913,6 +1055,12 @@ class SqliteAniListCache implements AniListCache {
           'position': i,
         });
       }
+      await _writeCursor(
+        txn,
+        AniListWorksSource.studio,
+        detail.id,
+        detail.worksCursor,
+      );
       await _upsertMeta(txn, key);
     });
   }

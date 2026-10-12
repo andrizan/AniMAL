@@ -143,6 +143,7 @@ refetch fails, the stored rows are served instead of an error.
 | Anime extra / character / staff / studio | `animeExtra_…` etc | Button only (empty extras cached) |
 
 - **Cache-first** = serve SQLite immediately; one blocking fetch only on miss, deduped per key.
+- **Works lists** (character appearances, staff works, studio productions) scroll infinitely in pages of 50, AniList's maximum. Page 1 comes with the detail; every further page is appended to SQLite with a cursor (`anilist_works_progress`), so reopening a page shows everything loaded so far with no request and continues from where it stopped.
 - **Rate limit** `429` → `ApiException.rateLimited` (no auto-retry), health tracked in `ApiHealthTracker`.
 - **Provider errors surface at once**: Riverpod's default retry is disabled (`noProviderRetry`), so a failed load shows its error and a Retry button instead of an endless spinner.
 - **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update every stored snapshot of the personal status (user lists, `anime` rows, merged airing week) and bump `animeListVersionProvider`. Providers that watch it render with `skipLoadingOnReload` so an edit never flashes a spinner or resets scroll. The airing schedule itself is never refetched by list edits.

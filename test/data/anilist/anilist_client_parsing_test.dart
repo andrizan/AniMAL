@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:animal/core/constants/anilist_queries.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/local/anilist_cache.dart';
@@ -90,6 +91,23 @@ Map<String, dynamic> _media(int id, {int? malId}) => {
   'coverImage': {'medium': 'm$id.jpg'},
   'type': 'ANIME',
 };
+
+class _FailingCache extends SqliteAniListCache {
+  _FailingCache(AppDatabase db) : super(db);
+
+  int attempts = 0;
+
+  @override
+  Future<void> appendWorks(
+    AniListWorksSource source,
+    int id,
+    int pageNumber,
+    AniListWorksPage page,
+  ) async {
+    attempts++;
+    throw StateError('disk full');
+  }
+}
 
 void main() {
   setUpAll(() {
@@ -433,6 +451,450 @@ void main() {
 
       expect(again.name, 'Bones');
       expect(gqlCalls(), 1);
+    });
+  });
+
+  group('getWorksPage', () {
+    FakeResponse pageOf(
+      String root,
+      String field,
+      List<Map<String, dynamic>> edges, {
+      bool next = false,
+      int? total,
+    }) => FakeResponse.json(
+      _gql({
+        root: {
+          field: {
+            'pageInfo': {'hasNextPage': next, 'total': total},
+            'edges': edges,
+          },
+        },
+      }),
+    );
+
+    Map<String, dynamic> lastVariables() =>
+        (adapter.requests.last.data as Map<String, dynamic>)['variables']
+            as Map<String, dynamic>;
+
+    test('asks for the right page of a staff member', () async {
+      respond = (_) => pageOf('Staff', 'staffMedia', const []);
+
+      await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+
+      expect(queryOf(adapter.requests.last.data), contains('staffMedia'));
+      expect(lastVariables(), {
+        'id': 8,
+        'page': 2,
+        'perPage': AniListClient.worksPageSize,
+      });
+    });
+
+    test('asks for the right page of a character', () async {
+      respond = (_) => pageOf('Character', 'media', const []);
+
+      await client.getWorksPage(AniListWorksSource.character, 3, 4);
+
+      expect(queryOf(adapter.requests.last.data), contains('Character(id'));
+      expect(lastVariables(), {
+        'id': 3,
+        'page': 4,
+        'perPage': AniListClient.worksPageSize,
+      });
+    });
+
+    test('asks for the right page of a studio', () async {
+      respond = (_) => pageOf('Studio', 'media', const []);
+
+      await client.getWorksPage(AniListWorksSource.studio, 7, 3);
+
+      expect(queryOf(adapter.requests.last.data), contains('Studio(id'));
+      expect(lastVariables(), {
+        'id': 7,
+        'page': 3,
+        'perPage': AniListClient.worksPageSize,
+      });
+    });
+
+    test('reads each source role from its own field', () async {
+      respond = (_) => pageOf('Character', 'media', [
+        {'characterRole': 'MAIN', 'node': _media(1, malId: 11)},
+      ]);
+      final character = await client.getWorksPage(
+        AniListWorksSource.character,
+        3,
+        2,
+      );
+
+      respond = (_) => pageOf('Staff', 'staffMedia', [
+        {'staffRole': 'Director', 'node': _media(2)},
+      ]);
+      final staff = await client.getWorksPage(AniListWorksSource.staff, 3, 2);
+
+      respond = (_) => pageOf('Studio', 'media', [
+        {'node': _media(3, malId: 33)},
+      ]);
+      final studio = await client.getWorksPage(AniListWorksSource.studio, 3, 2);
+
+      expect(character.items.single.role, 'MAIN');
+      expect(character.items.single.malId, 11);
+      expect(staff.items.single.role, 'Director');
+      expect(studio.items.single.role, isNull);
+      expect(studio.items.single.malId, 33);
+      expect(studio.items.single.titleEnglish, 'English 3');
+    });
+
+    test(
+      'reports whether more pages follow and how many works exist',
+      () async {
+        respond = (_) => pageOf(
+          'Staff',
+          'staffMedia',
+          [
+            {'staffRole': 'Music', 'node': _media(1)},
+          ],
+          next: true,
+          total: 57,
+        );
+
+        final page = await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+
+        expect(page.hasNextPage, isTrue);
+        expect(page.total, 57);
+        expect(page.items, hasLength(1));
+      },
+    );
+
+    test('treats a missing pageInfo as the last page', () async {
+      respond = (_) => FakeResponse.json(
+        _gql({
+          'Studio': {
+            'media': {
+              'edges': [
+                {'node': _media(1)},
+              ],
+            },
+          },
+        }),
+      );
+
+      final page = await client.getWorksPage(AniListWorksSource.studio, 7, 2);
+
+      expect(page.hasNextPage, isFalse);
+      expect(page.total, isNull);
+    });
+
+    test('keeps the order AniList sent', () async {
+      respond = (_) => pageOf('Studio', 'media', [
+        for (final id in [30, 10, 20]) {'node': _media(id)},
+      ]);
+
+      final page = await client.getWorksPage(AniListWorksSource.studio, 7, 2);
+
+      expect(page.items.map((m) => m.anilistId), [30, 10, 20]);
+    });
+
+    test(
+      'remembers a page, so scrolling back never repeats the request',
+      () async {
+        respond = (_) => pageOf('Staff', 'staffMedia', [
+          {'staffRole': 'Director', 'node': _media(1)},
+        ]);
+
+        final first = await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+        final again = await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+
+        expect(gqlCalls(), 1);
+        expect(again, same(first));
+      },
+    );
+
+    test('keeps pages, people and kinds apart', () async {
+      respond = (_) => pageOf('Staff', 'staffMedia', const []);
+      await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+      await client.getWorksPage(AniListWorksSource.staff, 8, 3);
+      await client.getWorksPage(AniListWorksSource.staff, 9, 2);
+      respond = (_) => pageOf('Studio', 'media', const []);
+      await client.getWorksPage(AniListWorksSource.studio, 8, 2);
+
+      expect(gqlCalls(), 4);
+    });
+
+    test(
+      'shares one request between callers asking at the same time',
+      () async {
+        respond = (_) => pageOf('Staff', 'staffMedia', const []);
+
+        await Future.wait([
+          client.getWorksPage(AniListWorksSource.staff, 8, 2),
+          client.getWorksPage(AniListWorksSource.staff, 8, 2),
+          client.getWorksPage(AniListWorksSource.staff, 8, 2),
+        ]);
+
+        expect(gqlCalls(), 1);
+      },
+    );
+
+    test('a failed request is reported and not remembered', () async {
+      respond = (_) => const FakeResponse.json({}, status: 500);
+
+      await expectLater(
+        client.getWorksPage(AniListWorksSource.staff, 8, 2),
+        throwsA(isA<ApiException>()),
+      );
+
+      respond = (_) => pageOf('Staff', 'staffMedia', [
+        {'staffRole': 'Director', 'node': _media(1)},
+      ]);
+      final page = await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+
+      expect(page.items, hasLength(1));
+      expect(gqlCalls(), 2);
+    });
+
+    test('a GraphQL error is reported and not remembered', () async {
+      respond = (_) => FakeResponse.json({
+        'errors': [
+          {'message': 'boom'},
+        ],
+      });
+
+      await expectLater(
+        client.getWorksPage(AniListWorksSource.studio, 7, 2),
+        throwsA(isA<ApiException>()),
+      );
+      await expectLater(
+        client.getWorksPage(AniListWorksSource.studio, 7, 2),
+        throwsA(isA<ApiException>()),
+      );
+      expect(gqlCalls(), 2);
+    });
+
+    test('a 429 surfaces as a rate-limit error', () async {
+      respond = (_) => const FakeResponse.json(
+        {},
+        status: 429,
+        headers: {
+          'retry-after': ['30'],
+        },
+      );
+
+      await expectLater(
+        client.getWorksPage(AniListWorksSource.staff, 8, 2),
+        throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('a page is as big as AniList allows', () {
+      expect(AniListClient.worksPageSize, 50);
+    });
+
+    test('the detail and page queries take the page size as a variable', () {
+      for (final query in [
+        AniListQueries.characterDetail,
+        AniListQueries.staffDetail,
+        AniListQueries.studioDetail,
+        AniListQueries.characterWorksPage,
+        AniListQueries.staffWorksPage,
+        AniListQueries.studioWorksPage,
+      ]) {
+        expect(query, contains(r'$perPage: Int'));
+        expect(query, contains(r'perPage: $perPage'));
+        expect(query, contains('pageInfo { hasNextPage'));
+      }
+    });
+  });
+
+  group('works lists in SQLite', () {
+    FakeResponse staffDetail(List<Map<String, dynamic>> edges, {bool? next}) =>
+        FakeResponse.json(
+          _gql({
+            'Staff': {
+              'id': 8,
+              'name': {'full': 'Hiromu Arakawa', 'native': null},
+              'image': {'large': null, 'medium': null},
+              'description': null,
+              'primaryOccupations': <Object>[],
+              'gender': null,
+              'dateOfBirth': null,
+              'dateOfDeath': null,
+              'age': null,
+              'yearsActive': <Object>[],
+              'homeTown': null,
+              'staffMedia': {
+                if (next != null) 'pageInfo': {'hasNextPage': next},
+                'edges': edges,
+              },
+            },
+          }),
+        );
+
+    FakeResponse staffPage(
+      List<Map<String, dynamic>> edges, {
+      required bool next,
+    }) => FakeResponse.json(
+      _gql({
+        'Staff': {
+          'staffMedia': {
+            'pageInfo': {'hasNextPage': next, 'total': 99},
+            'edges': edges,
+          },
+        },
+      }),
+    );
+
+    List<Map<String, dynamic>> staffEdges(int from, int count) => [
+      for (var i = from; i < from + count; i++)
+        {'staffRole': 'Director', 'node': _media(i, malId: i + 1000)},
+    ];
+
+    AniListClient newClient({AniListCache? over}) {
+      final c = AniListClient(
+        cache: over ?? cache,
+        logger: Logger(level: Level.off),
+      );
+      c.dio.httpClientAdapter = adapter;
+      return c;
+    }
+
+    test(
+      'the detail asks for a full page and records where it stopped',
+      () async {
+        respond = (_) => staffDetail(staffEdges(1, 3), next: true);
+
+        final detail = await client.getStaffDetail(8);
+
+        expect(
+          (adapter.requests.single.data! as Map<String, dynamic>)['variables'],
+          {'id': 8, 'perPage': AniListClient.worksPageSize},
+        );
+        expect(detail.worksCursor.hasMore, isTrue);
+        expect(detail.worksCursor.nextPage, 2);
+      },
+    );
+
+    test('a detail that ends on its first page has nothing more', () async {
+      respond = (_) => staffDetail(staffEdges(1, 3), next: false);
+
+      final detail = await client.getStaffDetail(8);
+
+      expect(detail.worksCursor.hasMore, isFalse);
+    });
+
+    test('without pageInfo a full first page is taken to continue', () async {
+      respond = (_) => staffDetail(staffEdges(1, AniListClient.worksPageSize));
+      final full = await client.getStaffDetail(8);
+
+      respond = (_) => staffDetail(staffEdges(1, 3));
+      final short = await newClient().getStaffDetail(9);
+
+      expect(full.worksCursor.hasMore, isTrue);
+      expect(short.worksCursor.hasMore, isFalse);
+    });
+
+    test('every kind of detail records its cursor', () async {
+      respond = (_) => FakeResponse.json(
+        _gql({
+          'Character': {
+            'id': 3,
+            'name': {'full': 'X', 'native': null},
+            'image': {'large': null, 'medium': null},
+            'description': null,
+            'dateOfBirth': null,
+            'age': null,
+            'gender': null,
+            'media': {
+              'pageInfo': {'hasNextPage': true},
+              'edges': <Object>[],
+            },
+          },
+        }),
+      );
+      final character = await client.getCharacterDetail(3);
+
+      respond = (_) => FakeResponse.json(
+        _gql({
+          'Studio': {
+            'id': 7,
+            'name': 'Bones',
+            'isAnimationStudio': true,
+            'siteUrl': null,
+            'favourites': null,
+            'media': {
+              'pageInfo': {'hasNextPage': true},
+              'edges': <Object>[],
+            },
+          },
+        }),
+      );
+      final studio = await client.getStudioDetail(7);
+
+      expect(character.worksCursor.hasMore, isTrue);
+      expect(studio.worksCursor.hasMore, isTrue);
+    });
+
+    test('a fetched page is stored with the detail', () async {
+      respond = (_) => staffDetail(staffEdges(1, 3), next: true);
+      await client.getStaffDetail(8);
+      respond = (_) => staffPage(staffEdges(4, 3), next: true);
+
+      await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+
+      final stored = (await cache.getStaff(8))!;
+      expect(stored.mediaWorks.map((m) => m.anilistId), [
+        for (var i = 1; i <= 6; i++) i,
+      ]);
+      expect(stored.worksCursor.nextPage, 3);
+      expect(stored.worksCursor.hasMore, isTrue);
+    });
+
+    test('the last page closes the stored list', () async {
+      respond = (_) => staffDetail(staffEdges(1, 3), next: true);
+      await client.getStaffDetail(8);
+      respond = (_) => staffPage(staffEdges(4, 2), next: false);
+
+      await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+
+      final stored = (await cache.getStaff(8))!;
+      expect(stored.mediaWorks, hasLength(5));
+      expect(stored.worksCursor.hasMore, isFalse);
+      expect(stored.worksCursor.nextPage, 3);
+    });
+
+    test('a later visit shows every stored page without a request', () async {
+      respond = (_) => staffDetail(staffEdges(1, 3), next: true);
+      await client.getStaffDetail(8);
+      respond = (_) => staffPage(staffEdges(4, 3), next: true);
+      await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+      respond = (_) => staffPage(staffEdges(7, 3), next: false);
+      await client.getWorksPage(AniListWorksSource.staff, 8, 3);
+      final before = gqlCalls();
+
+      final reopened = await newClient().getStaffDetail(8);
+
+      expect(gqlCalls(), before);
+      expect(reopened.mediaWorks, hasLength(9));
+      expect(reopened.worksCursor.nextPage, 4);
+      expect(reopened.worksCursor.hasMore, isFalse);
+    });
+
+    test('a page for a detail that is not stored is still returned', () async {
+      respond = (_) => staffPage(staffEdges(1, 2), next: true);
+
+      final page = await client.getWorksPage(AniListWorksSource.staff, 8, 2);
+
+      expect(page.items, hasLength(2));
+      expect(await cache.getStaff(8), isNull);
+    });
+
+    test('a storage failure never fails the page', () async {
+      final failing = _FailingCache(appDb);
+      respond = (_) => staffPage(staffEdges(1, 2), next: true);
+
+      final page = await newClient(over: failing)
+          .getWorksPage(AniListWorksSource.staff, 8, 2);
+
+      expect(failing.attempts, 1);
+      expect(page.items, hasLength(2));
     });
   });
 

@@ -71,6 +71,28 @@ void main() {
           'ALTER TABLE anilist_anime_extra DROP COLUMN staff_json',
         );
       }
+      await db.raw.insert('anilist_staff', {'id': 8, 'name': 'Kept staff'});
+      await db.raw.insert('anilist_staff_media', {
+        'staff_id': 8,
+        'anilist_id': 100,
+        'title': 'Kept work',
+        'position': 0,
+      });
+      for (final key in [
+        'character_3',
+        'staff_8',
+        'studio_7',
+        'detail_5',
+        'animeExtra_5',
+      ]) {
+        await db.raw.insert('cache_meta', {
+          'cache_key': key,
+          'fetched_at': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+      if (version < 4) {
+        await db.raw.execute('DROP TABLE anilist_works_progress');
+      }
       if (version < 3) {
         for (final table in ['airing_schedule', 'merged_airing_entry']) {
           for (final col in [
@@ -98,7 +120,7 @@ void main() {
         );
         addTearDown(db.close);
 
-        expect(await db.raw.getVersion(), 3);
+        expect(await db.raw.getVersion(), 4);
         expect(
           await columns(db, 'anilist_anime_extra'),
           containsAll(['characters_json', 'staff_json']),
@@ -140,7 +162,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 3);
+      expect(await db.raw.getVersion(), 4);
       expect(await columns(db, 'airing_schedule'), contains('next_airing_at'));
       expect(
         (await db.raw.query('anilist_anime_extra')).single['characters_json'],
@@ -160,8 +182,51 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 3);
+      expect(await db.raw.getVersion(), 4);
       expect((await db.raw.query('anime')).single['title'], 'Kept anime');
+    });
+
+    test('v3 gains the works cursor table and refetches works lists', () async {
+      final path = await oldDatabase(3);
+
+      final db = await AppDatabase.open(
+        pathOverride: path,
+        runMigrations: false,
+      );
+      addTearDown(db.close);
+
+      expect(await db.raw.getVersion(), 4);
+      expect(await columns(db, 'anilist_works_progress'), {
+        'source',
+        'id',
+        'next_page',
+        'has_more',
+      });
+      expect(await db.raw.query('anilist_works_progress'), isEmpty);
+      expect(await metaKeys(db), {
+        'detail_5',
+        'animeExtra_5',
+      }, reason: 'only the 10-item works details are forgotten');
+      expect(
+        (await db.raw.query('anilist_staff')).single['name'],
+        'Kept staff',
+      );
+      expect(
+        (await db.raw.query('anilist_staff_media')).single['title'],
+        'Kept work',
+      );
+    });
+
+    test('a database already at v4 keeps its works lists', () async {
+      final path = await oldDatabase(4);
+
+      final db = await AppDatabase.open(
+        pathOverride: path,
+        runMigrations: false,
+      );
+      addTearDown(db.close);
+
+      expect(await metaKeys(db), containsAll(['character_3', 'staff_8']));
     });
   });
 
