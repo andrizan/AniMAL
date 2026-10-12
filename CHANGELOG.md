@@ -1,3 +1,43 @@
+## [2.11.0] - 2026-10-12
+
+### Bug Fixes
+
+- Resolve one air time for cards and detail
+- Ellipsize long info chip labels
+- Count episodes typed in the edit sheet without pressing done
+- Keep the season tab labels on one line
+
+### CI
+
+- Build per-abi and universal apks on pull requests and main
+
+### Chores
+
+- Bump version to 2.10.0+13 [skip ci]
+- Remove unused code and files
+- Render the README screenshots from the real widgets
+- Bump flutter_local_notifications to 22.3.2
+
+### Documentation
+
+- Bring features, structure, caching and design rules up to date
+- Add screenshots and bring the README up to date
+
+### Features
+
+- Apply the soft redesign with a wcag-checked theme
+- Finish the redesign details from the canvas
+- Match the canvas exactly on the remaining details
+- Page works lists and keep every page in sqlite
+- Replace the launcher icon with a linked-nodes check mark
+- Announce a newer release when the app opens
+
+### Tests
+
+- Cover theme contrast, shared widgets and airing refresh
+- Cover the router, network, providers, theme and detail navigation
+- Remove unused imports and casts from the new tests
+- Parse a full MAL detail response from JSON
 ## [2.10.0] - 2026-10-09
 
 ### Bug Fixes
