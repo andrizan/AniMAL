@@ -1,3 +1,13 @@
+## [2.11.1] - 2026-10-12
+
+### Chores
+
+- Bump version to 2.11.0+14 [skip ci]
+
+### Features
+
+- Open web links in the external browser
+- Add a copy button to the login url fallback
 ## [2.11.0] - 2026-10-12
 
 ### Bug Fixes
