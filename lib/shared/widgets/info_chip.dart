@@ -47,13 +47,15 @@ class InfoChip extends StatelessWidget {
             Icon(icon, size: dense ? 12 : 16, color: foreground),
             SizedBox(width: dense ? AppSpacing.xs : 6),
           ],
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: textStyle?.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textStyle?.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
