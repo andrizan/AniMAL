@@ -1,5 +1,6 @@
 import 'package:animal/core/providers.dart';
 import 'package:animal/features/auth/presentation/login_page.dart';
+import 'package:animal/shared/widgets/app_mark.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,6 +54,14 @@ void main() {
     expect(find.text('Unofficial MyAnimeList client'), findsOneWidget);
     expect(find.text('Login with MyAnimeList'), findsOneWidget);
     expect(find.text('Enter code manually'), findsOneWidget);
+  });
+
+  testWidgets('shows the app mark, not a TV', (tester) async {
+    await open(tester);
+
+    expect(find.byType(AppMark), findsOneWidget);
+    expect(find.byIcon(Icons.live_tv_rounded), findsNothing);
+    expect(find.byIcon(Icons.live_tv), findsNothing);
   });
 
   group('browser login', () {

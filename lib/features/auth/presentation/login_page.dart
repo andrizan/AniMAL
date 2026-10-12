@@ -4,6 +4,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/features/auth/providers/auth_providers.dart';
+import 'package:animal/shared/widgets/app_mark.dart';
 import 'package:animal/shared/widgets/tonal_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -54,15 +55,8 @@ class LoginPage extends ConsumerWidget {
                   const Spacer(),
 
                   // App mark
-                  Container(
-                    width: 104,
-                    height: 104,
+                  DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: AppColors.brandGradient,
-                      ),
                       borderRadius: BorderRadius.circular(36),
                       boxShadow: [
                         BoxShadow(
@@ -72,11 +66,7 @@ class LoginPage extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.live_tv_rounded,
-                      size: 52,
-                      color: AppColors.iconLight,
-                    ),
+                    child: const AppMark(),
                   ),
                   const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
 

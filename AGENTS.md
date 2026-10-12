@@ -202,6 +202,12 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - **Colors**: ALL colors MUST be defined in `lib/core/theme/app_colors.dart` — NEVER use raw `Colors.blue`, `Colors.green`, etc. Theme-aware colours come from `StatusColors.of(context)` (solid `list*` marks, `star`, and the `*Container` / `on*Container` pairs); static `AppColors.*` is only for overlays on imagery and the chart palettes.
 - **WCAG 2.2 AA**: every text pair is at least 4.5:1 and every icon, border or chart mark at least 3:1. When adding a colour, check it with the same formula and keep the five chart colours as a set (they are validated for colour-vision deficiency together).
 
+## App icon
+
+- The mark is a check made of linked nodes (tracking, kept in step with its sources). It carries no logo of any service: never add MyAnimeList or AniList branding to it.
+- `AppMarkPainter` (`shared/widgets/app_mark.dart`) is the only source of the geometry; the login page shows it through `AppMark`.
+- Launcher icons are generated, not drawn by hand: `flutter test tool/render_app_icon.dart` rewrites the Android (legacy, adaptive background/foreground/monochrome) and iOS (opaque, no alpha) files. Add `--dart-define=PREVIEW_DIR=<dir>` to write a contact sheet instead.
+
 ## Environment
 
 - Credentials via `--dart-define` compile-time constants, NOT `flutter_dotenv`.
