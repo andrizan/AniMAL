@@ -1,5 +1,7 @@
+import 'package:animal/core/theme/app_theme.dart';
 import 'package:animal/shared/widgets/pill_tab_bar.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _labels = ['Mon', 'Tue', 'Wed'];
@@ -162,6 +164,65 @@ void main() {
         scheme.surfaceContainer,
       );
     });
+  });
+
+  group('on a narrow phone', () {
+    const seasons = ['Winter', 'Spring', 'Summer', 'Fall', 'Later'];
+    const icons = [
+      Icons.ac_unit,
+      Icons.local_florist,
+      Icons.wb_sunny,
+      Icons.park,
+      Icons.schedule,
+    ];
+
+    for (final width in [360.0, 390.0]) {
+      testWidgets('five season labels stay on one line at ${width.toInt()}dp', (
+        tester,
+      ) async {
+        GoogleFonts.config.allowRuntimeFetching = false;
+        addTearDown(() => GoogleFonts.config.allowRuntimeFetching = true);
+        final theme = buildDarkTheme();
+        await tester.runAsync(GoogleFonts.pendingFonts);
+        tester.view
+          ..physicalSize = Size(width * 3, 800 * 3)
+          ..devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
+        final controller = TabController(
+          length: seasons.length,
+          vsync: const TestVSync(),
+        );
+        addTearDown(controller.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: PillTabBar(
+                  controller: controller,
+                  labels: seasons,
+                  icons: icons,
+                  scrollable: false,
+                  segmented: true,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final oneLine = tester.getSize(find.text('Fall')).height;
+        for (final label in seasons) {
+          expect(
+            tester.getSize(find.text(label)).height,
+            oneLine,
+            reason: '$label wrapped',
+          );
+        }
+      });
+    }
   });
 
   group('icons', () {

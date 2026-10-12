@@ -108,7 +108,7 @@ class _PillTab extends StatelessWidget {
     return Container(
       alignment: Alignment.center,
       padding: EdgeInsets.symmetric(
-        horizontal: icon == null ? AppSpacing.lg : AppSpacing.md,
+        horizontal: icon == null ? AppSpacing.lg : AppSpacing.xs,
       ),
       decoration: filled
           ? BoxDecoration(
