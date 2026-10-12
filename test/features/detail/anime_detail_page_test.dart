@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:animal/core/notification/anime_notification_service.dart';
+import 'package:animal/core/config/env.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anilist/anilist_models.dart';
@@ -13,6 +14,8 @@ import 'package:animal/features/detail/presentation/screens/anime_detail_page.da
 import 'package:animal/features/detail/presentation/widgets/detail_sections.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:animal/shared/widgets/full_screen_image.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -981,6 +984,87 @@ void main() {
 
       expect(find.text('Sousou no Frieren'), findsWidgets);
       expect(find.text('Next Episode'), findsNothing);
+    });
+  });
+
+  group('cover and share', () {
+    const cover = MainPicture(
+      medium: 'https://img.test/m.jpg',
+      large: 'https://img.test/l.jpg',
+    );
+
+    testWidgets('tapping the cover opens it full screen', (tester) async {
+      await open(tester, detail: () => _detail().copyWith(mainPicture: cover));
+
+      await tester.tapAt(const Offset(200, 150));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final viewer = tester.widget<FullScreenImageViewer>(
+        find.byType(FullScreenImageViewer),
+      );
+      expect(viewer.imageUrl, 'https://img.test/l.jpg');
+      expect(viewer.heroTag, 'anime_cover');
+    });
+
+    testWidgets('the full-screen cover can be closed again', (tester) async {
+      await open(tester, detail: () => _detail().copyWith(mainPicture: cover));
+      await tester.tapAt(const Offset(200, 150));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(FullScreenImageViewer), findsNothing);
+      expect(find.byType(AnimeDetailPage), findsOneWidget);
+    });
+
+    testWidgets('an anime without a cover opens nothing', (tester) async {
+      await open(tester);
+
+      await tester.tapAt(const Offset(200, 150));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(FullScreenImageViewer), findsNothing);
+    });
+
+    testWidgets('a cover with only a small size opens nothing', (tester) async {
+      await open(
+        tester,
+        detail: () => _detail().copyWith(
+          mainPicture: const MainPicture(medium: 'https://img.test/m.jpg'),
+        ),
+      );
+
+      await tester.tapAt(const Offset(200, 150));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(FullScreenImageViewer), findsNothing);
+    });
+
+    testWidgets('Share sends the title and the MyAnimeList link', (
+      tester,
+    ) async {
+      const channel = MethodChannel('dev.fluttercommunity.plus/share');
+      final shared = <Map<Object?, Object?>>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            shared.add(call.arguments as Map<Object?, Object?>);
+            return 'dev.fluttercommunity.plus/share/success';
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+      await open(tester);
+
+      await tester.tap(find.byTooltip('Share'));
+      await tester.pumpAndSettle();
+
+      expect(shared, hasLength(1));
+      expect(shared.single['text'], 'Sousou no Frieren\n${Env.malAnimeUrl(1)}');
     });
   });
 

@@ -442,6 +442,247 @@ void main() {
     });
   });
 
+  group('AniListCache.weekly edge cases', () {
+    test(
+      'a week that was fetched but had no airings reads as empty days',
+      () async {
+        const weekStartSec = 1790000000;
+        await cache.saveWeeklySchedule(weekStartSec, {});
+
+        final out = await cache.getWeeklySchedule(weekStartSec);
+
+        expect(out, isNotNull);
+        expect(out!.keys, [
+          'monday',
+          'tuesday',
+          'wednesday',
+          'thursday',
+          'friday',
+          'saturday',
+          'sunday',
+        ]);
+        expect(out.values.every((day) => day.isEmpty), isTrue);
+      },
+    );
+
+    test('a week that was never fetched is unknown', () async {
+      expect(await cache.getWeeklySchedule(1790000000), isNull);
+    });
+
+    test('the next airing of an entry survives a round trip', () async {
+      final weekStart = DateTime.utc(2026, 10, 12);
+      final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+      final next = DateTime.utc(2026, 10, 19, 14, 30);
+      await cache.saveWeeklySchedule(weekStartSec, {
+        'monday': [
+          AniListScheduleEntry(
+            anilistId: 1,
+            malId: 10,
+            title: 'Frieren',
+            airingAt: weekStart.add(const Duration(hours: 10)),
+            episode: 4,
+            timeUntilAiring: 3600,
+            nextAiringAt: next,
+            nextEpisode: 5,
+            nextTimeUntilAiring: 700000,
+          ),
+          AniListScheduleEntry(
+            anilistId: 2,
+            malId: 20,
+            title: 'No next',
+            airingAt: weekStart.add(const Duration(hours: 11)),
+            episode: 1,
+            timeUntilAiring: 7200,
+          ),
+        ],
+      });
+
+      final out = (await cache.getWeeklySchedule(weekStartSec))!['monday']!;
+
+      expect(out.first.nextAiringAt, next);
+      expect(out.first.nextEpisode, 5);
+      expect(out.first.nextTimeUntilAiring, 700000);
+      expect(out.last.nextAiringAt, isNull);
+      expect(out.last.nextEpisode, isNull);
+    });
+  });
+
+  group('AniListCache.animeExtra stored by older versions', () {
+    Future<void> markFetched(int malId) => appDb.raw.insert('cache_meta', {
+      'cache_key': 'animeExtra_$malId',
+      'fetched_at': DateTime.now().millisecondsSinceEpoch,
+    });
+
+    Future<void> insertExtra(
+      int malId, {
+      String? charactersJson,
+      String? staffJson,
+      int? nextAt,
+    }) async {
+      await appDb.raw.insert('anime', {'mal_id': malId, 'title': 'Legacy'});
+      await markFetched(malId);
+      await appDb.raw.insert('anilist_anime_extra', {
+        'mal_id': malId,
+        'characters_json': charactersJson,
+        'staff_json': staffJson,
+        'next_airing_at': nextAt,
+        'next_airing_episode': nextAt == null ? null : 8,
+        'next_airing_time_until': nextAt == null ? null : 4000,
+      });
+    }
+
+    Future<void> insertVoiceActor(
+      int malId,
+      int characterId,
+      int vaId,
+      String name,
+    ) => appDb.raw.insert('anilist_anime_extra_voice_actor', {
+      'anime_mal_id': malId,
+      'character_id': characterId,
+      'va_id': vaId,
+      'name': name,
+      'native_name': '$name-jp',
+      'image_url': 'va$vaId.jpg',
+      'language': 'JAPANESE',
+    });
+
+    test(
+      'rows without the people JSON rebuild characters from their voice actors',
+      () async {
+        await insertExtra(
+          70,
+          nextAt: DateTime.utc(2026, 11, 1, 9).millisecondsSinceEpoch ~/ 1000,
+        );
+        await insertVoiceActor(70, 1, 11, 'Romi');
+        await insertVoiceActor(70, 1, 12, 'Sora');
+        await insertVoiceActor(70, 2, 13, 'Yuki');
+        await appDb.raw.insert('anilist_anime_extra_link', {
+          'mal_id': 70,
+          'id': 1,
+          'url': 'https://x.test',
+          'site': 'X',
+        });
+        await appDb.raw.insert('anilist_anime_extra_studio', {
+          'mal_id': 70,
+          'studio_id': 5,
+          'name': 'Bones',
+          'is_animation_studio': 1,
+          'is_main': 1,
+        });
+
+        final out = await cache.getAnimeExtra(70);
+
+        expect(out!.people.characters.map((c) => c.id), [1, 2]);
+        expect(out.people.characters.every((c) => c.name == 'Unknown'), isTrue);
+        expect(out.people.characters.first.voiceActors.map((v) => v.name), [
+          'Romi',
+          'Sora',
+        ]);
+        expect(
+          out.people.characters.first.voiceActors.first.nativeName,
+          'Romi-jp',
+        );
+        expect(
+          out.people.characters.first.voiceActors.first.language,
+          'JAPANESE',
+        );
+        expect(out.people.characters.last.voiceActors.single.name, 'Yuki');
+        expect(out.people.staff, isEmpty);
+        expect(out.nextAiring!.episode, 8);
+        expect(out.nextAiring!.timeUntilAiring, 4000);
+        expect(out.nextAiring!.airingAt, DateTime.utc(2026, 11, 1, 9));
+        expect(out.externalLinks.single.site, 'X');
+        expect(out.studios.single.name, 'Bones');
+        expect(out.studios.single.isMain, isTrue);
+      },
+    );
+
+    test('a stored staff list does not hide the voice actor rows', () async {
+      await insertExtra(
+        71,
+        staffJson: '[{"id":9,"name":"Director X","role":"Director"}]',
+      );
+      await insertVoiceActor(71, 3, 21, 'Aoi');
+
+      final out = await cache.getAnimeExtra(71);
+
+      expect(out!.people.staff.single.name, 'Director X');
+      expect(out.people.characters.single.id, 3);
+      expect(out.people.characters.single.voiceActors.single.name, 'Aoi');
+    });
+
+    test('stored characters win over the voice actor rows', () async {
+      await insertExtra(
+        72,
+        charactersJson: '[{"id":4,"name":"Real","voiceActors":[]}]',
+      );
+      await insertVoiceActor(72, 99, 31, 'Ignored');
+
+      final out = await cache.getAnimeExtra(72);
+
+      expect(out!.people.characters.map((c) => c.name), ['Real']);
+    });
+
+    test('an anime never fetched is unknown', () async {
+      expect(await cache.getAnimeExtra(404), isNull);
+    });
+
+    test('a fetch that stored nothing reads as an empty extra', () async {
+      await markFetched(405);
+
+      final out = await cache.getAnimeExtra(405);
+
+      expect(out!.people.characters, isEmpty);
+      expect(out.people.staff, isEmpty);
+      expect(out.nextAiring, isNull);
+      expect(out.externalLinks, isEmpty);
+    });
+
+    test(
+      'a partial refresh keeps the voice actors of cached characters',
+      () async {
+        const full = AniListAnimeExtra(
+          people: AniListAnimePeople(
+            characters: [
+              AniListCharacter(
+                id: 1,
+                name: 'Char A',
+                voiceActors: [
+                  AniListVoiceActor(
+                    id: 5,
+                    name: 'Voice',
+                    nativeName: 'ボイス',
+                    imageUrl: 'v.jpg',
+                    language: 'JAPANESE',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+        await cache.saveAnimeExtra(56, full);
+
+        await cache.saveAnimeExtra(
+          56,
+          const AniListAnimeExtra(
+            externalLinks: [AniListExternalLink(id: 1, url: 'https://z.test')],
+          ),
+        );
+
+        final voice = (await cache.getAnimeExtra(56))!
+            .people
+            .characters
+            .single
+            .voiceActors
+            .single;
+        expect(voice.name, 'Voice');
+        expect(voice.nativeName, 'ボイス');
+        expect(voice.imageUrl, 'v.jpg');
+        expect(voice.language, 'JAPANESE');
+      },
+    );
+  });
+
   group('AniListCache.animeExtra', () {
     test('save and read preserves next airing, links, studios', () async {
       // FK constraint: anilist_anime_extra.mal_id references anime.mal_id.

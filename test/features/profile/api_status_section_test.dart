@@ -5,6 +5,7 @@ import 'package:animal/data/local/anilist_cache.dart';
 import 'package:animal/features/profile/presentation/widgets/api_status_section.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -12,12 +13,35 @@ import '../../support/fake_adapter.dart';
 
 class _NoCache extends Fake implements AniListCache {}
 
+/// A tracker whose MyAnimeList side last answered [lastHit].
+class _Seeded extends ApiHealthTracker {
+  _Seeded(this.lastHit);
+
+  final DateTime lastHit;
+
+  @override
+  Map<ApiSource, ApiHealth> build() => {
+    ...super.build(),
+    ApiSource.mal: ApiHealth(
+      source: ApiSource.mal,
+      status: ApiStatus.healthy,
+      totalHits: 4,
+      totalErrors: 0,
+      totalRateLimited: 0,
+      lastHit: lastHit,
+    ),
+  };
+}
+
 void main() {
   late ProviderContainer container;
   late FakeAdapter mal;
   late FakeAdapter anilist;
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(
+    WidgetTester tester, {
+    List<Override> overrides = const [],
+  }) async {
     mal = FakeAdapter((_) => const FakeResponse.json({'id': 1}));
     anilist = FakeAdapter(
       (_) => const FakeResponse.json(<String, Object?>{
@@ -30,6 +54,7 @@ void main() {
       overrides: [
         dioProvider.overrideWithValue(fakeDio(mal)),
         anilistApiProvider.overrideWithValue(anilistClient),
+        ...overrides,
       ],
     );
     addTearDown(container.dispose);
@@ -183,6 +208,33 @@ void main() {
     });
   });
 
+  group('how long ago', () {
+    final ago = {
+      'seconds': (const Duration(seconds: 30), '30s ago'),
+      'minutes': (const Duration(minutes: 5, seconds: 10), '5m ago'),
+      'hours': (const Duration(hours: 3, minutes: 20), '3h ago'),
+      'days': (const Duration(days: 2, hours: 5), '2d ago'),
+    };
+
+    for (final entry in ago.entries) {
+      testWidgets('is counted in ${entry.key}', (tester) async {
+        await open(
+          tester,
+          overrides: [
+            apiHealthTrackerProvider.overrideWith(
+              () => _Seeded(DateTime.now().subtract(entry.value.$1)),
+            ),
+          ],
+        );
+
+        expect(
+          find.textContaining('OK · 4 hits · last ${entry.value.$2}'),
+          findsOneWidget,
+        );
+      });
+    }
+  });
+
   group('testing connections', () {
     testWidgets('Test All pings both services', (tester) async {
       await open(tester);
@@ -207,6 +259,37 @@ void main() {
       await tester.tap(find.byTooltip('Test connection').last);
       await tester.pumpAndSettle();
       expect(anilist.requests, hasLength(1));
+    });
+
+    testWidgets('a failing AniList ping does not crash the page', (
+      tester,
+    ) async {
+      await open(tester);
+      anilist = FakeAdapter((_) => const FakeResponse.json({}, status: 500));
+      container.read(anilistApiProvider).dio.httpClientAdapter = anilist;
+
+      await tester.tap(find.text('Test All'));
+      await tester.pumpAndSettle();
+
+      expect(anilist.requests, hasLength(1));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a failing row ping does not crash the page', (tester) async {
+      await open(tester);
+      mal = FakeAdapter((_) => const FakeResponse.json({}, status: 500));
+      container.read(dioProvider).httpClientAdapter = mal;
+      anilist = FakeAdapter((_) => const FakeResponse.json({}, status: 500));
+      container.read(anilistApiProvider).dio.httpClientAdapter = anilist;
+
+      await tester.tap(find.byTooltip('Test connection').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Test connection').last);
+      await tester.pumpAndSettle();
+
+      expect(mal.requests, hasLength(1));
+      expect(anilist.requests, hasLength(1));
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('a failing ping does not crash the page', (tester) async {

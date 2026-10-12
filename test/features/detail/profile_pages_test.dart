@@ -9,6 +9,7 @@ import 'package:animal/features/detail/presentation/screens/studio_page.dart';
 import 'package:animal/shared/providers/anilist_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:animal/shared/widgets/full_screen_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -374,6 +375,76 @@ void main() {
       );
 
       expect(find.text('Works'), findsNothing);
+    });
+  });
+
+  group('portraits', () {
+    Future<void> tapPortrait(WidgetTester tester) async {
+      await tester.tapAt(const Offset(200, 150));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    Override character(String? url) => anilistCharacterDetailProvider(7)
+        .overrideWith(
+          (ref) async =>
+              AniListCharacterDetail(id: 7, name: 'Edward', imageUrl: url),
+        );
+
+    Override staff(String? url) => anilistStaffDetailProvider(8).overrideWith(
+      (ref) async => AniListStaffDetail(id: 8, name: 'Hiromu', imageUrl: url),
+    );
+
+    testWidgets('tapping a character portrait opens it full screen', (
+      tester,
+    ) async {
+      await _open(tester, const CharacterProfilePage(characterId: 7), [
+        character('https://img.test/big.jpg'),
+      ]);
+
+      await tapPortrait(tester);
+
+      final viewer = tester.widget<FullScreenImageViewer>(
+        find.byType(FullScreenImageViewer),
+      );
+      expect(viewer.imageUrl, 'https://img.test/big.jpg');
+      expect(viewer.heroTag, 'character');
+    });
+
+    testWidgets('a character without a portrait opens nothing', (tester) async {
+      await _open(tester, const CharacterProfilePage(characterId: 7), [
+        character(null),
+      ]);
+
+      await tapPortrait(tester);
+
+      expect(find.byType(FullScreenImageViewer), findsNothing);
+    });
+
+    testWidgets('tapping a staff portrait opens it full screen', (
+      tester,
+    ) async {
+      await _open(tester, const StaffProfilePage(staffId: 8), [
+        staff('https://img.test/staff.jpg'),
+      ]);
+
+      await tapPortrait(tester);
+
+      final viewer = tester.widget<FullScreenImageViewer>(
+        find.byType(FullScreenImageViewer),
+      );
+      expect(viewer.imageUrl, 'https://img.test/staff.jpg');
+      expect(viewer.heroTag, 'staff');
+    });
+
+    testWidgets('a staff member without a portrait opens nothing', (
+      tester,
+    ) async {
+      await _open(tester, const StaffProfilePage(staffId: 8), [staff(null)]);
+
+      await tapPortrait(tester);
+
+      expect(find.byType(FullScreenImageViewer), findsNothing);
     });
   });
 }

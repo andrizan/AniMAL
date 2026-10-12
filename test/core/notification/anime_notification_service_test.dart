@@ -1,4 +1,5 @@
 import 'package:animal/core/notification/anime_notification_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +17,7 @@ class _Native {
   bool failSchedule = false;
   bool failPending = false;
   bool failCancel = false;
+  Object? darwinPermission = true;
   Map<String, Object?>? launchDetails;
   List<int> pending = [];
   final calls = <MethodCall>[];
@@ -34,6 +36,8 @@ class _Native {
         return permissionGranted;
       case 'areNotificationsEnabled':
         return notificationsEnabled;
+      case 'requestPermissions':
+        return darwinPermission;
       case 'zonedSchedule':
         if (failSchedule)
           throw PlatformException(code: 'exact_alarms_not_permitted');
@@ -74,6 +78,7 @@ void main() {
   });
 
   tearDown(() {
+    AndroidFlutterLocalNotificationsPlugin.registerWith();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_channel, null);
   });
@@ -300,6 +305,150 @@ void main() {
       await service.initialize();
 
       expect(service.consumeLaunchAnimeId(), isNull);
+    });
+  });
+
+  group('notification taps', () {
+    Future<void> tap(Object? id) => TestDefaultBinaryMessengerBinding
+        .instance
+        .defaultBinaryMessenger
+        .handlePlatformMessage(
+          _channel.name,
+          _channel.codec.encodeMethodCall(
+            MethodCall('didReceiveNotificationResponse', {
+              'notificationId': id,
+              'actionId': null,
+              'input': null,
+              'payload': null,
+              'notificationResponseType': 0,
+            }),
+          ),
+          (_) {},
+        );
+
+    test('a tap is announced with the anime id', () async {
+      await service.initialize();
+      final taps = <int>[];
+      final sub = service.onNotificationTapped.listen(taps.add);
+      addTearDown(sub.cancel);
+
+      await tap(42);
+      await tap(7);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(taps, [42, 7]);
+    });
+
+    test('a tap without a usable id is ignored', () async {
+      await service.initialize();
+      final taps = <int>[];
+      final sub = service.onNotificationTapped.listen(taps.add);
+      addTearDown(sub.cancel);
+
+      await tap(null);
+      await tap(0);
+      await tap(-3);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(taps, isEmpty);
+    });
+
+    test('disposing ends the stream', () async {
+      final done = expectLater(service.onNotificationTapped, emitsDone);
+
+      service.dispose();
+
+      await done;
+    });
+  });
+
+  group('permission on other platforms', () {
+    test('Android treats a missing answer as granted', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(_channel, (call) async {
+            native.calls.add(call);
+            return null;
+          });
+
+      expect(await service.requestPermission(), isTrue);
+      expect(service.permissionGranted, isTrue);
+    });
+
+    for (final platform in <String, (TargetPlatform, void Function())>{
+      'iOS': (
+        TargetPlatform.iOS,
+        IOSFlutterLocalNotificationsPlugin.registerWith,
+      ),
+      'macOS': (
+        TargetPlatform.macOS,
+        MacOSFlutterLocalNotificationsPlugin.registerWith,
+      ),
+    }.entries) {
+      group(platform.key, () {
+        setUp(() {
+          debugDefaultTargetPlatformOverride = platform.value.$1;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+          platform.value.$2();
+        });
+
+        test('asks for alerts, badges and sounds', () async {
+          expect(await service.requestPermission(), isTrue);
+
+          final args =
+              native.of('requestPermissions').single.arguments
+                  as Map<Object?, Object?>;
+          expect(args['alert'], isTrue);
+          expect(args['badge'], isTrue);
+          expect(args['sound'], isTrue);
+          expect(service.permissionGranted, isTrue);
+        });
+
+        test('a refusal is remembered', () async {
+          native.darwinPermission = false;
+
+          expect(await service.requestPermission(), isFalse);
+
+          expect(service.permissionGranted, isFalse);
+        });
+
+        test('no answer counts as refused', () async {
+          native.darwinPermission = null;
+
+          expect(await service.requestPermission(), isFalse);
+        });
+
+        test('checking keeps what was last answered', () async {
+          expect(await service.checkPermission(), isFalse);
+
+          await service.requestPermission();
+
+          expect(await service.checkPermission(), isTrue);
+          expect(native.of('areNotificationsEnabled'), isEmpty);
+        });
+
+        test('scheduling asks once, then schedules', () async {
+          expect(await schedule(), ScheduleResult.scheduled);
+
+          expect(native.of('requestPermissions'), hasLength(1));
+          expect(native.of('zonedSchedule'), hasLength(1));
+        });
+
+        test('scheduling stops at a refusal', () async {
+          native.darwinPermission = false;
+
+          expect(await schedule(), ScheduleResult.permissionDenied);
+
+          expect(native.of('zonedSchedule'), isEmpty);
+        });
+      });
+    }
+
+    test('an unknown platform is assumed to allow notifications', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      expect(await service.requestPermission(), isTrue);
+      expect(service.permissionGranted, isTrue);
     });
   });
 

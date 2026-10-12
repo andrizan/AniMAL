@@ -185,6 +185,44 @@ void main() {
       expect(await storage.getRefreshToken(), 'old-refresh');
     });
 
+    for (final entry in {
+      'text that is not JSON': const FakeResponse.raw('<html>oops</html>'),
+      'JSON without a token': const FakeResponse.json({'oops': 1}),
+      'an empty body': const FakeResponse.raw(''),
+    }.entries) {
+      test(
+        'an unreadable token response (${entry.key}) keeps the session',
+        () async {
+          final adapter = FakeAdapter((o) {
+            if (_isTokenCall(o)) return entry.value;
+            return const FakeResponse.json({
+              'error': 'invalid_token',
+            }, status: 401);
+          });
+
+          await expectLater(
+            build(adapter).get<dynamic>('/anime'),
+            throwsA(isA<DioException>()),
+          );
+
+          expect(authFailures, 0);
+          expect(await storage.getAccessToken(), 'old-access');
+          expect(await storage.getRefreshToken(), 'old-refresh');
+          expect(adapter.count((o) => !_isTokenCall(o)), 1, reason: 'no retry');
+        },
+      );
+    }
+
+    test('works without an explicit logger', () async {
+      final adapter = serverAcceptingOnly('new-access');
+      final dio = fakeDio(adapter);
+      dio.interceptors.add(AuthInterceptor(tokenStorage: storage, dio: dio));
+
+      final response = await dio.get<dynamic>('/anime');
+
+      expect((response.data as Map)['ok'], true);
+    });
+
     test('does not try to refresh without a refresh token', () async {
       await storage.clear();
       await storage.saveTokens(accessToken: 'old-access', refreshToken: '');

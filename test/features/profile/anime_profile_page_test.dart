@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/config/env.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/models/mal_user.dart';
 import 'package:animal/features/profile/domain/entities/profile_insights.dart';
@@ -162,6 +163,24 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('andrizan'), findsOneWidget);
+    });
+
+    testWidgets('the refresh button reloads a loaded profile', (tester) async {
+      var loads = 0;
+      await open(
+        tester,
+        user: () {
+          loads++;
+          return MalUser(id: 1, name: 'user $loads');
+        },
+      );
+      expect(find.text('user 1'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Refresh'));
+      await tester.pumpAndSettle();
+
+      expect(loads, 2);
+      expect(find.text('user 2'), findsOneWidget);
     });
 
     testWidgets('an anonymous profile (null user) shows no header', (
@@ -391,6 +410,37 @@ void main() {
     });
   });
 
+  group('source code link', () {
+    const launcher = MethodChannel('plugins.flutter.io/url_launcher');
+    late List<MethodCall> launched;
+
+    setUp(() {
+      launched = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(launcher, (call) async {
+            launched.add(call);
+            return true;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(launcher, null);
+    });
+
+    testWidgets('GitHub opens the repository in the browser', (tester) async {
+      await open(tester);
+
+      await tapVisible(tester, find.text('GitHub'));
+
+      final call = launched.single;
+      expect(call.method, 'launch');
+      final args = call.arguments as Map;
+      expect(args['url'], Env.githubRepoUrl);
+      expect(args['useWebView'], isFalse);
+    });
+  });
+
   group('check for update', () {
     const launcher = MethodChannel('plugins.flutter.io/url_launcher');
     late List<MethodCall> launched;
@@ -467,6 +517,16 @@ void main() {
         find.text('You are running the latest version (v2.9.0).'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('OK closes the up to date notice', (tester) async {
+      await open(tester, release: () async => release('v2.9.0'));
+      await tapVisible(tester, find.text('Check for Update'));
+
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Up to Date'), findsNothing);
     });
 
     testWidgets('never offers a downgrade to an older release', (tester) async {
