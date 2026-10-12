@@ -1,28 +1,69 @@
 # AniMAL
 
-> Unofficial [MyAnimeList](https://myanimelist.net) client built with Flutter — clean, fast, and offline-capable.
+> A fast, offline-friendly **anime tracker**. Keep your [MyAnimeList](https://myanimelist.net) list in order, know what airs when, and never lose your place. It tracks anime; it does not play any video.
 
+[![Latest release](https://img.shields.io/github/v/release/andrizan/AniMAL?include_prereleases&label=download)](https://github.com/andrizan/AniMAL/releases/latest)
 [![Quality Checks](https://github.com/andrizan/AniMAL/actions/workflows/quality.yml/badge.svg)](https://github.com/andrizan/AniMAL/actions/workflows/quality.yml)
 [![Release APK](https://github.com/andrizan/AniMAL/actions/workflows/release-apk.yml/badge.svg)](https://github.com/andrizan/AniMAL/actions/workflows/release-apk.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-3.47-blue?logo=flutter)](https://flutter.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Track your anime, discover seasonal charts, follow weekly airing schedules, and dive into character / staff details. MAL is the source of truth for user data; AniList enriches it with schedule and people data.
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="AniMAL: the Airing, Library and Detail screens on the app's indigo background" width="100%">
+</p>
+
+Update episodes and scores in two taps, see a countdown to every episode on your list, browse the seasonal chart, and dive into character, voice actor, staff and studio pages. MAL is the source of truth for your data; AniList is the reference for airing schedules and people.
+
+AniMAL is an unofficial app and is not affiliated with or endorsed by MyAnimeList or AniList. Its icon is a check made of linked nodes and carries no logo of either service.
 
 ---
 
 ## Features
 
-- **Home** — Your lists by status (Watching / Plan to Watch / On Hold / Completed / Dropped) with sort and airing filter, one card UI everywhere, and an edit modal (status, episodes, score). Complete lists are fetched page by page, and editing keeps your scroll position.
+- **Home** — Your lists by status (Watching / Plan to Watch / On Hold / Completed / Dropped) with sort and airing filter, one card UI everywhere, and an edit modal (status, episodes typed or stepped, score, reminder). Complete lists are fetched page by page, and editing keeps your scroll position.
 - **Airing** — Weekly schedule grouped by day (Mon–Sun) with countdown (`2d 5h`, `45m`, urgent <6h in red), merged from AniList and MAL scores. Refresh fetches both sources.
 - **Calendar** — Seasonal browser (Winter / Spring / Summer / Fall) with a year picker (current − 50 → current + 1). The **Later** tab lists upcoming anime that have no start date yet.
 - **Search & Ranking** — Debounced full-text search and MAL rankings with local cache.
-- **Detail** — Ordered by importance: score / rank / popularity summary, your list card (status, progress bar, episode stepper, score, remove) or *Add to Watching*, next episode, synopsis with genres, information (aired, season, broadcast in your local time, duration, source, studios), characters & voice actors, staff, related anime, alternative titles, external links. Cover with gradient and full-screen viewer.
+- **Detail** — Ordered by importance: score / rank / popularity summary, your list card (status, progress bar, episode stepper, score, remove) or *Add to Watching*, next episode, synopsis with genres, information (aired, season, broadcast in your local time, duration, source, studios), characters & voice actors, staff, related anime, alternative titles, external links. Cover with gradient and full-screen viewer. Characters, voice actors, staff and studios have their own pages that scroll through every title they worked on. The air time is the same on the card, the airing list and the detail page.
 - **Profile** — Header with your MAL stats, a status donut, time invested, and charts built from your own list: score distribution, top genres, formats and activity over the last 12 months. Also API health, theme, update check and logout.
 - **Notifications** — Per-anime reminder 15 minutes before the next episode airs.
+- **Updates** — On launch the app looks up the latest GitHub release and, when a newer version exists, shows a notice with a Download button. It appears once per launch, goes away by itself, and stays silent when you are offline. The profile page can also check by hand.
 - **Auth** — MAL OAuth2 PKCE with a manual-code fallback, secure token storage, token refresh on 401 (retried once), `animal://` deep links.
 - **Offline** — Persistent SQLite cache survives cold start; cached screens work offline.
-- **Theme** — Material 3, dark by default, switchable and remembered.
+- **Theme** — Material 3 with a lavender and indigo palette that meets WCAG 2.2 AA, dark by default, switchable and remembered.
+
+---
+
+## Screens
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="docs/screenshots/library.png" alt="Library: your lists by status with progress bars and episode countdowns"><br><sub><b>Library</b><br>Every list, progress and the next episode at a glance</sub></td>
+    <td align="center" width="33%"><img src="docs/screenshots/airing.png" alt="Airing: this week's schedule grouped by day with countdowns"><br><sub><b>Airing</b><br>A countdown to every episode, urgent ones in red</sub></td>
+    <td align="center" width="33%"><img src="docs/screenshots/detail.png" alt="Detail: cover, score, your list card and episode stepper"><br><sub><b>Detail</b><br>Update progress and score without leaving the page</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><img src="docs/screenshots/calendar.png" alt="Calendar: the seasonal chart with Winter, Spring, Summer, Fall and Later tabs"><br><sub><b>Calendar</b><br>Browse any season, or what has no date yet</sub></td>
+    <td align="center" width="33%"><img src="docs/screenshots/profile.png" alt="Profile: your stats, a status donut and charts built from your own list"><br><sub><b>Profile</b><br>Insights computed from your own list</sub></td>
+    <td align="center" width="33%"><img src="docs/screenshots/library_light.png" alt="Library in the light theme"><br><sub><b>Light theme</b><br>Dark by default, light when you want it</sub></td>
+  </tr>
+</table>
+
+The screens are rendered from the real widgets with invented titles and generated artwork (see [Screenshots](#screenshots)).
+
+---
+
+## Download
+
+Grab the latest APK from the [Releases page](https://github.com/andrizan/AniMAL/releases/latest). Not sure which one? Take `universal`.
+
+| File | For |
+|------|-----|
+| `animal-<version>-arm64-v8a.apk` | Most modern phones |
+| `animal-<version>-armeabi-v7a.apk` | Older 32-bit phones |
+| `animal-<version>-universal.apk` | Any device, including x86_64 tablets and emulators (largest) |
+
+All three share one `versionCode`, so you can move between them without Android reporting a downgrade. You sign in with your own MyAnimeList account; the app never sees your password.
 
 ---
 
@@ -51,7 +92,7 @@ Track your anime, discover seasonal charts, follow weekly airing schedules, and 
 |--------|------|
 | **MyAnimeList API v2** | User list, detail, search, ranking, seasonal, scores (`mean`), auth |
 | **AniList GraphQL** | Characters, staff, studios, airing schedule (`airingAt`, `episode`, `timeUntilAiring`) |
-| **GitHub Releases** | Update check from the profile page |
+| **GitHub Releases** | Update notice on launch and the manual check in the profile page |
 
 MAL is primary; AniList is supplementary. On merge MAL wins.
 
@@ -103,9 +144,14 @@ lib/
 │   ├── providers/                     # AnimeRepository, user lists, airing (+ shared refresh), AniList, theme, notifications
 │   └── widgets/                       # anime_card, section_card, section_header, hero_panel, stat_highlight,
 │                                      # error_view, empty_view, info_chip, status_chip, countdown_badge, pill_tab_bar,
-│                                      # score_picker, scrim_icon_button, app_cached_image, full_screen_image
+│                                      # score_picker, scrim_icon_button, app_cached_image, full_screen_image,
+│                                      # works_sliver (infinite works lists), app_mark (the app icon)
 └── features/
     ├── home/ airing/ seasonal/ profile/ auth/ detail/ search/
+
+tool/                                  # render_app_icon.dart (launcher icons), render_screenshots.dart (README images)
+docs/screenshots/                      # generated by tool/render_screenshots.dart
+test/                                  # mirrors lib/; test/support has fake Dio adapters and auth repo
 ```
 
 ### Design system
@@ -219,7 +265,7 @@ flutter test --coverage
 
 `very_good_analysis` is enabled — `flutter analyze` must be 0 errors (infos are allowed unless `--fatal-infos`).
 
-Tests live under `test/` and mirror `lib/`. They cover the pure logic (date and version helpers, insights), repositories and caches (real SQLite through `sqflite_common_ffi`, fake Dio adapters in `test/support/`), providers, and the pages and shared widgets.
+Tests live under `test/` and mirror `lib/`: over 1,200 of them, at about 99% line coverage. They cover the pure logic (date and version helpers, insights), repositories and caches (real SQLite through `sqflite_common_ffi`, fake Dio adapters in `test/support/`), the router, providers, theme rules, launcher icon files, and the pages and shared widgets.
 
 ### Build APK (debug)
 
@@ -230,7 +276,32 @@ flutter build apk --debug \
   --dart-define=MAL_REDIRECT_URI=...
 ```
 
-Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml`); it signs with `KEYSTORE_BASE64` secrets and attaches three APKs to a GitHub Release: `arm64-v8a` for most phones, `armeabi-v7a` for older 32-bit phones, and `universal` (all ABIs including x86_64, the largest file). All three share the same `versionCode`.
+Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml`); it signs with `KEYSTORE_BASE64` secrets and attaches three APKs to a GitHub Release: `arm64-v8a`, `armeabi-v7a` and `universal` (see [Download](#download)). All three share the same `versionCode`.
+
+To build the same set locally:
+
+```bash
+flutter build apk --release --split-per-abi    # one APK per ABI
+flutter build apk --release                    # universal
+```
+
+### Screenshots
+
+The images in `docs/screenshots/` are not photos of a device: `tool/render_screenshots.dart` pumps the real pages with fake providers (invented titles, covers generated in code, no service artwork or logos) and writes the PNGs. Run it after a UI change:
+
+```bash
+flutter test tool/render_screenshots.dart
+```
+
+### Launcher icon
+
+The mark is drawn once, in `AppMarkPainter` (`lib/shared/widgets/app_mark.dart`), and every launcher size is rendered from it. After changing the geometry:
+
+```bash
+flutter test tool/render_app_icon.dart
+```
+
+This rewrites the Android (legacy, adaptive and monochrome layers) and iOS icon files. Add `--dart-define=PREVIEW_DIR=<dir>` to write a contact sheet instead. `test/core/app_icon_assets_test.dart` checks the sizes and that the iOS icons have no alpha channel.
 
 ---
 
@@ -238,8 +309,10 @@ Release APKs are built by CI on tag push (see `.github/workflows/release-apk.yml
 
 | Workflow | Trigger | What |
 |----------|---------|------|
-| `quality.yml` | push `**` + PR | `pub get` → `build_runner` → `dart format --set-exit-if-changed` → `flutter analyze` → `flutter test` |
+| `quality.yml` | push `**` + PR | `pub get` → `build_runner` → `dart format --set-exit-if-changed` → `flutter analyze` → `flutter test`. On PRs and pushes to `main` a second job, `build-apk`, then builds an APK per ABI (`arm64-v8a`, `armeabi-v7a`, `x86_64`) and a universal APK and uploads them as the `animal-apk-<sha>` artifact (kept 14 days) |
 | `release-apk.yml` | tag `v*` + manual dispatch | quality → bump version → `flutter build apk --release --split-per-abi` + universal `flutter build apk --release` (both with `--dart-define=...`) → upload artifact → release notes and `CHANGELOG.md` via `git-cliff` → GitHub Release → bump `pubspec.yaml` and changelog on `main` |
+
+The APKs from `build-apk` are debug-signed and carry no MAL credentials, so they prove the build works and show the UI but cannot sign in; only release builds get the secrets.
 
 The release job pushes a `chore: bump version … [skip ci]` commit to `main`, so pull or rebase before pushing.
 
