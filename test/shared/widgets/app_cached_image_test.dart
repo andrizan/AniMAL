@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -223,6 +225,147 @@ void main() {
       );
 
       expect((await _iconIn(tester, _error(tester))).size, 48);
+    });
+  });
+
+  group('debugImageProvider', () {
+    tearDown(() => AppCachedImage.debugImageProvider = null);
+
+    final pixel = Uint8List.fromList(const [
+      0x89,
+      0x50,
+      0x4E,
+      0x47,
+      0x0D,
+      0x0A,
+      0x1A,
+      0x0A,
+      0x00,
+      0x00,
+      0x00,
+      0x0D,
+      0x49,
+      0x48,
+      0x44,
+      0x52,
+      0x00,
+      0x00,
+      0x00,
+      0x01,
+      0x00,
+      0x00,
+      0x00,
+      0x01,
+      0x08,
+      0x06,
+      0x00,
+      0x00,
+      0x00,
+      0x1F,
+      0x15,
+      0xC4,
+      0x89,
+      0x00,
+      0x00,
+      0x00,
+      0x0D,
+      0x49,
+      0x44,
+      0x41,
+      0x54,
+      0x78,
+      0x9C,
+      0x63,
+      0xF8,
+      0xFF,
+      0xFF,
+      0x3F,
+      0x00,
+      0x05,
+      0xFE,
+      0x02,
+      0xFE,
+      0xA7,
+      0x35,
+      0x81,
+      0x84,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x49,
+      0x45,
+      0x4E,
+      0x44,
+      0xAE,
+      0x42,
+      0x60,
+      0x82,
+    ]);
+
+    testWidgets('replaces the network image with the provided one', (
+      tester,
+    ) async {
+      final asked = <String>[];
+      AppCachedImage.debugImageProvider = (url) {
+        asked.add(url);
+        return MemoryImage(pixel);
+      };
+
+      await _show(
+        tester,
+        const AppCachedImage(
+          imageUrl: _url,
+          width: 84,
+          height: 120,
+          fit: BoxFit.contain,
+        ),
+      );
+
+      final image = tester.widget<Image>(find.byType(Image));
+      expect(find.byType(CachedNetworkImage), findsNothing);
+      expect(asked, [_url]);
+      expect(image.width, 84);
+      expect(image.height, 120);
+      expect(image.fit, BoxFit.contain);
+    });
+
+    testWidgets('still rounds the corners', (tester) async {
+      AppCachedImage.debugImageProvider = (_) => MemoryImage(pixel);
+      const radius = BorderRadius.all(Radius.circular(18));
+
+      await _show(
+        tester,
+        const AppCachedImage(imageUrl: _url, borderRadius: radius),
+      );
+
+      expect(
+        tester.widget<ClipRRect>(find.byType(ClipRRect)).borderRadius,
+        radius,
+      );
+    });
+
+    testWidgets('shows the fallback when the image cannot be read', (
+      tester,
+    ) async {
+      AppCachedImage.debugImageProvider = (_) => MemoryImage(Uint8List(0));
+
+      await _show(
+        tester,
+        const AppCachedImage(imageUrl: _url, fallbackIcon: Icons.broken_image),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byIcon(Icons.broken_image), findsOneWidget);
+    });
+
+    testWidgets('is off by default', (tester) async {
+      expect(AppCachedImage.debugImageProvider, isNull);
+
+      await _show(tester, const AppCachedImage(imageUrl: _url));
+
+      expect(find.byType(CachedNetworkImage), findsOneWidget);
     });
   });
 }

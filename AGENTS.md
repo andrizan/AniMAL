@@ -208,6 +208,11 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - `AppMarkPainter` (`shared/widgets/app_mark.dart`) is the only source of the geometry; the login page shows it through `AppMark`.
 - Launcher icons are generated, not drawn by hand: `flutter test tool/render_app_icon.dart` rewrites the Android (legacy, adaptive background/foreground/monochrome) and iOS (opaque, no alpha) files. Add `--dart-define=PREVIEW_DIR=<dir>` to write a contact sheet instead.
 
+## README images
+
+- `docs/screenshots/` is generated, not captured: `flutter test tool/render_screenshots.dart` pumps the real pages with fake providers. Data must stay invented (fictional titles and user, generated artwork) and carry no MyAnimeList or AniList logos or artwork.
+- `AppCachedImage.debugImageProvider` exists only so that tool (and tests) can show generated covers instead of network images; leave it null in the app.
+
 ## Environment
 
 - Credentials via `--dart-define` compile-time constants, NOT `flutter_dotenv`.

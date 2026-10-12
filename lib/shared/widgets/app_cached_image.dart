@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:material_ui/material_ui.dart';
 
 /// Shared cached image widget with consistent placeholder/error handling.
@@ -30,6 +31,9 @@ class AppCachedImage extends StatelessWidget {
   final int? memCacheWidth;
   final int? memCacheHeight;
 
+  @visibleForTesting
+  static ImageProvider Function(String url)? debugImageProvider;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -49,16 +53,25 @@ class AppCachedImage extends StatelessWidget {
       ),
     );
 
-    Widget image = CachedNetworkImage(
-      imageUrl: imageUrl,
-      width: width,
-      height: height,
-      fit: fit,
-      memCacheWidth: memCacheWidth,
-      memCacheHeight: memCacheHeight,
-      placeholder: (context, url) => loadingWidget ?? fallback,
-      errorWidget: (context, url, error) => fallback,
-    );
+    final debugProvider = debugImageProvider;
+    Widget image = debugProvider != null
+        ? Image(
+            image: debugProvider(imageUrl),
+            width: width,
+            height: height,
+            fit: fit,
+            errorBuilder: (context, error, stackTrace) => fallback,
+          )
+        : CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: width,
+            height: height,
+            fit: fit,
+            memCacheWidth: memCacheWidth,
+            memCacheHeight: memCacheHeight,
+            placeholder: (context, url) => loadingWidget ?? fallback,
+            errorWidget: (context, url, error) => fallback,
+          );
 
     if (borderRadius != null) {
       image = ClipRRect(borderRadius: borderRadius!, child: image);
