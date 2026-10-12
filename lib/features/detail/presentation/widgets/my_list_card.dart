@@ -299,30 +299,9 @@ class _MyListCardState extends ConsumerState<MyListCard> {
                   ),
                 ),
               ),
-              SizedBox(
-                width: 120,
-                child: TextFormField(
-                  key: ValueKey('episodes_$watched'),
-                  initialValue: '$watched',
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  enabled: !_busy,
-                  style: theme.textTheme.labelLarge,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
-                    ),
-                    suffixText: total != null ? '/ $total' : null,
-                  ),
-                  onFieldSubmitted: (value) {
-                    final parsed = int.tryParse(value);
-                    if (parsed != null && parsed >= 0) {
-                      unawaited(_updateEpisodes(parsed));
-                    }
-                  },
-                ),
+              Text(
+                total != null ? '$watched / $total' : '$watched',
+                style: theme.textTheme.labelLarge,
               ),
             ],
           ),
@@ -339,7 +318,7 @@ class _MyListCardState extends ConsumerState<MyListCard> {
             children: [
               IconButton.filledTonal(
                 tooltip: 'One episode less',
-                icon: const Icon(Icons.remove_circle_outline),
+                icon: const Icon(Icons.remove),
                 onPressed: (_busy || watched <= 0)
                     ? null
                     : () => _updateEpisodes(watched - 1),
@@ -368,7 +347,7 @@ class _MyListCardState extends ConsumerState<MyListCard> {
               const SizedBox(width: AppSpacing.md),
               IconButton.filledTonal(
                 tooltip: 'One episode more',
-                icon: const Icon(Icons.add_circle_outline),
+                icon: const Icon(Icons.add),
                 onPressed: (_busy || !canAdvance)
                     ? null
                     : () => _updateEpisodes(watched + 1),

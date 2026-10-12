@@ -5,6 +5,7 @@ import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:animal/shared/widgets/empty_view.dart';
 import 'package:animal/shared/widgets/error_view.dart';
 import 'package:animal/shared/widgets/pill_tab_bar.dart';
+import 'package:animal/shared/widgets/tonal_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -82,7 +83,7 @@ class _AnimeSchedulePageState extends ConsumerState<AnimeSchedulePage>
                     ? () => setState(() => _selectedYear--)
                     : null,
               ),
-              FilledButton.tonal(
+              TonalButton(
                 onPressed: () => _showYearPicker(context),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(64, 48),

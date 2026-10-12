@@ -34,6 +34,7 @@ void main() {
     AiringEntry? nextAiring,
     int? rank,
     String? note,
+    bool showListStatus = true,
     VoidCallback? onTap,
     Set<int> notifying = const {},
     GoRouter? router,
@@ -45,6 +46,7 @@ void main() {
       nextAiring: nextAiring,
       rank: rank,
       note: note,
+      showListStatus: showListStatus,
       onTap: onTap,
     );
     final app = router != null
@@ -167,8 +169,7 @@ void main() {
           list: const MyListStatus(status: WatchStatus.completed, score: 9),
         ),
       );
-      expect(find.text('9'), findsOneWidget);
-      expect(find.byIcon(Icons.star), findsOneWidget);
+      expect(find.text('You 9'), findsOneWidget);
 
       await pumpCard(
         tester,
@@ -177,7 +178,7 @@ void main() {
           list: const MyListStatus(status: WatchStatus.completed, score: 0),
         ),
       );
-      expect(find.byIcon(Icons.star), findsNothing);
+      expect(find.textContaining('You'), findsNothing);
     });
 
     testWidgets('shows a progress bar with watched over total episodes', (
@@ -236,6 +237,18 @@ void main() {
       for (final s in WatchStatus.values) {
         expect(find.text(s.label), findsNothing);
       }
+    });
+
+    testWidgets('the list chip can be left out where the list is implied', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        anime(list: const MyListStatus(status: WatchStatus.onHold)),
+        showListStatus: false,
+      );
+
+      expect(find.text('On Hold'), findsNothing);
     });
   });
 

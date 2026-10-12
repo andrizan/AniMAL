@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/features/auth/providers/auth_providers.dart';
+import 'package:animal/shared/widgets/tonal_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -34,6 +36,11 @@ class LoginPage extends ConsumerWidget {
             left: -120,
             child: _Blob(size: 340, color: colors.airingContainer),
           ),
+          Positioned(
+            top: 330,
+            right: -140,
+            child: _Blob(size: 220, color: colors.upcomingContainer),
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -51,7 +58,11 @@ class LoginPage extends ConsumerWidget {
                     width: 104,
                     height: 104,
                     decoration: BoxDecoration(
-                      color: scheme.primary,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: AppColors.brandGradient,
+                      ),
                       borderRadius: BorderRadius.circular(36),
                       boxShadow: [
                         BoxShadow(
@@ -61,10 +72,10 @@ class LoginPage extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.live_tv_rounded,
                       size: 52,
-                      color: scheme.onPrimary,
+                      color: AppColors.iconLight,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
@@ -113,7 +124,7 @@ class LoginPage extends ConsumerWidget {
                   // Manual code entry (fallback)
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton.tonal(
+                    child: TonalButton(
                       onPressed: () => _showCodeInputDialog(context, ref),
                       child: const Text('Enter code manually'),
                     ),
@@ -188,7 +199,7 @@ class LoginPage extends ConsumerWidget {
   }
 }
 
-/// A soft radial tint behind the login content.
+/// A blurred colour blob behind the login content.
 class _Blob extends StatelessWidget {
   const _Blob({required this.size, required this.color});
 
@@ -198,12 +209,12 @@ class _Blob extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
+      child: ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
       ),
     );

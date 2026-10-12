@@ -114,18 +114,37 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.page,
             AppSpacing.xs,
-            AppSpacing.sm,
+            AppSpacing.page,
             0,
+          ),
+          child: PillTabBar(controller: _tabController, labels: _tabLabels),
+        ),
+
+        // Filter bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            AppSpacing.sm,
+            AppSpacing.sm,
+            AppSpacing.xs,
           ),
           child: Row(
             children: [
-              Expanded(
-                child: PillTabBar(
-                  controller: _tabController,
-                  labels: _tabLabels,
-                ),
+              _SortPill(
+                sortBy: _sortBy,
+                ascending: _ascending,
+                onSort: _saveSort,
+                onDirection: _saveAscending,
               ),
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: AppSpacing.sm),
+              _MenuPill<AiringFilter>(
+                tooltip: 'Filter by airing status',
+                value: _airingFilter,
+                values: AiringFilter.values,
+                labelOf: (f) => f.label,
+                onSelected: _saveAiringFilter,
+              ),
+              const Spacer(),
               IconButton(
                 icon: _isRefreshing
                     ? const SizedBox(
@@ -136,44 +155,6 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
                     : const Icon(Icons.refresh),
                 tooltip: 'Refresh',
                 onPressed: _isRefreshing ? null : _handleRefresh,
-              ),
-            ],
-          ),
-        ),
-
-        // Filter bar
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.page,
-            AppSpacing.sm,
-            AppSpacing.page,
-            AppSpacing.xs,
-          ),
-          child: Row(
-            children: [
-              _MenuPill<ListSort>(
-                tooltip: 'Sort by',
-                value: _sortBy,
-                values: ListSort.values,
-                labelOf: (s) => s.label,
-                onSelected: _saveSort,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              IconButton(
-                iconSize: 20,
-                icon: Icon(
-                  _ascending ? Icons.arrow_upward : Icons.arrow_downward,
-                ),
-                tooltip: _ascending ? 'Ascending' : 'Descending',
-                onPressed: () => _saveAscending(!_ascending),
-              ),
-              const Spacer(),
-              _MenuPill<AiringFilter>(
-                tooltip: 'Filter by airing status',
-                value: _airingFilter,
-                values: AiringFilter.values,
-                labelOf: (f) => f.label,
-                onSelected: _saveAiringFilter,
               ),
             ],
           ),
@@ -202,6 +183,98 @@ class _AnimeHomeTabState extends ConsumerState<AnimeHomeTab>
   }
 }
 
+/// The pill body shared by the sort and filter menus.
+class _PillBody extends StatelessWidget {
+  const _PillBody({required this.label, required this.icon});
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.fromLTRB(14, 0, 10, 0),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: theme.textTheme.labelLarge),
+          const SizedBox(width: AppSpacing.xs),
+          Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Title ↑": the sort field with its direction. The menu lists the fields
+/// and, below a divider, the two directions.
+class _SortPill extends StatelessWidget {
+  const _SortPill({
+    required this.sortBy,
+    required this.ascending,
+    required this.onSort,
+    required this.onDirection,
+  });
+
+  final ListSort sortBy;
+  final bool ascending;
+  final ValueChanged<ListSort> onSort;
+  final ValueChanged<bool> onDirection;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return PopupMenuButton<Object>(
+      tooltip: 'Sort by',
+      onSelected: (value) {
+        if (value is ListSort) onSort(value);
+        if (value is bool) onDirection(value);
+      },
+      itemBuilder: (context) => [
+        for (final s in ListSort.values)
+          PopupMenuItem<Object>(
+            value: s,
+            child: Row(
+              children: [
+                Expanded(child: Text(s.label)),
+                if (s == sortBy)
+                  Icon(Icons.check_rounded, size: 18, color: scheme.primary),
+              ],
+            ),
+          ),
+        const PopupMenuDivider(),
+        for (final (direction, label, icon) in const [
+          (true, 'Ascending', Icons.arrow_upward),
+          (false, 'Descending', Icons.arrow_downward),
+        ])
+          PopupMenuItem<Object>(
+            value: direction,
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(child: Text(label)),
+                if (direction == ascending)
+                  Icon(Icons.check_rounded, size: 18, color: scheme.primary),
+              ],
+            ),
+          ),
+      ],
+      child: _PillBody(
+        label: sortBy.label,
+        icon: ascending ? Icons.arrow_upward : Icons.arrow_downward,
+      ),
+    );
+  }
+}
+
 /// A tonal pill that opens a menu of [values].
 class _MenuPill<T> extends StatelessWidget {
   const _MenuPill({
@@ -220,8 +293,6 @@ class _MenuPill<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     return PopupMenuButton<T>(
       tooltip: tooltip,
       initialValue: value,
@@ -230,26 +301,7 @@ class _MenuPill<T> extends StatelessWidget {
         for (final v in values)
           PopupMenuItem(value: v, child: Text(labelOf(v))),
       ],
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.fromLTRB(14, 0, 10, 0),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(labelOf(value), style: theme.textTheme.labelLarge),
-            const SizedBox(width: AppSpacing.xs),
-            Icon(
-              Icons.expand_more_rounded,
-              size: 18,
-              color: scheme.onSurfaceVariant,
-            ),
-          ],
-        ),
-      ),
+      child: _PillBody(label: labelOf(value), icon: Icons.expand_more_rounded),
     );
   }
 }

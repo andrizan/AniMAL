@@ -214,6 +214,9 @@ abstract final class AppColors {
     Color(0xFF9AA1BC),
   ];
 
+  // ── Brand mark (same in both themes; white reads at 4:1+ on both ends) ──
+  static const brandGradient = <Color>[Color(0xFF7B6CF0), Color(0xFF4B3FC0)];
+
   // ── Overlays on imagery (same in both themes) ──
   static const transparent = Color(0x00000000);
   static const overlayDark = Color(0x6614121F);

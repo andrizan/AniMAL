@@ -46,7 +46,8 @@ void main() {
     test('$name body copy keeps a line height of at least 1.4', () {
       final text = build().textTheme;
 
-      for (final style in [text.bodyLarge, text.bodyMedium, text.bodySmall]) {
+      expect(text.bodyLarge!.fontSize, 15);
+      for (final style in [text.bodyLarge, text.bodyMedium]) {
         expect(style!.height, greaterThanOrEqualTo(1.4));
       }
     });

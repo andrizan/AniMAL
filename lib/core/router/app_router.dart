@@ -25,6 +25,27 @@ abstract final class AppRoutes {
   static const String oauthCallback = '/oauth/callback';
 }
 
+/// Every page change is a 200 ms fade, and no animation at all when the
+/// device asks for reduced motion.
+Page<void> fadePage(BuildContext context, GoRouterState state, Widget child) {
+  final duration = MediaQuery.disableAnimationsOf(context)
+      ? Duration.zero
+      : const Duration(milliseconds: 200);
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: duration,
+    reverseTransitionDuration: duration,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        FadeTransition(opacity: animation, child: child),
+  );
+}
+
+Widget _invalidId(String what) => Scaffold(
+  appBar: AppBar(title: const Text('Invalid ID')),
+  body: Center(child: Text('Invalid $what ID')),
+);
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = AuthRefreshListenable(ref);
 
@@ -35,8 +56,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         authGuard(state, ref.read(authControllerProvider)),
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            HomePage(navigationShell: navigationShell),
+        pageBuilder: (context, state, navigationShell) => fadePage(
+          context,
+          state,
+          HomePage(navigationShell: navigationShell),
+        ),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -79,76 +103,76 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.search,
         name: 'search',
-        builder: (context, state) => const AnimeSearchPage(),
+        pageBuilder: (context, state) =>
+            fadePage(context, state, const AnimeSearchPage()),
       ),
       GoRoute(
         path: AppRoutes.animeDetail,
         name: 'animeDetail',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('Invalid ID')),
-              body: const Center(child: Text('Invalid anime ID')),
-            );
-          }
-          return AnimeDetailPage(animeId: id);
+          return fadePage(
+            context,
+            state,
+            id == null ? _invalidId('anime') : AnimeDetailPage(animeId: id),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.characterProfile,
         name: 'characterProfile',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('Invalid ID')),
-              body: const Center(child: Text('Invalid character ID')),
-            );
-          }
-          return CharacterProfilePage(characterId: id);
+          return fadePage(
+            context,
+            state,
+            id == null
+                ? _invalidId('character')
+                : CharacterProfilePage(characterId: id),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.staffProfile,
         name: 'staffProfile',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('Invalid ID')),
-              body: const Center(child: Text('Invalid staff ID')),
-            );
-          }
-          return StaffProfilePage(staffId: id);
+          return fadePage(
+            context,
+            state,
+            id == null ? _invalidId('staff') : StaffProfilePage(staffId: id),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.studioProfile,
         name: 'studioProfile',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('Invalid ID')),
-              body: const Center(child: Text('Invalid studio ID')),
-            );
-          }
-          return StudioProfilePage(studioId: id);
+          return fadePage(
+            context,
+            state,
+            id == null ? _invalidId('studio') : StudioProfilePage(studioId: id),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.login,
         name: 'login',
-        builder: (context, state) => const LoginPage(),
+        pageBuilder: (context, state) =>
+            fadePage(context, state, const LoginPage()),
       ),
       GoRoute(
         path: AppRoutes.oauthCallback,
         name: 'oauthCallback',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final code = state.uri.queryParameters['code'];
           final oauthState = state.uri.queryParameters['state'];
-          return OAuthCallbackPage(code: code, state: oauthState);
+          return fadePage(
+            context,
+            state,
+            OAuthCallbackPage(code: code, state: oauthState),
+          );
         },
       ),
     ],

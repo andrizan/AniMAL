@@ -120,8 +120,7 @@ void main() {
       );
 
       expect(find.text('andrizan'), findsOneWidget);
-      expect(find.text('Connected to MyAnimeList'), findsOneWidget);
-      expect(find.text('Indonesia'), findsOneWidget);
+      expect(find.textContaining('Indonesia'), findsOneWidget);
     });
 
     testWidgets('shows a placeholder while loading', (tester) async {
@@ -170,7 +169,7 @@ void main() {
     ) async {
       await open(tester, user: () => null);
 
-      expect(find.text('Connected to MyAnimeList'), findsNothing);
+      expect(find.byType(ProfileHeader), findsNothing);
       expect(find.text('Failed to load profile'), findsNothing);
     });
   });
@@ -189,7 +188,7 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('Since '), findsOneWidget);
+      expect(find.textContaining('Member since '), findsOneWidget);
       expect(find.textContaining('2019'), findsOneWidget);
       expect(find.text('30.8'), findsOneWidget);
       expect(find.text('Days watched'), findsOneWidget);
@@ -199,14 +198,30 @@ void main() {
       expect(find.text('Mean score'), findsOneWidget);
     });
 
-    testWidgets('a user without a join date or location omits those pills', (
+    testWidgets('a user without a join date or location has no caption', (
       tester,
     ) async {
       await open(tester, user: () => const MalUser(id: 1, name: 'andrizan'));
 
-      expect(find.textContaining('Since '), findsNothing);
-      expect(find.byIcon(Icons.location_on_outlined), findsNothing);
-      expect(find.text('Connected to MyAnimeList'), findsOneWidget);
+      expect(find.textContaining('Member since'), findsNothing);
+      expect(find.text('andrizan'), findsOneWidget);
+    });
+
+    testWidgets('the caption joins the join date and the location', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        user: () => const MalUser(
+          id: 1,
+          name: 'andrizan',
+          joinedAt: '2019-03-12T09:41:05+00:00',
+          location: 'Indonesia',
+        ),
+      );
+
+      expect(find.textContaining('Member since '), findsOneWidget);
+      expect(find.textContaining(' · Indonesia'), findsOneWidget);
     });
 
     testWidgets('missing headline numbers fall back to zero or a dash', (

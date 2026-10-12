@@ -173,7 +173,7 @@ void main() {
     await tester.longPress(card);
     await tester.pumpAndSettle();
     for (var i = 0; i < 3; i++) {
-      await tester.tap(find.byIcon(Icons.add_circle_outline));
+      await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
     }
     await tester.tap(find.text('Save'));

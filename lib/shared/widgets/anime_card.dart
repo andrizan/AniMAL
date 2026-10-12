@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/anime_labels.dart';
@@ -37,6 +38,7 @@ class AnimeCard extends ConsumerWidget {
     this.nextAiring,
     this.rank,
     this.note,
+    this.showListStatus = true,
     this.onTap,
   });
 
@@ -56,6 +58,9 @@ class AnimeCard extends ConsumerWidget {
 
   /// Optional muted note under the footer, e.g. why the card cannot open.
   final String? note;
+
+  /// Whether to show the list status chip; off where the list is implied.
+  final bool showListStatus;
 
   /// Optional tap callback. When provided, replaces the default navigation.
   final VoidCallback? onTap;
@@ -99,7 +104,8 @@ class AnimeCard extends ConsumerWidget {
           ],
         ),
       if (personalScore > 0) _PersonalScore(score: personalScore),
-      if (list != null) ListStatusChip(status: list.status, dense: true),
+      if (list != null && showListStatus)
+        ListStatusChip(status: list.status, dense: true),
     ];
 
     final footer = <Widget>[
@@ -329,24 +335,20 @@ class _PersonalScore extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 3, AppSpacing.sm, 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: scheme.primaryContainer,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.star, size: 12, color: scheme.onPrimaryContainer),
-          const SizedBox(width: 2),
-          Text(
-            '$score',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: scheme.onPrimaryContainer,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+      child: Text(
+        'You $score',
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: scheme.onPrimaryContainer,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -499,12 +501,23 @@ class _UpdateListStatusModalState
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
-                      child: Text(
-                        notifEnabled
-                            ? 'Notification enabled for '
-                                  'Ep ${widget.nextAiring!.episode}'
-                            : 'Get notified before the episode airs',
-                        style: theme.textTheme.bodyMedium,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Notify me before Ep ${widget.nextAiring!.episode}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${ApiConstants.notificationLeadMinutes} minutes '
+                            'ahead',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     Switch(
@@ -586,7 +599,7 @@ class _UpdateListStatusModalState
               children: [
                 IconButton.filledTonal(
                   tooltip: 'One episode less',
-                  icon: const Icon(Icons.remove_circle_outline),
+                  icon: const Icon(Icons.remove),
                   onPressed: (_saving || _selectedEps <= 0)
                       ? null
                       : () {
@@ -616,7 +629,7 @@ class _UpdateListStatusModalState
                 const SizedBox(width: AppSpacing.md),
                 IconButton.filledTonal(
                   tooltip: 'One episode more',
-                  icon: const Icon(Icons.add_circle_outline),
+                  icon: const Icon(Icons.add),
                   onPressed:
                       (_saving ||
                           (totalEps != null && _selectedEps >= totalEps))

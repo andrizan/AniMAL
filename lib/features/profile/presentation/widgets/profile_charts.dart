@@ -213,12 +213,16 @@ class BarChart extends StatelessWidget {
     required this.highlightColor,
     super.key,
     this.height = 140,
+    this.labelHighlightOnly = false,
   });
 
   final List<BarDatum> bars;
   final Color color;
   final Color highlightColor;
   final double height;
+
+  /// Print the count above the highlighted bars only, instead of every bar.
+  final bool labelHighlightOnly;
 
   static const _countHeight = 16.0;
   static const _labelHeight = 18.0;
@@ -249,7 +253,9 @@ class BarChart extends StatelessWidget {
                   children: [
                     SizedBox(
                       height: _countHeight,
-                      child: bar.value > 0
+                      child:
+                          bar.value > 0 &&
+                              (bar.highlight || !labelHighlightOnly)
                           ? FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(

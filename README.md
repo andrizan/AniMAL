@@ -115,7 +115,8 @@ One look across every screen, enforced by `test/core/theme/design_rules_test.dar
 - **Colors** only from `core/theme/app_colors.dart` (`AppColors`, `StatusColors.of(context)`, `chartPalette`) — never `Colors.*`. Every text pair meets WCAG 2.2 AA (4.5:1), icons and chart marks 3:1, and the chart palette is validated for colour-vision deficiency.
 - **Typography** only from the theme text styles (Figtree); no raw `fontSize`. `labelSmall` (12) is the micro size.
 - **Spacing and radius** from `AppSpacing` (`page` is the page gutter) and `AppRadius` in `core/theme/app_spacing.dart`.
-- **Cards** are plain, borderless `Card`s styled once in `cardTheme`; use `SectionCard` for a titled block and `HeroPanel` for a highlighted one.
+- **Cards** are plain, borderless `Card`s styled once in `cardTheme`; use `SectionCard` (28px corners) for a titled block and `HeroPanel` for a highlighted one.
+- **Motion**: 200 ms fades between routes, none under reduced motion; keyboard focus shows a 3px ring.
 - **Status** always pairs a tonal tint with an icon and a word (`ListStatusChip`, `AiringStatusChip`, `CountdownBadge`); tabs are `PillTabBar`s.
 - **Error and empty states** use `ErrorView` / `EmptyView`; section titles use `SectionHeader`.
 

@@ -251,8 +251,8 @@ void main() {
       expect(find.text('Broadcast'), findsOneWidget);
       expect(
         find.text(
-          '${local.day[0].toUpperCase()}${local.day.substring(1)}'
-          ' at ${local.time}',
+          '${local.day[0].toUpperCase()}${local.day.substring(1)}s, '
+          '${local.time} your time',
         ),
         findsOneWidget,
       );
@@ -260,7 +260,7 @@ void main() {
       expect(find.text('Aired'), findsOneWidget);
       expect(find.text('Sep 29, 2023 to Mar 22, 2024'), findsOneWidget);
       expect(find.text('Fall 2023'), findsOneWidget);
-      expect(find.text('26m'), findsOneWidget);
+      expect(find.text('26 min per episode'), findsOneWidget);
       expect(find.text('Manga'), findsOneWidget);
     });
 
@@ -356,7 +356,7 @@ void main() {
         const Offset(0, -300),
       );
 
-      expect(find.text('Friday'), findsOneWidget);
+      expect(find.text('Fridays'), findsOneWidget);
     });
 
     testWidgets('an unreadable broadcast time falls back to the JST text', (
@@ -374,7 +374,7 @@ void main() {
         const Offset(0, -300),
       );
 
-      expect(find.text('Friday at ?? JST'), findsOneWidget);
+      expect(find.text('Fridays, ?? JST'), findsOneWidget);
     });
 
     testWidgets('a running anime says Airing and omits the end date', (
@@ -498,8 +498,9 @@ void main() {
 
       expect(find.text('Watching'), findsOneWidget);
       expect(find.byTooltip('Change status'), findsOneWidget);
-      expect(find.text('/ 12'), findsOneWidget);
+      expect(find.text('5 / 12'), findsOneWidget);
       expect(find.text('Mark episode 6 watched'), findsOneWidget);
+      expect(find.byType(TextFormField), findsNothing);
       expect(find.text('7'), findsWidgets);
       expect(find.text('Remove from List'), findsOneWidget);
     });
@@ -540,12 +541,12 @@ void main() {
     testWidgets('+ and - change the watched episodes by one', (tester) async {
       await open(tester, detail: () => _detail(list: watching));
 
-      await tapVisible(tester, find.byIcon(Icons.add_circle_outline));
+      await tapVisible(tester, find.byIcon(Icons.add));
       await tester.pumpAndSettle();
       expect(repo.updates.last['eps'], 6);
       expect(find.text('Episodes updated to 6'), findsOneWidget);
 
-      await tapVisible(tester, find.byIcon(Icons.remove_circle_outline));
+      await tapVisible(tester, find.byIcon(Icons.remove));
       await tester.pumpAndSettle();
       expect(repo.updates.last['eps'], 5);
     });
@@ -562,7 +563,7 @@ void main() {
       );
 
       final minus = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.remove_circle_outline),
+        find.widgetWithIcon(IconButton, Icons.remove),
       );
       expect(minus.onPressed, isNull);
     });
@@ -579,7 +580,7 @@ void main() {
       );
 
       final plus = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.add_circle_outline),
+        find.widgetWithIcon(IconButton, Icons.add),
       );
       expect(plus.onPressed, isNull);
       expect(find.text('All episodes watched'), findsOneWidget);
@@ -591,16 +592,6 @@ void main() {
             .onPressed,
         isNull,
       );
-    });
-
-    testWidgets('typing an episode number submits it', (tester) async {
-      await open(tester, detail: () => _detail(list: watching));
-
-      await tester.enterText(find.byType(TextFormField), '9');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-
-      expect(repo.updates.last['eps'], 9);
     });
 
     testWidgets('changing the score saves it', (tester) async {
@@ -672,7 +663,7 @@ void main() {
       await open(tester, detail: () => _detail(list: watching));
       repo.failure = Exception('server down');
 
-      await tapVisible(tester, find.byIcon(Icons.add_circle_outline));
+      await tapVisible(tester, find.byIcon(Icons.add));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Failed:'), findsOneWidget);

@@ -1,4 +1,3 @@
-import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
 import 'package:animal/core/utils/format_utils.dart';
 import 'package:animal/data/models/mal_user.dart';
@@ -19,6 +18,10 @@ class ProfileHeader extends StatelessWidget {
     final scheme = theme.colorScheme;
     final stats = user.animeStatistics;
     final joined = formatMonthYear(user.joinedAt);
+    final caption = [
+      if (joined != null) 'Member since $joined',
+      ?user.location,
+    ].join(' · ');
 
     return HeroPanel(
       child: Column(
@@ -41,13 +44,31 @@ class ProfileHeader extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.lg),
               Expanded(
-                child: Text(
-                  user.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (caption.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          caption,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               IconButton(
@@ -56,30 +77,6 @@ class ProfileHeader extends StatelessWidget {
                 onPressed: onRefresh,
               ),
             ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                _InfoPill(
-                  dotColor: StatusColors.of(context).listWatching,
-                  text: 'Connected to MyAnimeList',
-                ),
-                if (joined != null)
-                  _InfoPill(
-                    icon: Icons.calendar_month_outlined,
-                    text: 'Since $joined',
-                  ),
-                if (user.location != null)
-                  _InfoPill(
-                    icon: Icons.location_on_outlined,
-                    text: user.location!,
-                  ),
-              ],
-            ),
           ),
           if (stats != null) ...[
             const SizedBox(height: AppSpacing.lg),
@@ -112,57 +109,6 @@ class ProfileHeader extends StatelessWidget {
               ],
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  const _InfoPill({required this.text, this.icon, this.dotColor});
-
-  final String text;
-  final IconData? icon;
-  final Color? dotColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm + 2,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (dotColor != null)
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-          if (icon != null) Icon(icon, size: 14, color: muted),
-          if (dotColor != null || icon != null) const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: muted,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
         ],
       ),
     );

@@ -193,13 +193,13 @@ void main() {
 
   test('enum labels are shown to the user', () {
     expect(ListSort.values.map((s) => s.label), [
-      'Name',
+      'Title',
       'Score',
       'Episodes',
       'Airing',
     ]);
     expect(AiringFilter.values.map((f) => f.label), [
-      'All',
+      'All airing',
       'Airing',
       'Finished',
       'Upcoming',

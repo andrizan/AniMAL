@@ -9,11 +9,11 @@ ThemeData buildLightTheme() =>
 
 ThemeData buildDarkTheme() => _buildTheme(AppColors.dark, AppColors.darkStatus);
 
-/// A 2px ring drawn inside a control while it has keyboard focus.
+/// A 3px ring drawn inside a control while it has keyboard focus.
 WidgetStateProperty<BorderSide?> _focusRing(Color color) =>
     WidgetStateProperty.resolveWith(
       (states) => states.contains(WidgetState.focused)
-          ? BorderSide(color: color, width: 2)
+          ? BorderSide(color: color, width: 3)
           : null,
     );
 
@@ -95,7 +95,7 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
       shape: const StadiumBorder(),
       side: WidgetStateBorderSide.resolveWith(
         (states) => states.contains(WidgetState.focused)
-            ? BorderSide(color: scheme.primary, width: 2)
+            ? BorderSide(color: scheme.primary, width: 3)
             : BorderSide.none,
       ),
       backgroundColor: scheme.surfaceContainer,
@@ -150,20 +150,12 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style:
-          FilledButton.styleFrom(
-            minimumSize: const Size(64, 52),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            shape: const StadiumBorder(),
-            textStyle: textTheme.titleMedium,
-          ).copyWith(
-            side: _focusRing(scheme.onSurface),
-            overlayColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.focused)
-                  ? scheme.onPrimary.withValues(alpha: 0.2)
-                  : null,
-            ),
-          ),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(64, 52),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        shape: const StadiumBorder(),
+        textStyle: textTheme.titleMedium,
+      ).copyWith(side: _focusRing(scheme.primaryContainer)),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style:
@@ -178,7 +170,7 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
                 color: states.contains(WidgetState.focused)
                     ? scheme.primary
                     : scheme.outline,
-                width: states.contains(WidgetState.focused) ? 2 : 1.5,
+                width: states.contains(WidgetState.focused) ? 3 : 1.5,
               ),
             ),
           ),
@@ -253,6 +245,6 @@ ThemeData _buildTheme(ColorScheme scheme, StatusColors status) {
 
 OutlineInputBorder _inputBorder(Color color, double width) =>
     OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(color: color, width: width),
     );

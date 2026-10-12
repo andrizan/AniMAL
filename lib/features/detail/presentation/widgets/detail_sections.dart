@@ -20,14 +20,31 @@ const _longSynopsis = 280;
 
 String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
 
+/// "Fridays, 23:30 your time", or the JST text when it cannot be converted.
 String broadcastLabel(Broadcast broadcast) {
   final day = broadcast.dayOfWeek!;
   final time = broadcast.startTime;
-  if (time == null) return _capitalize(day);
+  if (time == null) return '${_capitalize(day)}s';
   final local = convertJstBroadcastToLocal(day, time);
-  if (local == null) return '${_capitalize(day)} at $time JST';
-  return '${_capitalize(local.day)} at ${local.time}';
+  if (local == null) return '${_capitalize(day)}s, $time JST';
+  return '${_capitalize(local.day)}s, ${local.time} your time';
 }
+
+String _durationLabel(int seconds) {
+  final minutes = seconds ~/ 60;
+  if (minutes < 60) return '$minutes min per episode';
+  return '${AnimeLabels.durationLabel(seconds)} per episode';
+}
+
+const _weekdays = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 class AboutCard extends StatefulWidget {
   const AboutCard({required this.detail, super.key});
@@ -135,7 +152,7 @@ class InfoCard extends StatelessWidget {
       if (detail.broadcast?.dayOfWeek != null)
         (label: 'Broadcast', value: text(broadcastLabel(detail.broadcast!))),
       if (duration != null && duration > 0)
-        (label: 'Duration', value: text(AnimeLabels.durationLabel(duration))),
+        (label: 'Duration', value: text(_durationLabel(duration))),
       if (source != null && source.isNotEmpty)
         (label: 'Source', value: text(AnimeLabels.sourceLabel(source))),
       if (studios.isNotEmpty)
@@ -282,7 +299,7 @@ class NextEpisodeCard extends ConsumerWidget {
     final time =
         '${local.hour.toString().padLeft(2, '0')}:'
         '${local.minute.toString().padLeft(2, '0')}';
-    final date = '${local.day}/${local.month} at $time';
+    final date = '${_weekdays[local.weekday - 1]}, $time your time';
     final reminderOn = ref.watch(
       animeNotificationProvider.select((s) => s.contains(animeId)),
     );

@@ -125,8 +125,8 @@ void main() {
     expect(repo.loads, [WatchStatus.watching]);
     expect(titles(tester), ['alpha', 'Bravo', 'Charlie']);
     expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
-    expect(find.text('Name'), findsOneWidget);
-    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Title'), findsOneWidget);
+    expect(find.text('All airing'), findsOneWidget);
   });
 
   group('saved preferences', () {
@@ -157,35 +157,41 @@ void main() {
   });
 
   group('sorting controls', () {
-    testWidgets('the arrow flips the order and is remembered', (tester) async {
-      await open(tester);
-
-      await tester.tap(find.byIcon(Icons.arrow_upward));
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
-      expect(titles(tester), ['Charlie', 'Bravo', 'alpha']);
-      expect(await pref('list_ascending'), 'false');
-    });
-
-    testWidgets('the sort dropdown reorders the list and is remembered', (
+    testWidgets('the sort menu flips the order and is remembered', (
       tester,
     ) async {
       await open(tester);
 
-      await tester.tap(find.text('Name'));
+      await tester.tap(find.text('Title'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Descending'));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_upward), findsNothing);
+      expect(titles(tester), ['Charlie', 'Bravo', 'alpha']);
+      expect(await pref('list_ascending'), 'false');
+    });
+
+    testWidgets('the sort menu reorders the list and is remembered', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await tester.tap(find.text('Title'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Episodes').last);
       await tester.pumpAndSettle();
 
       expect(titles(tester).first, 'Bravo');
       expect(await pref('list_sort'), '2');
+      expect(find.text('Episodes'), findsOneWidget);
     });
 
-    testWidgets('the filter dropdown is remembered', (tester) async {
+    testWidgets('the filter menu is remembered', (tester) async {
       await open(tester);
 
-      await tester.tap(find.text('All'));
+      await tester.tap(find.text('All airing'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Finished').last);
       await tester.pumpAndSettle();

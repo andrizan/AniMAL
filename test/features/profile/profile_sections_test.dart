@@ -78,7 +78,7 @@ Anime _anime(
 
 void main() {
   group('LibrarySection', () {
-    testWidgets('shows the total, each status with its share and the rates', (
+    testWidgets('shows the total and each status with its share', (
       tester,
     ) async {
       await _show(tester, const LibrarySection(stats: _stats));
@@ -98,24 +98,6 @@ void main() {
       expect(find.text('120'), findsOneWidget);
       expect(find.text('72%'), findsOneWidget);
       expect(find.text('24%'), findsOneWidget);
-      expect(find.text('95%'), findsOneWidget);
-      expect(find.text('19.8'), findsOneWidget);
-      expect(find.text('Completion rate'), findsOneWidget);
-      expect(find.text('Episodes per anime'), findsOneWidget);
-    });
-
-    testWidgets('only plan-to-watch titles means no rates to show', (
-      tester,
-    ) async {
-      await _show(
-        tester,
-        const LibrarySection(
-          stats: AnimeStatistics(numItems: 5, numItemsPlanToWatch: 5),
-        ),
-      );
-
-      expect(find.text('5 anime'), findsOneWidget);
-      expect(find.text('Completion rate'), findsNothing);
     });
 
     testWidgets('missing numbers count as zero and the total falls back', (
@@ -129,7 +111,8 @@ void main() {
       );
 
       expect(find.text('5 anime'), findsOneWidget);
-      expect(find.text('80%'), findsNWidgets(2));
+      expect(find.text('80%'), findsOneWidget);
+      expect(find.text('20%'), findsOneWidget);
     });
 
     testWidgets('an empty library does not divide by zero', (tester) async {

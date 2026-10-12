@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Sort options for the anime list.
 enum ListSort {
-  name('Name'),
+  name('Title'),
   score('Score'),
   episodes('Episodes'),
   airing('Airing');
@@ -20,7 +20,7 @@ enum ListSort {
 
 /// Airing status filter.
 enum AiringFilter {
-  all('All'),
+  all('All airing'),
   airing('Airing'),
   finished('Finished'),
   upcoming('Upcoming');

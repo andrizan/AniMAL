@@ -48,8 +48,6 @@ class LibrarySection extends StatelessWidget {
     };
     final sum = counts.values.fold<int>(0, (a, b) => a + b);
     final total = stats.numItems ?? sum;
-    final started = sum - counts[WatchStatus.planToWatch]!;
-    final completed = counts[WatchStatus.completed]!;
 
     return SectionCard(
       title: 'Library',
@@ -97,28 +95,6 @@ class LibrarySection extends StatelessWidget {
               label: status.label,
               count: counts[status]!,
               percent: sum > 0 ? counts[status]! * 100 / sum : 0,
-            ),
-          ],
-          if (started > 0) ...[
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                Expanded(
-                  child: _MiniStat(
-                    label: 'Completion rate',
-                    value: '${(completed * 100 / started).round()}%',
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm + 2),
-                Expanded(
-                  child: _MiniStat(
-                    label: 'Episodes per anime',
-                    value: ((stats.numEpisodes ?? 0) / started).toStringAsFixed(
-                      1,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
         ],
@@ -171,47 +147,6 @@ class _LegendRow extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 2,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -395,6 +330,7 @@ class _ScoreCard extends StatelessWidget {
                 BarChart(
                   color: theme.colorScheme.primary,
                   highlightColor: StatusColors.of(context).star,
+                  labelHighlightOnly: true,
                   bars: [
                     for (var i = 0; i < insights.scoreCounts.length; i++)
                       BarDatum(
@@ -511,6 +447,7 @@ class _ActivityCard extends StatelessWidget {
             height: 130,
             color: theme.colorScheme.secondary,
             highlightColor: StatusColors.of(context).star,
+            labelHighlightOnly: true,
             bars: [
               for (var i = 0; i < months.length; i++)
                 BarDatum(

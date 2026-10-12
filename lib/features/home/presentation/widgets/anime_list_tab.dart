@@ -76,7 +76,11 @@ class AnimeListTab extends ConsumerWidget {
         itemBuilder: (context, index) {
           final anime = sorted[index];
           final nextAiring = airingMap[anime.id];
-          return AnimeCard(anime: anime, nextAiring: nextAiring);
+          return AnimeCard(
+            anime: anime,
+            nextAiring: nextAiring,
+            showListStatus: false,
+          );
         },
       ),
     );
