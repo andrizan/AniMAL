@@ -136,8 +136,16 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
           title: detail.title,
         ),
       if (AboutCard.hasContent(detail)) AboutCard(detail: detail),
-      if (InfoCard.hasContent(detail, studios))
-        InfoCard(detail: detail, studios: studios),
+      if (InfoCard.hasContent(
+        detail,
+        studios,
+        nextAiringAt: nextAiring?.airingAt,
+      ))
+        InfoCard(
+          detail: detail,
+          studios: studios,
+          nextAiringAt: nextAiring?.airingAt,
+        ),
       if (characters.isNotEmpty) CharactersCard(characters: characters),
       if (staff.isNotEmpty) StaffCard(staff: staff),
       if (detail.relatedAnime.isNotEmpty)

@@ -21,13 +21,23 @@ const _longSynopsis = 280;
 String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
 
 /// "Fridays, 23:30 your time", or the JST text when it cannot be converted.
-String broadcastLabel(Broadcast broadcast) {
-  final day = broadcast.dayOfWeek!;
-  final time = broadcast.startTime;
+///
+/// The slot comes from [resolveAirSlot], the function the cards use too, so
+/// the page agrees with every card: [nextAiringAt] (AniList) wins over the
+/// MAL [broadcast].
+String broadcastLabel(Broadcast? broadcast, {DateTime? nextAiringAt}) {
+  final slot = resolveAirSlot(
+    nextAiringAt: nextAiringAt,
+    jstDay: broadcast?.dayOfWeek,
+    jstTime: broadcast?.startTime,
+  );
+  if (slot != null) return weeklyAirSlotLabel(slot);
+
+  final day = broadcast?.dayOfWeek;
+  if (day == null) return '';
+  final time = broadcast?.startTime;
   if (time == null) return '${_capitalize(day)}s';
-  final local = convertJstBroadcastToLocal(day, time);
-  if (local == null) return '${_capitalize(day)}s, $time JST';
-  return '${_capitalize(local.day)}s, ${local.time} your time';
+  return '${_capitalize(day)}s, $time JST';
 }
 
 String _durationLabel(int seconds) {
@@ -35,16 +45,6 @@ String _durationLabel(int seconds) {
   if (minutes < 60) return '$minutes min per episode';
   return '${AnimeLabels.durationLabel(seconds)} per episode';
 }
-
-const _weekdays = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
 
 class AboutCard extends StatefulWidget {
   const AboutCard({required this.detail, super.key});
@@ -112,10 +112,18 @@ class _AboutCardState extends State<AboutCard> {
 }
 
 class InfoCard extends StatelessWidget {
-  const InfoCard({required this.detail, required this.studios, super.key});
+  const InfoCard({
+    required this.detail,
+    required this.studios,
+    super.key,
+    this.nextAiringAt,
+  });
 
   final AnimeDetail detail;
   final List<AniListStudio> studios;
+
+  /// The next AniList airing, when known; it decides the broadcast row.
+  final DateTime? nextAiringAt;
 
   List<({String label, Widget value})> _facts(BuildContext context) {
     final theme = Theme.of(context);
@@ -149,8 +157,13 @@ class InfoCard extends StatelessWidget {
             '${AnimeLabels.seasonLabel(season.season)} ${season.year}',
           ),
         ),
-      if (detail.broadcast?.dayOfWeek != null)
-        (label: 'Broadcast', value: text(broadcastLabel(detail.broadcast!))),
+      if (detail.broadcast?.dayOfWeek != null || nextAiringAt != null)
+        (
+          label: 'Broadcast',
+          value: text(
+            broadcastLabel(detail.broadcast, nextAiringAt: nextAiringAt),
+          ),
+        ),
       if (duration != null && duration > 0)
         (label: 'Duration', value: text(_durationLabel(duration))),
       if (source != null && source.isNotEmpty)
@@ -167,11 +180,16 @@ class InfoCard extends StatelessWidget {
     ];
   }
 
-  static bool hasContent(AnimeDetail detail, List<AniListStudio> studios) =>
+  static bool hasContent(
+    AnimeDetail detail,
+    List<AniListStudio> studios, {
+    DateTime? nextAiringAt,
+  }) =>
       detail.startDate != null ||
       detail.endDate != null ||
       detail.startSeason != null ||
       detail.broadcast?.dayOfWeek != null ||
+      nextAiringAt != null ||
       (detail.averageEpisodeDuration ?? 0) > 0 ||
       (detail.source?.isNotEmpty ?? false) ||
       studios.isNotEmpty;
@@ -295,11 +313,7 @@ class NextEpisodeCard extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final colors = StatusColors.of(context);
     final urgent = next.isUrgent;
-    final local = next.airingAt.toLocal();
-    final time =
-        '${local.hour.toString().padLeft(2, '0')}:'
-        '${local.minute.toString().padLeft(2, '0')}';
-    final date = '${_weekdays[local.weekday - 1]}, $time your time';
+    final date = nextAirSlotLabel(resolveAirSlot(nextAiringAt: next.airingAt)!);
     final reminderOn = ref.watch(
       animeNotificationProvider.select((s) => s.contains(animeId)),
     );

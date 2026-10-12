@@ -300,14 +300,20 @@ class AnimeCard extends ConsumerWidget {
     return parts.isEmpty ? null : parts.join(' · ');
   }
 
+  /// The air time shown in the footer. It comes from [resolveAirSlot], the
+  /// same function the detail page uses, so a card and its detail page never
+  /// show different times: the next AniList airing wins over the MAL slot.
   String? _broadcastTime() {
     final broadcast = anime.broadcast;
     final start = broadcast?.startTime;
+    final slot = resolveAirSlot(
+      nextAiringAt: nextAiring?.airingAt,
+      jstDay: broadcast?.dayOfWeek,
+      jstTime: start,
+    );
+    if (slot != null) return shortAirSlotLabel(slot);
     if (start == null || start.isEmpty) return null;
-    final local = convertJstBroadcastToLocal(broadcast?.dayOfWeek, start);
-    if (local == null) return convertJstToLocal(start);
-    final day = local.day;
-    return '${day[0].toUpperCase()}${day.substring(1, 3)} ${local.time}';
+    return convertJstToLocal(start);
   }
 
   void _showUpdateModal(BuildContext context) {

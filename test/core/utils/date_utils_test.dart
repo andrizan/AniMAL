@@ -126,4 +126,168 @@ void main() {
       expect(convertBroadcast('friday', '10:xx', 7), isNull);
     });
   });
+
+  group('resolveAirSlot', () {
+    // Friday 2026-10-16 14:00 UTC is Friday 23:00 in JST.
+    final fridayJstEvening = DateTime.utc(2026, 10, 16, 14);
+
+    AirSlot? resolve({
+      DateTime? airingAt,
+      String? day,
+      String? time,
+      int offsetHours = 7,
+    }) => resolveAirSlot(
+      nextAiringAt: airingAt,
+      jstDay: day,
+      jstTime: time,
+      localOffset: Duration(hours: offsetHours),
+    );
+
+    test('turns the AniList instant into the device zone', () {
+      expect(resolve(airingAt: fridayJstEvening), (
+        day: 'friday',
+        time: '21:00',
+      ));
+      expect(resolve(airingAt: fridayJstEvening, offsetHours: 9), (
+        day: 'friday',
+        time: '23:00',
+      ));
+    });
+
+    test('rolls the weekday over midnight in either direction', () {
+      expect(resolve(airingAt: DateTime.utc(2026, 10, 16, 20)), (
+        day: 'saturday',
+        time: '03:00',
+      ));
+      expect(resolve(airingAt: DateTime.utc(2026, 10, 18, 20)), (
+        day: 'monday',
+        time: '03:00',
+      ));
+      expect(
+        resolve(airingAt: DateTime.utc(2026, 10, 16, 3), offsetHours: -5),
+        (day: 'thursday', time: '22:00'),
+      );
+    });
+
+    test('AniList wins over a MAL slot that disagrees with it', () {
+      final slot = resolve(
+        airingAt: fridayJstEvening,
+        day: 'friday',
+        time: '23:30',
+      );
+
+      expect(slot, (day: 'friday', time: '21:00'));
+    });
+
+    test('AniList wins even when MAL names another weekday', () {
+      final slot = resolve(
+        airingAt: fridayJstEvening,
+        day: 'sunday',
+        time: '01:00',
+      );
+
+      expect(slot?.day, 'friday');
+    });
+
+    test('falls back to the converted MAL slot without an AniList time', () {
+      expect(resolve(day: 'friday', time: '23:00'), (
+        day: 'friday',
+        time: '21:00',
+      ));
+      expect(
+        resolve(day: 'friday', time: '23:00'),
+        convertJstBroadcastToLocal(
+          'friday',
+          '23:00',
+          localOffset: const Duration(hours: 7),
+        ),
+      );
+    });
+
+    test('is null when neither source is usable', () {
+      expect(resolve(), isNull);
+      expect(resolve(day: 'friday'), isNull);
+      expect(resolve(time: '23:00'), isNull);
+      expect(resolve(day: 'friday', time: 'late'), isNull);
+    });
+
+    test('treats a local DateTime and the same UTC instant alike', () {
+      final utc = DateTime.utc(2026, 10, 16, 14, 30);
+
+      expect(resolve(airingAt: utc.toLocal()), resolve(airingAt: utc));
+    });
+
+    test('uses the device zone by default', () {
+      final instant = DateTime.utc(2026, 10, 16, 14, 45);
+      final local = instant.toLocal();
+
+      final slot = resolveAirSlot(nextAiringAt: instant)!;
+
+      expect(
+        slot.time,
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}',
+      );
+      expect(
+        slot.day,
+        const [
+          'monday',
+          'tuesday',
+          'wednesday',
+          'thursday',
+          'friday',
+          'saturday',
+          'sunday',
+        ][local.weekday - 1],
+      );
+    });
+
+    test('keeps minutes, so a 23:26 broadcast is not rounded to 23:30', () {
+      expect(
+        resolve(airingAt: DateTime.utc(2026, 10, 16, 14, 26), offsetHours: 9),
+        (day: 'friday', time: '23:26'),
+      );
+    });
+  });
+
+  group('air slot labels', () {
+    const names = {
+      'monday': ('Mon', 'Mondays', 'Monday'),
+      'tuesday': ('Tue', 'Tuesdays', 'Tuesday'),
+      'wednesday': ('Wed', 'Wednesdays', 'Wednesday'),
+      'thursday': ('Thu', 'Thursdays', 'Thursday'),
+      'friday': ('Fri', 'Fridays', 'Friday'),
+      'saturday': ('Sat', 'Saturdays', 'Saturday'),
+      'sunday': ('Sun', 'Sundays', 'Sunday'),
+    };
+
+    test('format every weekday on cards, weekly slots and next episodes', () {
+      names.forEach((day, forms) {
+        final slot = (day: day, time: '23:30');
+
+        expect(shortAirSlotLabel(slot), '${forms.$1} 23:30', reason: day);
+        expect(
+          weeklyAirSlotLabel(slot),
+          '${forms.$2}, 23:30 your time',
+          reason: day,
+        );
+        expect(
+          nextAirSlotLabel(slot),
+          '${forms.$3}, 23:30 your time',
+          reason: day,
+        );
+      });
+    });
+
+    test('a card and its detail page agree on the day and the time', () {
+      final slot = resolveAirSlot(
+        nextAiringAt: DateTime.utc(2026, 10, 16, 14, 30),
+        localOffset: const Duration(hours: 7),
+      )!;
+
+      expect(shortAirSlotLabel(slot), 'Fri 21:30');
+      expect(weeklyAirSlotLabel(slot), 'Fridays, 21:30 your time');
+      expect(nextAirSlotLabel(slot), 'Friday, 21:30 your time');
+    });
+  });
 }

@@ -42,7 +42,52 @@ const _weekDays = <String>[
   'sunday',
 ];
 
-({String day, String time})? convertJstBroadcastToLocal(
+/// A weekday and clock time in the device zone. [day] is a lower-case English
+/// weekday name and [time] is `HH:mm`.
+typedef AirSlot = ({String day, String time});
+
+String _twoDigits(int value) => value.toString().padLeft(2, '0');
+
+String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
+
+/// The one place that decides which air time the UI shows for an anime.
+///
+/// AniList's [nextAiringAt] wins when it is known: it is the instant the
+/// countdown counts down to, so every label next to a countdown must agree
+/// with it. Without it the MAL weekly slot ([jstDay] and [jstTime], in JST)
+/// is converted to the device zone. Returns null when neither is usable.
+///
+/// [localOffset] overrides the device zone for tests.
+AirSlot? resolveAirSlot({
+  DateTime? nextAiringAt,
+  String? jstDay,
+  String? jstTime,
+  Duration? localOffset,
+}) {
+  if (nextAiringAt != null) {
+    final instant = nextAiringAt.toUtc();
+    final local = instant.add(localOffset ?? instant.toLocal().timeZoneOffset);
+    return (
+      day: _weekDays[local.weekday - 1],
+      time: '${_twoDigits(local.hour)}:${_twoDigits(local.minute)}',
+    );
+  }
+  return convertJstBroadcastToLocal(jstDay, jstTime, localOffset: localOffset);
+}
+
+/// `Fri 23:30`, the compact form used on cards.
+String shortAirSlotLabel(AirSlot slot) =>
+    '${_capitalize(slot.day).substring(0, 3)} ${slot.time}';
+
+/// `Fridays, 23:30 your time`, the weekly form used for a broadcast slot.
+String weeklyAirSlotLabel(AirSlot slot) =>
+    '${_capitalize(slot.day)}s, ${slot.time} your time';
+
+/// `Friday, 23:30 your time`, the form used for one upcoming episode.
+String nextAirSlotLabel(AirSlot slot) =>
+    '${_capitalize(slot.day)}, ${slot.time} your time';
+
+AirSlot? convertJstBroadcastToLocal(
   String? jstDay,
   String? jstTime, {
   Duration? localOffset,
@@ -60,8 +105,6 @@ const _weekDays = <String>[
   final minuteOfDay = total - dayShift * Duration.minutesPerDay;
   return (
     day: _weekDays[(dayIndex + dayShift) % 7],
-    time:
-        '${(minuteOfDay ~/ 60).toString().padLeft(2, '0')}:'
-        '${(minuteOfDay % 60).toString().padLeft(2, '0')}',
+    time: '${_twoDigits(minuteOfDay ~/ 60)}:${_twoDigits(minuteOfDay % 60)}',
   );
 }

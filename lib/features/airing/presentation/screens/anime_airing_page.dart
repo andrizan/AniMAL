@@ -1,4 +1,5 @@
 import 'package:animal/core/theme/app_spacing.dart';
+import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/features/airing/providers/airing_providers.dart';
@@ -255,10 +256,7 @@ class _AiringHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final local = airingAt.toLocal();
-    final time =
-        '${local.hour.toString().padLeft(2, '0')}:'
-        '${local.minute.toString().padLeft(2, '0')}';
+    final time = resolveAirSlot(nextAiringAt: airingAt)!.time;
 
     return Row(
       children: [

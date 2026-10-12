@@ -1,11 +1,14 @@
 import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_spacing.dart';
+import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart' show Genre;
 import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
+import 'package:animal/features/detail/presentation/widgets/detail_sections.dart'
+    show broadcastLabel;
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -283,6 +286,99 @@ void main() {
         tester,
         anime(broadcast: const Broadcast(dayOfWeek: 'monday')),
       );
+
+      expect(find.byIcon(Icons.access_time), findsNothing);
+    });
+  });
+
+  group('air time', () {
+    // 2026-10-16 14:00 UTC, a Friday evening in Japan.
+    final airingAt = DateTime.utc(2026, 10, 16, 14, 26);
+    const malSlot = Broadcast(dayOfWeek: 'monday', startTime: '04:13');
+
+    AiringEntry next() => AiringEntry(
+      anilistId: 1,
+      malId: 1,
+      title: 'Frieren',
+      airingAt: airingAt,
+      episode: 5,
+      timeUntilAiring: 90000,
+    );
+
+    String shown(WidgetTester tester) {
+      final footer = find.byIcon(Icons.access_time);
+      expect(footer, findsOneWidget);
+      final row = find.ancestor(of: footer, matching: find.byType(Row)).first;
+      return tester
+          .widgetList<Text>(
+            find.descendant(of: row, matching: find.byType(Text)),
+          )
+          .single
+          .data!;
+    }
+
+    testWidgets('the next AniList airing wins over the MAL slot', (
+      tester,
+    ) async {
+      await pumpCard(tester, anime(broadcast: malSlot), nextAiring: next());
+
+      final fromAniList = shortAirSlotLabel(
+        resolveAirSlot(nextAiringAt: airingAt)!,
+      );
+      final fromMal = shortAirSlotLabel(
+        convertJstBroadcastToLocal('monday', '04:13')!,
+      );
+      expect(fromAniList, isNot(fromMal));
+      expect(shown(tester), fromAniList);
+      expect(find.text(fromMal), findsNothing);
+    });
+
+    testWidgets('shows the same time as the detail page would', (tester) async {
+      await pumpCard(tester, anime(broadcast: malSlot), nextAiring: next());
+
+      final slot = resolveAirSlot(nextAiringAt: airingAt)!;
+      expect(shown(tester), shortAirSlotLabel(slot));
+      expect(
+        broadcastLabel(malSlot, nextAiringAt: airingAt),
+        weeklyAirSlotLabel(slot),
+      );
+    });
+
+    testWidgets('shows the AniList time even without a MAL broadcast', (
+      tester,
+    ) async {
+      await pumpCard(tester, anime(), nextAiring: next());
+
+      expect(
+        shown(tester),
+        shortAirSlotLabel(resolveAirSlot(nextAiringAt: airingAt)!),
+      );
+    });
+
+    testWidgets('falls back to the MAL slot without an AniList airing', (
+      tester,
+    ) async {
+      await pumpCard(tester, anime(broadcast: malSlot));
+
+      expect(
+        shown(tester),
+        shortAirSlotLabel(convertJstBroadcastToLocal('monday', '04:13')!),
+      );
+    });
+
+    testWidgets('a start time without a weekday still shows a time', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        anime(broadcast: const Broadcast(startTime: '23:00')),
+      );
+
+      expect(shown(tester), convertJstToLocal('23:00'));
+    });
+
+    testWidgets('shows no time at all without either source', (tester) async {
+      await pumpCard(tester, anime());
 
       expect(find.byIcon(Icons.access_time), findsNothing);
     });

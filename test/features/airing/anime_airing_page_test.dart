@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/providers.dart';
+import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/features/airing/presentation/screens/anime_airing_page.dart';
@@ -143,6 +144,39 @@ void main() {
     expect(find.byType(CountdownBadge), findsNWidgets(2));
     expect(find.text('Episode 4'), findsNWidgets(2));
     expect(find.textContaining('Ep 4'), findsNothing);
+  });
+
+  testWidgets('the card shows the local airing time, converted only once', (
+    tester,
+  ) async {
+    final airingAt = DateTime.now().toUtc().add(const Duration(hours: 5));
+    await open(
+      tester,
+      () => week(
+        onToday: [
+          AiringEntry(
+            anilistId: 1,
+            malId: 1,
+            title: 'Show 1',
+            airingAt: airingAt,
+            episode: 4,
+            timeUntilAiring: const Duration(hours: 5).inSeconds,
+          ),
+        ],
+      ),
+    );
+
+    final local = airingAt.toLocal();
+    final expected =
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
+    expect(find.text(expected), findsOneWidget);
+    // No second clock time from a MAL broadcast on the same card.
+    expect(find.byIcon(Icons.access_time), findsNothing);
+    expect(
+      find.text(resolveAirSlot(nextAiringAt: airingAt)!.time),
+      findsOneWidget,
+    );
   });
 
   testWidgets('an entry without a MAL id says so on the card', (tester) async {

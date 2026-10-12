@@ -833,6 +833,78 @@ void main() {
       );
     });
 
+    group('air time', () {
+      // A moment well in the future so the countdown is stable.
+      final airingAt = DateTime.now().toUtc().add(
+        const Duration(days: 2, hours: 1, minutes: 7),
+      );
+      final slot = resolveAirSlot(nextAiringAt: airingAt)!;
+
+      AniListAnimeExtra extra() => AniListAnimeExtra(
+        nextAiring: AniListNextAiring(
+          airingAt: airingAt,
+          episode: 7,
+          timeUntilAiring: airingAt
+              .difference(DateTime.now().toUtc())
+              .inSeconds,
+        ),
+      );
+
+      testWidgets('Information and Next Episode show the same time', (
+        tester,
+      ) async {
+        // _detail() has a MAL slot of Fridays 23:00 JST that disagrees.
+        await open(tester, extra: extra);
+        await scrollTo(tester, find.text('Information'));
+
+        expect(find.text(weeklyAirSlotLabel(slot)), findsOneWidget);
+
+        await scrollTo(tester, find.text('Next Episode'));
+        expect(find.text(nextAirSlotLabel(slot)), findsOneWidget);
+      });
+
+      testWidgets('the MAL slot is not shown while AniList knows better', (
+        tester,
+      ) async {
+        await open(
+          tester,
+          detail: () => _detail().copyWith(
+            broadcast: const Broadcast(dayOfWeek: 'monday', startTime: '04:13'),
+          ),
+          extra: extra,
+        );
+        await scrollTo(tester, find.text('Information'));
+
+        final mal = broadcastLabel(
+          const Broadcast(dayOfWeek: 'monday', startTime: '04:13'),
+        );
+        expect(find.text(weeklyAirSlotLabel(slot)), findsOneWidget);
+        expect(mal, isNot(weeklyAirSlotLabel(slot)));
+        expect(find.text(mal), findsNothing);
+      });
+
+      testWidgets('a MAL-only broadcast keeps its own slot', (tester) async {
+        await open(tester);
+        await scrollTo(tester, find.text('Information'));
+
+        expect(find.text(broadcastLabel(_detail().broadcast)), findsOneWidget);
+      });
+
+      testWidgets('AniList alone is enough to show a broadcast row', (
+        tester,
+      ) async {
+        await open(
+          tester,
+          detail: () => _detail().copyWith(broadcast: null),
+          extra: extra,
+        );
+        await scrollTo(tester, find.text('Information'));
+
+        expect(find.text('Broadcast'), findsOneWidget);
+        expect(find.text(weeklyAirSlotLabel(slot)), findsOneWidget);
+      });
+    });
+
     testWidgets('groups external links and names them by site', (tester) async {
       await open(
         tester,
