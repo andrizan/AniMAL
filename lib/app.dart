@@ -4,10 +4,12 @@ import 'package:animal/core/providers.dart';
 import 'package:animal/core/router/app_router.dart';
 import 'package:animal/core/router/deep_links.dart';
 import 'package:animal/core/theme/app_theme.dart';
+import 'package:animal/core/utils/update_check.dart';
 import 'package:animal/shared/providers/theme_providers.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -19,12 +21,16 @@ class App extends ConsumerStatefulWidget {
 class _AppState extends ConsumerState<App> {
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<int>? _notificationSubscription;
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
     unawaited(_initDeepLinks());
     _initNotificationListener();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_announceUpdate());
+    });
   }
 
   @override
@@ -41,6 +47,32 @@ class _AppState extends ConsumerState<App> {
     if (initialLink != null) _handleLink(initialLink);
 
     _linkSubscription = appLinks.uriLinkStream.listen(_handleLink);
+  }
+
+  /// Tells the user, once per launch, when a newer release is published.
+  Future<void> _announceUpdate() async {
+    final update = await findNewerRelease(
+      fetchRelease: ref.read(latestReleaseProvider),
+      currentVersion: ref.read(appVersionProvider),
+    );
+    if (update == null || !mounted) return;
+    _messengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text('AniMAL v${update.version} is available'),
+        duration: const Duration(seconds: 12),
+        persist: false,
+        showCloseIcon: true,
+        action: SnackBarAction(
+          label: 'Download',
+          onPressed: () => unawaited(
+            launchUrl(
+              Uri.parse(update.url),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _handleLink(Uri uri) {
@@ -85,6 +117,7 @@ class _AppState extends ConsumerState<App> {
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
       themeMode: themeMode,
+      scaffoldMessengerKey: _messengerKey,
       routerConfig: router,
     );
   }

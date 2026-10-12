@@ -14,6 +14,7 @@ import 'package:animal/features/auth/data/repositories/mal_auth_repository.dart'
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Riverpod 3 retries a failed provider up to 10 times with backoff and keeps
 /// the state loading meanwhile. Every provider here is a cached network read
@@ -33,6 +34,12 @@ final latestReleaseProvider =
     Provider<Future<Map<String, dynamic>?> Function()>(
       (ref) => fetchLatestRelease,
     );
+
+/// The installed app version; overridable in tests.
+final appVersionProvider = Provider<Future<String> Function()>(
+  (ref) =>
+      () async => (await PackageInfo.fromPlatform()).version,
+);
 
 /// Configured Dio client.
 final dioClientProvider = Provider<DioClient>((ref) {

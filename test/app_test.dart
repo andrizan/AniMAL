@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _method = MethodChannel('com.llfbandit.app_links/messages');
 const _events = EventChannel('com.llfbandit.app_links/events');
+const _launcher = MethodChannel('plugins.flutter.io/url_launcher');
 
 class _Notifications extends Fake implements AnimeNotificationService {
   _Notifications({this.launchId});
@@ -37,8 +38,14 @@ void main() {
   String? initialLink;
   MockStreamHandlerEventSink? linkSink;
   late List<String> visited;
+  late List<MethodCall> launched;
+  Future<Map<String, dynamic>?> Function() latestRelease = () async => null;
+  var releaseLookups = 0;
 
   setUp(() {
+    launched = [];
+    releaseLookups = 0;
+    latestRelease = () async => null;
     initialLink = null;
     linkSink = null;
     visited = [];
@@ -49,21 +56,28 @@ void main() {
       _method,
       (call) async => call.method == 'getInitialLink' ? initialLink : null,
     );
-    messenger.setMockStreamHandler(
-      _events,
-      MockStreamHandler.inline(
-        onListen: (_, sink) {
-          linkSink = sink;
-        },
-      ),
-    );
+    messenger
+      ..setMockStreamHandler(
+        _events,
+        MockStreamHandler.inline(
+          onListen: (_, sink) {
+            linkSink = sink;
+          },
+        ),
+      )
+      ..setMockMethodCallHandler(_launcher, (call) async {
+        launched.add(call);
+        return true;
+      });
   });
 
   tearDown(() {
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    messenger.setMockMethodCallHandler(_method, null);
-    messenger.setMockStreamHandler(_events, null);
+    messenger
+      ..setMockMethodCallHandler(_method, null)
+      ..setMockMethodCallHandler(_launcher, null)
+      ..setMockStreamHandler(_events, null);
   });
 
   GoRouter fakeRouter() => GoRouter(
@@ -91,13 +105,22 @@ void main() {
     ],
   );
 
-  Future<_Notifications> open(WidgetTester tester, {int? launchId}) async {
+  Future<_Notifications> open(
+    WidgetTester tester, {
+    int? launchId,
+    String version = '2.10.0',
+  }) async {
     final notifications = _Notifications(launchId: launchId);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           notificationServiceProvider.overrideWithValue(notifications),
           routerProvider.overrideWithValue(fakeRouter()),
+          latestReleaseProvider.overrideWithValue(() {
+            releaseLookups++;
+            return latestRelease();
+          }),
+          appVersionProvider.overrideWithValue(() async => version),
         ],
         child: const App(),
       ),
@@ -134,6 +157,149 @@ void main() {
       tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
       ThemeMode.light,
     );
+  });
+
+  group('update notice', () {
+    Map<String, dynamic> release(String tag) => {
+      'tag_name': tag,
+      'html_url': 'https://github.com/andrizan/AniMAL/releases/tag/$tag',
+      'body': 'notes',
+    };
+
+    testWidgets('appears when a newer version is published', (tester) async {
+      latestRelease = () async => release('v2.11.0');
+
+      await open(tester);
+
+      expect(find.text('AniMAL v2.11.0 is available'), findsOneWidget);
+      expect(find.text('Download'), findsOneWidget);
+    });
+
+    testWidgets('Download opens the release page in the browser', (
+      tester,
+    ) async {
+      latestRelease = () async => release('v2.11.0');
+      await open(tester);
+
+      await tester.tap(find.text('Download'));
+      await tester.pumpAndSettle();
+
+      final call = launched.single;
+      final args = call.arguments as Map;
+      expect(call.method, 'launch');
+      expect(
+        args['url'],
+        'https://github.com/andrizan/AniMAL/releases/tag/v2.11.0',
+      );
+      expect(args['useWebView'], isFalse);
+    });
+
+    testWidgets('does not appear on the latest version', (tester) async {
+      latestRelease = () async => release('v2.10.0');
+
+      await open(tester);
+
+      expect(find.textContaining('is available'), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('does not appear when the installed version is newer', (
+      tester,
+    ) async {
+      latestRelease = () async => release('v2.9.0');
+
+      await open(tester);
+
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('stays quiet when the check fails', (tester) async {
+      latestRelease = () async => throw Exception('offline');
+
+      await open(tester);
+
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.text('START'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('stays quiet when GitHub has no answer', (tester) async {
+      await open(tester);
+
+      expect(find.byType(SnackBar), findsNothing);
+      expect(releaseLookups, 1);
+    });
+
+    testWidgets('is checked once per launch, not on every rebuild', (
+      tester,
+    ) async {
+      latestRelease = () async => release('v2.11.0');
+      await open(tester);
+
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pumpAndSettle();
+
+      expect(releaseLookups, 1);
+    });
+
+    testWidgets('never holds up the first screen', (tester) async {
+      final gate = Completer<Map<String, dynamic>?>();
+      latestRelease = () => gate.future;
+
+      await open(tester);
+
+      expect(find.text('START'), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+
+      gate.complete(release('v2.11.0'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('AniMAL v2.11.0 is available'), findsOneWidget);
+    });
+
+    testWidgets('shows over the page that is open', (tester) async {
+      latestRelease = () async => release('v2.11.0');
+
+      await open(tester, launchId: 7);
+
+      expect(find.text('DETAIL 7'), findsOneWidget);
+      expect(find.text('AniMAL v2.11.0 is available'), findsOneWidget);
+    });
+
+    testWidgets('can be closed right away', (tester) async {
+      latestRelease = () async => release('v2.11.0');
+      await open(tester);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.text('AniMAL v2.11.0 is available'), findsNothing);
+      expect(launched, isEmpty);
+    });
+
+    testWidgets('names the version without a leading v', (tester) async {
+      latestRelease = () async => release('v3.0.0');
+
+      await open(tester);
+
+      expect(find.text('AniMAL v3.0.0 is available'), findsOneWidget);
+      expect(find.textContaining('vv'), findsNothing);
+    });
+
+    testWidgets('stays up long enough to read and goes away by itself', (
+      tester,
+    ) async {
+      latestRelease = () async => release('v2.11.0');
+      await open(tester);
+
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.text('AniMAL v2.11.0 is available'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 13));
+      await tester.pumpAndSettle();
+      expect(find.text('AniMAL v2.11.0 is available'), findsNothing);
+    });
   });
 
   group('notifications', () {

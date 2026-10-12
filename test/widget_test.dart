@@ -19,6 +19,8 @@ void main() {
           notificationServiceProvider.overrideWithValue(
             AnimeNotificationService(),
           ),
+          latestReleaseProvider.overrideWithValue(() async => null),
+          appVersionProvider.overrideWithValue(() async => '2.10.0'),
         ],
         child: const App(),
       ),
