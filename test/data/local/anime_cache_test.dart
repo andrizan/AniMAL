@@ -96,6 +96,15 @@ void main() {
       );
     });
 
+    test('ranking: an anime listed twice is stored once', () async {
+      final list = [makeAnime(99), makeAnime(100), makeAnime(99)];
+      await cache.saveAnimeRanking('all', 20, list);
+      expect(
+        (await cache.getAnimeRanking('all', 20))!.map((a) => a.id).toList(),
+        [99, 100],
+      );
+    });
+
     test('userlist: round-trip with offset', () async {
       final list = [makeAnime(7)];
       await cache.saveUserAnimeList('watching', 100, 0, list);

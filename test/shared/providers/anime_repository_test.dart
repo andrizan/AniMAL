@@ -7,6 +7,7 @@ import 'package:animal/data/local/anime_cache.dart';
 import 'package:animal/data/local/app_database.dart';
 import 'package:animal/data/local/sqlite_anime_cache.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
+import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/season.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
@@ -338,6 +339,20 @@ void main() {
     });
   });
 
+  group('cache writes', () {
+    test('a list that cannot be stored is still returned', () async {
+      final broken = AnimeRepository(
+        _ref(container),
+        MalApiClient(fakeDio(adapter)),
+        _SaveFailingCache(appDb),
+      );
+
+      final list = await broken.getAnimeRanking();
+
+      expect(list.map((a) => a.id), [1, 2]);
+    });
+  });
+
   group('stale fallback', () {
     test(
       'an invalidated user list is served from disk when the network fails',
@@ -415,6 +430,19 @@ void main() {
 Ref _ref(ProviderContainer c) => c.read(_refProvider);
 
 final _refProvider = Provider<Ref>((ref) => ref);
+
+class _SaveFailingCache extends SqliteAnimeCache {
+  _SaveFailingCache(AppDatabase db) : super(db);
+
+  @override
+  Future<void> saveAnimeRanking(
+    String rankingType,
+    int limit,
+    List<Anime> results,
+  ) async {
+    throw StateError('database is locked');
+  }
+}
 
 class _ThrowingAdapter implements HttpClientAdapter {
   _ThrowingAdapter(this.type);

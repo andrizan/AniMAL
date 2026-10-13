@@ -267,6 +267,21 @@ void main() {
       expect(out.map((a) => a.id), [1, 2, 3]);
     });
 
+    test('an anime that shifts onto the next page is listed once', () async {
+      final adapter = FakeAdapter(
+        (o) => FakeResponse.json(switch (o.queryParameters['offset']) {
+          0 => page([1, 2]),
+          500 => page([2, 3]),
+          _ => page([3]),
+        }),
+      );
+      final dio = fakeDio(adapter, baseUrl: 'https://example.test');
+
+      final out = await MalApiClient(dio).getUndatedUpcomingAnime();
+
+      expect(out.map((a) => a.id), [1, 2, 3]);
+    });
+
     test(
       'an empty page ends the scan even if it links to a next one',
       () async {

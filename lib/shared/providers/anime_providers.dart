@@ -358,7 +358,11 @@ class AnimeRepository {
         final fresh = await networkFetch();
         final isMissing = isMissingNetworkValue?.call(fresh) ?? false;
         if (!isMissing) {
-          await writeCache(fresh);
+          try {
+            await writeCache(fresh);
+          } on Object catch (e) {
+            _logger?.w('Could not cache $key', error: e);
+          }
         }
         return fresh;
       } on Object catch (e) {
@@ -389,7 +393,11 @@ class AnimeRepository {
         final fresh = await networkFetch();
         final isMissing = isMissingNetworkValue?.call(fresh) ?? false;
         if (!isMissing) {
-          await writeCache(fresh);
+          try {
+            await writeCache(fresh);
+          } on Object catch (e) {
+            _logger?.w('Could not cache $key', error: e);
+          }
         }
         return fresh;
       } on Object catch (e) {

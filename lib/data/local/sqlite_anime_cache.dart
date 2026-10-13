@@ -386,9 +386,10 @@ class SqliteAnimeCache implements AnimeCache {
 
   Future<void> _saveList(
     String key,
-    List<Anime> results, {
+    List<Anime> all, {
     String relation = 'search',
   }) async {
+    final results = {for (final a in all) a.id: a}.values.toList();
     final itemsTable = relation == 'userlist'
         ? 'user_anime_list_item'
         : 'anime_query_item';
