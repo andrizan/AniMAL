@@ -185,6 +185,22 @@ void main() {
       expect(out!.name, 'Sunrise');
       expect(out.mediaWorks.length, 1);
     });
+
+    test('a work listed twice is kept once, the first one', () async {
+      const s = AniListStudioDetail(
+        id: 7,
+        name: 'Sunrise',
+        isAnimationStudio: true,
+        mediaWorks: [
+          AniListMediaAppearance(anilistId: 100, title: 'Gundam'),
+          AniListMediaAppearance(anilistId: 101, title: 'Bebop'),
+          AniListMediaAppearance(anilistId: 100, title: 'Gundam again'),
+        ],
+      );
+      await cache.saveStudio(s);
+      final out = await cache.getStudio(7);
+      expect(out!.mediaWorks.map((m) => m.title), ['Gundam', 'Bebop']);
+    });
   });
 
   group('AniListCache.staff', () {

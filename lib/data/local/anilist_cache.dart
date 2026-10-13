@@ -152,6 +152,31 @@ class SqliteAniListCache implements AniListCache {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> _insertWorks(
+    DatabaseExecutor db,
+    AniListWorksSource source,
+    int id,
+    List<AniListMediaAppearance> works,
+  ) async {
+    final store = _worksStore(source);
+    final batch = db.batch();
+    for (var i = 0; i < works.length; i++) {
+      final m = works[i];
+      batch.insert(store.table, {
+        store.owner: id,
+        'anilist_id': m.anilistId,
+        'mal_id': m.malId,
+        'title': m.title,
+        'title_english': m.titleEnglish,
+        'image_url': m.imageUrl,
+        'type': m.type,
+        'role': m.role,
+        'position': i,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    await batch.commit(noResult: true);
+  }
+
   @override
   Future<void> appendWorks(
     AniListWorksSource source,
@@ -792,20 +817,12 @@ class SqliteAniListCache implements AniListCache {
         where: 'character_id = ?',
         whereArgs: [detail.id],
       );
-      for (var i = 0; i < detail.mediaAppearances.length; i++) {
-        final m = detail.mediaAppearances[i];
-        await txn.insert('anilist_character_media', {
-          'character_id': detail.id,
-          'anilist_id': m.anilistId,
-          'mal_id': m.malId,
-          'title': m.title,
-          'title_english': m.titleEnglish,
-          'image_url': m.imageUrl,
-          'type': m.type,
-          'role': m.role,
-          'position': i,
-        });
-      }
+      await _insertWorks(
+        txn,
+        AniListWorksSource.character,
+        detail.id,
+        detail.mediaAppearances,
+      );
       await _writeCursor(
         txn,
         AniListWorksSource.character,
@@ -908,20 +925,12 @@ class SqliteAniListCache implements AniListCache {
         where: 'staff_id = ?',
         whereArgs: [detail.id],
       );
-      for (var i = 0; i < detail.mediaWorks.length; i++) {
-        final m = detail.mediaWorks[i];
-        await txn.insert('anilist_staff_media', {
-          'staff_id': detail.id,
-          'anilist_id': m.anilistId,
-          'mal_id': m.malId,
-          'title': m.title,
-          'title_english': m.titleEnglish,
-          'image_url': m.imageUrl,
-          'type': m.type,
-          'role': m.role,
-          'position': i,
-        });
-      }
+      await _insertWorks(
+        txn,
+        AniListWorksSource.staff,
+        detail.id,
+        detail.mediaWorks,
+      );
       await _writeCursor(
         txn,
         AniListWorksSource.staff,
@@ -1041,20 +1050,12 @@ class SqliteAniListCache implements AniListCache {
         where: 'studio_id = ?',
         whereArgs: [detail.id],
       );
-      for (var i = 0; i < detail.mediaWorks.length; i++) {
-        final m = detail.mediaWorks[i];
-        await txn.insert('anilist_studio_media', {
-          'studio_id': detail.id,
-          'anilist_id': m.anilistId,
-          'mal_id': m.malId,
-          'title': m.title,
-          'title_english': m.titleEnglish,
-          'image_url': m.imageUrl,
-          'type': m.type,
-          'role': m.role,
-          'position': i,
-        });
-      }
+      await _insertWorks(
+        txn,
+        AniListWorksSource.studio,
+        detail.id,
+        detail.mediaWorks,
+      );
       await _writeCursor(
         txn,
         AniListWorksSource.studio,
