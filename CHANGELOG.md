@@ -1,3 +1,12 @@
+## [Unreleased]
+
+### Bug Fixes
+
+- Drop duplicate works so studio detail saves
+
+### Chores
+
+- Bump version to 2.11.1+15 [skip ci]
 ## [2.11.1] - 2026-10-12
 
 ### Chores
