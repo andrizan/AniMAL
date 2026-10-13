@@ -109,6 +109,15 @@ class _FailingCache extends SqliteAniListCache {
   }
 }
 
+class _SaveFailingStudioCache extends SqliteAniListCache {
+  _SaveFailingStudioCache(AppDatabase db) : super(db);
+
+  @override
+  Future<void> saveStudio(AniListStudioDetail detail) async {
+    throw StateError('database is locked');
+  }
+}
+
 void main() {
   setUpAll(() {
     sqfliteFfiInit();
@@ -451,6 +460,64 @@ void main() {
 
       expect(again.name, 'Bones');
       expect(gqlCalls(), 1);
+    });
+
+    test(
+      'a work listed twice is kept once and the detail still saves',
+      () async {
+        respond = (_) => FakeResponse.json(
+          _gql({
+            'Studio': {
+              'id': 7,
+              'name': 'Bones',
+              'isAnimationStudio': true,
+              'siteUrl': null,
+              'favourites': null,
+              'media': {
+                'edges': [
+                  {'node': _media(12)},
+                  {'node': _media(13)},
+                  {'node': _media(12)},
+                ],
+              },
+            },
+          }),
+        );
+
+        final s = await client.getStudioDetail(7);
+        final stored = (await cache.getStudio(7))!;
+
+        expect(s.mediaWorks.map((m) => m.anilistId), [12, 13]);
+        expect(stored.mediaWorks.map((m) => m.anilistId), [12, 13]);
+      },
+    );
+
+    test('a detail that cannot be stored is still shown', () async {
+      respond = (_) => FakeResponse.json(
+        _gql({
+          'Studio': {
+            'id': 7,
+            'name': 'Bones',
+            'isAnimationStudio': true,
+            'siteUrl': null,
+            'favourites': null,
+            'media': {
+              'edges': [
+                {'node': _media(12)},
+              ],
+            },
+          },
+        }),
+      );
+      final failing = AniListClient(
+        cache: _SaveFailingStudioCache(appDb),
+        logger: Logger(level: Level.off),
+      )..dio.httpClientAdapter = adapter;
+
+      final s = await failing.getStudioDetail(7);
+
+      expect(s.name, 'Bones');
+      expect(s.mediaWorks.single.anilistId, 12);
     });
   });
 

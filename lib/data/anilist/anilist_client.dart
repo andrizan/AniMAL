@@ -534,21 +534,25 @@ class AniListClient {
     List<dynamic> edges, {
     String? roleKey,
   }) {
-    return edges.map((e) {
-      final edge = e as Map<String, dynamic>;
-      final node = edge['node'] as Map<String, dynamic>;
-      final title = node['title'] as Map<String, dynamic>;
-      final cover = node['coverImage'] as Map<String, dynamic>;
-      return AniListMediaAppearance(
-        anilistId: node['id'] as int,
-        malId: node['idMal'] as int?,
-        title: title['romaji'] as String,
-        titleEnglish: title['english'] as String?,
-        imageUrl: cover['medium'] as String?,
-        type: node['type'] as String?,
-        role: roleKey == null ? null : edge[roleKey] as String?,
-      );
-    }).toList();
+    final seen = <int>{};
+    return edges
+        .map((e) {
+          final edge = e as Map<String, dynamic>;
+          final node = edge['node'] as Map<String, dynamic>;
+          final title = node['title'] as Map<String, dynamic>;
+          final cover = node['coverImage'] as Map<String, dynamic>;
+          return AniListMediaAppearance(
+            anilistId: node['id'] as int,
+            malId: node['idMal'] as int?,
+            title: title['romaji'] as String,
+            titleEnglish: title['english'] as String?,
+            imageUrl: cover['medium'] as String?,
+            type: node['type'] as String?,
+            role: roleKey == null ? null : edge[roleKey] as String?,
+          );
+        })
+        .where((m) => seen.add(m.anilistId))
+        .toList();
   }
 
   /// One page (1-based) of the works of a character, staff member or studio.
@@ -715,7 +719,11 @@ class AniListClient {
     try {
       final fresh = await networkFetch();
       if (isMissingNetworkValue == null || !isMissingNetworkValue(fresh)) {
-        await writeCache(fresh);
+        try {
+          await writeCache(fresh);
+        } on Object catch (e) {
+          _logger.w('Could not cache $key: $e');
+        }
       }
       return fresh;
     } on Object {
