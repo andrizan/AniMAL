@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:animal/data/local/airing_cache.dart';
@@ -157,4 +158,53 @@ void main() {
     expect(week[0].myListStatus, isNull);
     expect(week[1].myListStatus, isNotNull);
   });
+
+  test(
+    'syncMyListStatuses copies the stored anime statuses into the week',
+    () async {
+      final now = DateTime.now().toUtc();
+      final monday = now.subtract(Duration(days: now.weekday - 1));
+      final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+      final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+      AiringEntry entry(int anilistId, int? malId) => AiringEntry(
+        anilistId: anilistId,
+        malId: malId,
+        title: 'T$anilistId',
+        airingAt: weekStart.add(Duration(hours: anilistId)),
+        episode: 1,
+        timeUntilAiring: 0,
+        myListStatus: const MyListStatus(
+          status: WatchStatus.watching,
+          numEpisodesWatched: 1,
+        ),
+      );
+      await cache.saveMergedWeek(weekStartSec, {
+        'monday': [entry(1, 10), entry(2, 20), entry(3, 30), entry(4, null)],
+      });
+      await appDb.raw.insert('anime', {
+        'mal_id': 10,
+        'title': 'Completed on the website',
+        'my_list_status_json': jsonEncode({
+          'status': 'completed',
+          'num_episodes_watched': 12,
+          'score': 9,
+        }),
+        'my_list_status_user': 'completed',
+      });
+      await appDb.raw.insert('anime', {
+        'mal_id': 20,
+        'title': 'Not in the list',
+      });
+
+      await cache.syncMyListStatuses();
+
+      final week = (await cache.getMergedWeek(weekStartSec))!['monday']!;
+      expect(week[0].myListStatus?.status, WatchStatus.completed);
+      expect(week[0].myListStatus?.numEpisodesWatched, 12);
+      expect(week[0].myListStatus?.score, 9);
+      expect(week[1].myListStatus, isNull);
+      expect(week[2].myListStatus?.numEpisodesWatched, 1);
+      expect(week[3].myListStatus?.numEpisodesWatched, 1);
+    },
+  );
 }

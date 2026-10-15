@@ -178,11 +178,11 @@ refetch fails, the stored rows are served instead of an error.
 | Endpoint | Key | Refresh |
 |----------|-----|---------|
 | Search | `search_<q>_<limit>` | Button only (300 ms debounce at provider) |
-| Seasonal | `seasonal_<y>_<season>_<limit>` | Button only (empty seasons cached) |
+| Seasonal | `seasonal_<y>_<season>_500` | Pull to refresh (empty seasons cached) |
 | Ranking | `ranking_<type>_<limit>` | Button only |
-| Undated upcoming (Later tab) | `ranking_upcoming_undated_500` | Button only (first 3 pages of the `upcoming` ranking, filtered on `start_date`) |
+| Undated upcoming (Later tab) | `ranking_upcoming_undated_500` | Pull to refresh (first 3 pages of the `upcoming` ranking, filtered on `start_date`) |
 | Detail | `detail_<id>` | Pull to refresh |
-| User list | `userlist_<status>_500_0` (one complete list per status) | Button only (invalidated on edit/delete) |
+| User list | `userlist_<status>_500_0` (one complete list per status) | Pull to refresh or button (patched in place on edit/delete) |
 | User info | `userInfo` | Button only |
 | AniList weekly | `weeklyAiringSchedule:<YYYY-MM-DD>` | Button only |
 | Merged weekly | `weekly_schedule:<YYYY-MM-DD>` | Button only |
@@ -192,7 +192,7 @@ refetch fails, the stored rows are served instead of an error.
 - **Works lists** (character appearances, staff works, studio productions) scroll infinitely in pages of 50, AniList's maximum. Page 1 comes with the detail; every further page is appended to SQLite with a cursor (`anilist_works_progress`), so reopening a page shows everything loaded so far with no request and continues from where it stopped.
 - **Rate limit** `429` → `ApiException.rateLimited` (no auto-retry), health tracked in `ApiHealthTracker`.
 - **Provider errors surface at once**: Riverpod's default retry is disabled (`noProviderRetry`), so a failed load shows its error and a Retry button instead of an endless spinner.
-- **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update every stored snapshot of the personal status (user lists, `anime` rows, merged airing week) and bump `animeListVersionProvider`. Providers that watch it render with `skipLoadingOnReload` so an edit never flashes a spinner or resets scroll. The airing schedule itself is never refetched by list edits.
+- **Mutations** (`updateAnimeListStatus`/`deleteAnimeFromList`) update every stored snapshot of the personal status (user lists, `anime` rows, merged airing week) and bump `animeListVersionProvider`. Providers that watch it render with `skipLoadingOnReload` so an edit never flashes a spinner or resets scroll. The airing schedule itself is never refetched by list edits, nor by a list refresh, which only copies the statuses it brought into the stored week.
 
 **Physical retention** (`app_database.dart::_runStartupCleanup` on `AppDatabase.open`):
 

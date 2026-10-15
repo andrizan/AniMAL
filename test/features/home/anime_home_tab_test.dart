@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/notification/anime_notification_service.dart';
 import 'package:animal/core/providers.dart';
+import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/local/anime_cache.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/my_list_status.dart';
@@ -61,6 +62,15 @@ class _Airing extends Fake implements AiringRepository {
   }
 }
 
+class _AiringCache extends Fake implements AiringCache {
+  int syncs = 0;
+
+  @override
+  Future<void> syncMyListStatuses() async {
+    syncs++;
+  }
+}
+
 class _Notifications extends Fake implements AnimeNotificationService {
   @override
   bool get permissionGranted => true;
@@ -73,6 +83,7 @@ void main() {
   late _Repo repo;
   late _Cache cache;
   late _Airing airing;
+  late _AiringCache airingCache;
 
   Future<void> open(
     WidgetTester tester, [
@@ -82,6 +93,7 @@ void main() {
     repo = _Repo();
     cache = _Cache();
     airing = _Airing();
+    airingCache = _AiringCache();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -90,6 +102,7 @@ void main() {
           animeRepositoryProvider.overrideWithValue(repo),
           animeCacheProvider.overrideWithValue(cache),
           airingRepositoryProvider.overrideWithValue(airing),
+          airingCacheProvider.overrideWithValue(airingCache),
         ],
         child: const MaterialApp(home: Scaffold(body: AnimeHomeTab())),
       ),
@@ -214,9 +227,8 @@ void main() {
   });
 
   group('refresh', () {
-    testWidgets('reloads the active list and the airing schedule', (
-      tester,
-    ) async {
+    testWidgets('reloads the active list and syncs the stored week, '
+        'leaving the schedule alone', (tester) async {
       await open(tester);
       final before = repo.loads.length;
 
@@ -225,8 +237,9 @@ void main() {
 
       expect(repo.loads.length, greaterThan(before));
       expect(repo.loads.last, WatchStatus.watching);
-      expect(airing.refreshes, 1);
       expect(cache.invalidated.single.$1, 'watching');
+      expect(airingCache.syncs, 1);
+      expect(airing.refreshes, 0);
     });
 
     testWidgets('shows a spinner and ignores taps while refreshing', (
@@ -248,7 +261,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.refresh), findsOneWidget);
-      expect(airing.refreshes, 1);
+      expect(airingCache.syncs, 1);
     });
 
     testWidgets('refreshes the tab that is open, not always Watching', (

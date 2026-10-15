@@ -15,6 +15,11 @@ abstract interface class AiringCache {
     Map<String, List<AiringEntry>> week,
   );
   Future<void> updateMyListStatus(int malId, MyListStatus? status);
+
+  /// Copies the personal status of every anime from its shared `anime` row
+  /// into the stored weeks, so a user list fetched again reaches the Airing
+  /// tab without the schedule being fetched again.
+  Future<void> syncMyListStatuses();
 }
 
 class SqliteAiringCache implements AiringCache {
@@ -141,6 +146,18 @@ class SqliteAiringCache implements AiringCache {
       where: 'mal_id = ?',
       whereArgs: [malId],
     );
+  }
+
+  @override
+  Future<void> syncMyListStatuses() async {
+    await _db.rawUpdate('''
+      UPDATE merged_airing_entry
+      SET my_list_status_json = (
+        SELECT a.my_list_status_json FROM anime a
+        WHERE a.mal_id = merged_airing_entry.mal_id
+      )
+      WHERE mal_id IN (SELECT mal_id FROM anime)
+    ''');
   }
 
   AiringEntry _entryFromRow(Map<String, Object?> row) {

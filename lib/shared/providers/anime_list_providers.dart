@@ -109,8 +109,9 @@ final userAnimeListProvider = FutureProvider.family<List<Anime>, WatchStatus>((
   return repo.getUserAnimeList(status: status);
 });
 
-/// Force-refreshes the user list of a status together with the airing
-/// schedule. The AniList schedule and the MAL list are fetched in parallel.
+/// Force-refreshes the user list of a status from MAL, then copies the
+/// statuses it brought into the stored airing week so the Airing tab agrees.
+/// The AniList schedule itself is not fetched: it has its own refresh.
 final refreshUserAnimeListProvider =
     Provider<Future<void> Function(WatchStatus)>((ref) {
       return (status) async {
@@ -121,19 +122,11 @@ final refreshUserAnimeListProvider =
               ApiConstants.malUserListPageSize,
               0,
             );
-        await Future.wait([
-          _refreshSchedule(ref),
-          _refreshUserList(ref, status),
-        ]);
+        await _refreshUserList(ref, status);
+        await ref.read(airingCacheProvider).syncMyListStatuses();
+        ref.invalidate(weeklyAiringProvider);
       };
     });
-
-Future<void> _refreshSchedule(Ref ref) async {
-  try {
-    await ref.read(airingRepositoryProvider).refreshWeeklySchedule();
-  } on Object catch (_) {}
-  ref.invalidate(weeklyAiringProvider);
-}
 
 Future<void> _refreshUserList(Ref ref, WatchStatus status) async {
   ref.invalidate(userAnimeListProvider(status));
