@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/providers.dart';
+import 'package:animal/core/utils/anilist_mappings.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/models/anime.dart';
@@ -245,7 +246,7 @@ class AiringRepository {
             airingAt: entry.airingAt.toUtc(),
             episode: entry.episode ?? 0,
             timeUntilAiring: liveRemaining > 0 ? liveRemaining : 0,
-            malScore: malAnime?.mean ?? entry.meanScore,
+            malScore: malAnime?.mean ?? scoreOutOfTen(entry.meanScore),
             genres: entry.genres,
             episodes: malAnime?.numEpisodes ?? entry.episodes,
             format: entry.format,

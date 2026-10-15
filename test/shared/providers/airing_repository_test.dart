@@ -194,7 +194,8 @@ void main() {
       },
     );
 
-    test('falls back to AniList numbers when MAL has no match', () async {
+    test("falls back to AniList numbers, on MAL's scale, when MAL has no "
+        'match', () async {
       anilistPages = [
         _schedule(
           id: 2,
@@ -207,7 +208,7 @@ void main() {
 
       final e = (await allEntries()).single;
 
-      expect(e.malScore, 80);
+      expect(e.malScore, 8.0);
       expect(e.episodes, 12);
       expect(e.myListStatus, isNull);
     });
@@ -281,7 +282,7 @@ void main() {
 
       final e = (await allEntries()).single;
 
-      expect(e.malScore, 70);
+      expect(e.malScore, 7.0);
     });
   });
 
