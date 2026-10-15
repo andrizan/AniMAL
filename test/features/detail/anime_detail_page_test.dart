@@ -806,9 +806,9 @@ void main() {
         tester,
         extra: () => AniListAnimeExtra(
           nextAiring: AniListNextAiring(
-            airingAt: DateTime.now().add(const Duration(hours: 2)),
+            airingAt: DateTime.now().add(const Duration(hours: 2, minutes: 1)),
             episode: 7,
-            timeUntilAiring: 7200,
+            timeUntilAiring: 7260,
           ),
         ),
       );
@@ -819,6 +819,42 @@ void main() {
       expect(find.textContaining('2h 0m'), findsOneWidget);
       expect(find.text('Remind me before it airs'), findsOneWidget);
       expect(find.byType(SwitchListTile), findsOneWidget);
+    });
+
+    testWidgets('counts down from the air time, not from the stored seconds', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        extra: () => AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: DateTime.now().add(const Duration(hours: 5, minutes: 1)),
+            episode: 7,
+            timeUntilAiring: 3 * 86400,
+          ),
+        ),
+      );
+
+      await scrollTo(tester, find.text('Next Episode'));
+      expect(find.textContaining('5h 0m'), findsOneWidget);
+      expect(find.textContaining('3d'), findsNothing);
+    });
+
+    testWidgets('says Aired once the next episode has aired', (tester) async {
+      await open(
+        tester,
+        extra: () => AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: DateTime.now().subtract(const Duration(hours: 3)),
+            episode: 7,
+            timeUntilAiring: 600,
+          ),
+        ),
+      );
+
+      await scrollTo(tester, find.text('Next Episode'));
+      expect(find.text('Aired'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'^in \d')), findsNothing);
     });
 
     testWidgets('the heading sits under the cover and the bar title is '

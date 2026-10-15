@@ -219,17 +219,25 @@ class AniListNextAiring {
   final int episode;
   final int timeUntilAiring;
 
-  String get countdown {
-    if (timeUntilAiring <= 0) return 'Aired';
-    final days = timeUntilAiring ~/ 86400;
-    final hours = (timeUntilAiring % 86400) ~/ 3600;
-    final minutes = (timeUntilAiring % 3600) ~/ 60;
+  int _remaining(DateTime now) => airingAt.toUtc().difference(now).inSeconds;
+
+  bool hasAired(DateTime now) => _remaining(now) <= 0;
+
+  String countdownAt(DateTime now) {
+    final remaining = _remaining(now);
+    if (remaining <= 0) return 'Aired';
+    final days = remaining ~/ 86400;
+    final hours = (remaining % 86400) ~/ 3600;
+    final minutes = (remaining % 3600) ~/ 60;
     if (days > 0) return '${days}d ${hours}h';
     if (hours > 0) return '${hours}h ${minutes}m';
     return '${minutes}m';
   }
 
-  bool get isUrgent => timeUntilAiring > 0 && timeUntilAiring < 21600;
+  bool isUrgentAt(DateTime now) {
+    final remaining = _remaining(now);
+    return remaining > 0 && remaining < 21600;
+  }
 }
 
 class AniListExternalLink {

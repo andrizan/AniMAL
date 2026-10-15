@@ -11,6 +11,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../support/fake_adapter.dart';
 
+const _farFuture = 4102444800;
+
 Map<String, dynamic> _gql(Object data) => {'data': data};
 
 Map<String, dynamic> _extraMedia() => {
@@ -68,7 +70,7 @@ Map<String, dynamic> _extraMedia() => {
     ],
   },
   'nextAiringEpisode': {
-    'airingAt': 1800000000,
+    'airingAt': _farFuture,
     'episode': 7,
     'timeUntilAiring': 3600,
   },
@@ -182,7 +184,7 @@ void main() {
         expect(extra.nextAiring!.timeUntilAiring, 3600);
         expect(
           extra.nextAiring!.airingAt,
-          DateTime.fromMillisecondsSinceEpoch(1800000000 * 1000, isUtc: true),
+          DateTime.fromMillisecondsSinceEpoch(_farFuture * 1000, isUtc: true),
         );
 
         expect(extra.externalLinks.single.displaySite, 'Crunchyroll');
@@ -255,6 +257,58 @@ void main() {
       await client.refreshAnimeExtra(1);
 
       expect(gqlCalls(), before + 1);
+    });
+
+    group('a cached next episode that has aired', () {
+      Future<void> cacheAired() => cache.saveAnimeExtra(
+        1,
+        AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: DateTime.now().toUtc().subtract(const Duration(hours: 3)),
+            episode: 6,
+            timeUntilAiring: 600,
+          ),
+          externalLinks: const [
+            AniListExternalLink(id: 9, url: 'https://old.test'),
+          ],
+        ),
+      );
+
+      test('is asked about once and then replaced', () async {
+        await cacheAired();
+
+        final extra = await client.getAnimeExtraInfo(1);
+
+        expect(gqlCalls(), 1);
+        expect(extra.nextAiring!.episode, 7);
+        expect(extra.people.characters, hasLength(2));
+
+        await client.getAnimeExtraInfo(1);
+        expect(gqlCalls(), 1);
+      });
+
+      test('is dropped when AniList has no later episode', () async {
+        await cacheAired();
+        respond = (_) => FakeResponse.json(
+          _gql({'Media': _extraMedia()..remove('nextAiringEpisode')}),
+        );
+
+        final extra = await client.getAnimeExtraInfo(1);
+        await client.getAnimeExtraInfo(1);
+
+        expect(extra.nextAiring, isNull);
+        expect(gqlCalls(), 1);
+      });
+
+      test('stays as cached when the refresh fails', () async {
+        await cacheAired();
+        respond = (_) => const FakeResponse.json({}, status: 500);
+
+        final extra = await client.getAnimeExtraInfo(1);
+
+        expect(gqlCalls(), 1);
+        expect(extra.nextAiring!.episode, 6);
+      });
     });
   });
 

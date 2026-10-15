@@ -67,6 +67,33 @@ class AiringEntry {
   }
 
   bool get isUrgent => timeUntilAiring > 0 && timeUntilAiring < 21600;
+
+  /// The episode of this anime that airs next as of [now]: this entry while
+  /// it is still ahead, otherwise the next episode AniList reported with it
+  /// when that one is ahead, otherwise null.
+  AiringEntry? upcomingAt(DateTime now) {
+    if (airingAt.toUtc().isAfter(now)) return this;
+    final at = nextAiringAt?.toUtc();
+    final episode = nextEpisode;
+    if (at == null || episode == null || !at.isAfter(now)) return null;
+    return AiringEntry(
+      anilistId: anilistId,
+      malId: malId,
+      title: title,
+      titleEnglish: titleEnglish,
+      titleNative: titleNative,
+      imageUrl: imageUrl,
+      airingAt: at,
+      episode: episode,
+      timeUntilAiring: at.difference(now).inSeconds,
+      malScore: malScore,
+      genres: genres,
+      episodes: episodes,
+      format: format,
+      status: status,
+      myListStatus: myListStatus,
+    );
+  }
 }
 
 /// Repository that merges AniList schedule with MAL scores.
@@ -364,10 +391,11 @@ final airingByMalIdProvider = FutureProvider.autoDispose<Map<int, AiringEntry>>(
     final now = DateTime.now().toUtc();
     final map = <int, AiringEntry>{};
     for (final entries in schedule.values) {
-      for (final entry in entries) {
-        if (entry.malId == null) continue;
+      for (final scheduled in entries) {
+        if (scheduled.malId == null) continue;
+        final entry = scheduled.upcomingAt(now);
+        if (entry == null) continue;
         final remaining = entry.airingAt.toUtc().difference(now).inSeconds;
-        if (remaining <= 0) continue;
         final existing = map[entry.malId!];
         final existingRemaining =
             existing?.airingAt.toUtc().difference(now).inSeconds ?? 999999999;

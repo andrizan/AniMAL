@@ -59,31 +59,43 @@ void main() {
   });
 
   group('AniListNextAiring', () {
+    final now = DateTime.utc(2026, 5, 10, 12);
+
     AniListNextAiring next(int seconds) => AniListNextAiring(
-      airingAt: DateTime(2026),
+      airingAt: now.add(Duration(seconds: seconds)),
       episode: 1,
-      timeUntilAiring: seconds,
+      timeUntilAiring: 999999,
     );
 
     test('countdown formats days, hours and minutes', () {
-      expect(next(2 * 86400 + 5 * 3600 + 59).countdown, '2d 5h');
-      expect(next(86400).countdown, '1d 0h');
-      expect(next(3 * 3600 + 20 * 60).countdown, '3h 20m');
-      expect(next(45 * 60).countdown, '45m');
-      expect(next(30).countdown, '0m');
+      expect(next(2 * 86400 + 5 * 3600 + 59).countdownAt(now), '2d 5h');
+      expect(next(86400).countdownAt(now), '1d 0h');
+      expect(next(3 * 3600 + 20 * 60).countdownAt(now), '3h 20m');
+      expect(next(45 * 60).countdownAt(now), '45m');
+      expect(next(30).countdownAt(now), '0m');
     });
 
     test('countdown reports aired for zero or negative time', () {
-      expect(next(0).countdown, 'Aired');
-      expect(next(-120).countdown, 'Aired');
+      expect(next(0).countdownAt(now), 'Aired');
+      expect(next(-120).countdownAt(now), 'Aired');
+      expect(next(0).hasAired(now), isTrue);
+      expect(next(1).hasAired(now), isFalse);
     });
 
-    test('isUrgent is true only inside the last six hours', () {
-      expect(next(0).isUrgent, isFalse);
-      expect(next(-1).isUrgent, isFalse);
-      expect(next(1).isUrgent, isTrue);
-      expect(next(21599).isUrgent, isTrue);
-      expect(next(21600).isUrgent, isFalse);
+    test('isUrgentAt is true only inside the last six hours', () {
+      expect(next(0).isUrgentAt(now), isFalse);
+      expect(next(-1).isUrgentAt(now), isFalse);
+      expect(next(1).isUrgentAt(now), isTrue);
+      expect(next(21599).isUrgentAt(now), isTrue);
+      expect(next(21600).isUrgentAt(now), isFalse);
+    });
+
+    test('the countdown follows the clock, not the stored seconds', () {
+      final episode = next(3 * 3600);
+
+      expect(episode.countdownAt(now), '3h 0m');
+      expect(episode.countdownAt(now.add(const Duration(hours: 1))), '2h 0m');
+      expect(episode.countdownAt(now.add(const Duration(hours: 4))), 'Aired');
     });
   });
 

@@ -12,6 +12,7 @@ AiringEntry _entry(
   int? malId,
   Duration fromNow, {
   int episode = 1,
+  Duration? nextFromNow,
 }) => AiringEntry(
   anilistId: anilistId,
   malId: malId,
@@ -19,6 +20,11 @@ AiringEntry _entry(
   airingAt: DateTime.now().toUtc().add(fromNow),
   episode: episode,
   timeUntilAiring: fromNow.inSeconds,
+  nextAiringAt: nextFromNow == null
+      ? null
+      : DateTime.now().toUtc().add(nextFromNow),
+  nextEpisode: nextFromNow == null ? null : episode + 1,
+  nextTimeUntilAiring: nextFromNow?.inSeconds,
 );
 
 void main() {
@@ -50,6 +56,60 @@ void main() {
       });
 
       expect(map, isEmpty);
+    });
+
+    test('an aired episode hands over to the next one AniList knows', () async {
+      final map = await byMalId({
+        'monday': [
+          _entry(
+            1,
+            10,
+            const Duration(hours: -2),
+            episode: 5,
+            nextFromNow: const Duration(days: 7, hours: -2),
+          ),
+        ],
+      });
+
+      final next = map[10]!;
+      expect(next.episode, 6);
+      expect(
+        next.airingAt.difference(DateTime.now().toUtc()).inHours,
+        inInclusiveRange(164, 166),
+      );
+      expect(next.timeUntilAiring, greaterThan(0));
+    });
+
+    test('an aired episode whose next one is also past is ignored', () async {
+      final map = await byMalId({
+        'monday': [
+          _entry(
+            1,
+            10,
+            const Duration(days: -3),
+            episode: 5,
+            nextFromNow: const Duration(hours: -1),
+          ),
+        ],
+      });
+
+      expect(map, isEmpty);
+    });
+
+    test('an episode still ahead is kept over its own next one', () async {
+      final map = await byMalId({
+        'monday': [
+          _entry(
+            1,
+            10,
+            const Duration(hours: 4),
+            episode: 5,
+            nextFromNow: const Duration(days: 7, hours: 4),
+          ),
+        ],
+      });
+
+      expect(map[10]!.episode, 5);
     });
 
     test('ignores entries that have no MAL id', () async {

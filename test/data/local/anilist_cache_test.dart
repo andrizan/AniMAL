@@ -785,6 +785,73 @@ void main() {
       },
     );
 
+    test('an empty response keeps a next airing that is still ahead', () async {
+      final ahead = DateTime.now().toUtc().add(const Duration(days: 2));
+      await cache.saveAnimeExtra(
+        57,
+        AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: ahead,
+            episode: 4,
+            timeUntilAiring: 172800,
+          ),
+        ),
+      );
+
+      await cache.saveAnimeExtra(57, const AniListAnimeExtra());
+
+      final next = (await cache.getAnimeExtra(57))!.nextAiring!;
+      expect(next.episode, 4);
+      expect(
+        next.airingAt.millisecondsSinceEpoch ~/ 1000,
+        ahead.millisecondsSinceEpoch ~/ 1000,
+      );
+    });
+
+    test('an empty response drops a next airing that already aired', () async {
+      await cache.saveAnimeExtra(
+        58,
+        AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: DateTime.now().toUtc().subtract(const Duration(hours: 1)),
+            episode: 4,
+            timeUntilAiring: 60,
+          ),
+        ),
+      );
+
+      await cache.saveAnimeExtra(58, const AniListAnimeExtra());
+
+      expect((await cache.getAnimeExtra(58))!.nextAiring, isNull);
+    });
+
+    test('a new next airing replaces one that already aired', () async {
+      await cache.saveAnimeExtra(
+        59,
+        AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: DateTime.now().toUtc().subtract(const Duration(hours: 1)),
+            episode: 4,
+            timeUntilAiring: 60,
+          ),
+        ),
+      );
+      final later = DateTime.now().toUtc().add(const Duration(days: 6));
+
+      await cache.saveAnimeExtra(
+        59,
+        AniListAnimeExtra(
+          nextAiring: AniListNextAiring(
+            airingAt: later,
+            episode: 5,
+            timeUntilAiring: 518400,
+          ),
+        ),
+      );
+
+      expect((await cache.getAnimeExtra(59))!.nextAiring!.episode, 5);
+    });
+
     test('partial extra refresh preserves cached characters/staff', () async {
       const full = AniListAnimeExtra(
         people: AniListAnimePeople(

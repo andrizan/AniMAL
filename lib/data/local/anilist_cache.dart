@@ -666,8 +666,9 @@ class SqliteAniListCache implements AniListCache {
 
       // Merge per section: a partial refresh (e.g. empty characters) must
       // not wipe previously cached data. nextAiring takes the new value
-      // when present, otherwise keeps the existing one so caching an
-      // empty response (negative cache) never erases a known schedule.
+      // when present, otherwise keeps the existing one while it is still
+      // ahead, so caching an empty response (negative cache) never erases a
+      // known schedule but an episode that already aired is dropped.
       final characters = extra.people.characters.isNotEmpty
           ? extra.people.characters
           : _decodeCharacters(existing?['characters_json'] as String?);
@@ -675,14 +676,19 @@ class SqliteAniListCache implements AniListCache {
           ? extra.people.staff
           : _decodeStaff(existing?['staff_json'] as String?);
 
+      final nowSec = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+      final existingAt = existing?['next_airing_at'] as int?;
+      final upcoming = existingAt != null && existingAt > nowSec
+          ? existing
+          : null;
       final nextAiringAt = extra.nextAiring != null
           ? extra.nextAiring!.airingAt.toUtc().millisecondsSinceEpoch ~/ 1000
-          : existing?['next_airing_at'] as int?;
+          : upcoming?['next_airing_at'] as int?;
       final nextAiringEpisode =
-          extra.nextAiring?.episode ?? existing?['next_airing_episode'] as int?;
+          extra.nextAiring?.episode ?? upcoming?['next_airing_episode'] as int?;
       final nextAiringTimeUntil =
           extra.nextAiring?.timeUntilAiring ??
-          existing?['next_airing_time_until'] as int?;
+          upcoming?['next_airing_time_until'] as int?;
 
       final row = <String, Object?>{
         'mal_id': malId,

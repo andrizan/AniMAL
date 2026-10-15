@@ -260,17 +260,31 @@ class AniListClient {
 
   // ---------- Anime extra ----------
 
-  Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) {
+  Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) async {
     // Empty extras are cached too (negative cache): otherwise every
     // provider rebuild for an anime without AniList data would hit
     // the network again because `fetchedAt` was never written.
-    return _swr<AniListAnimeExtra>(
+    final extra = await _swr<AniListAnimeExtra>(
       key: 'animeExtra_$malId',
       ttl: _ttlAnimeExtra,
       readFresh: () => cache.getAnimeExtra(malId),
       networkFetch: () => _fetchAnimeExtra(malId),
       writeCache: (data) => cache.saveAnimeExtra(malId, data),
     );
+    final next = extra.nextAiring;
+    if (next == null || next.airingAt.isAfter(DateTime.now().toUtc())) {
+      return extra;
+    }
+    // The stored next episode has aired, so its time is no longer the answer.
+    // Ask AniList once what comes after it; the saved row then points at a
+    // later episode or none, so this does not repeat on the next read.
+    try {
+      await refreshAnimeExtra(malId);
+    } on Object catch (e) {
+      _logger.w('Could not refresh the aired next episode of $malId: $e');
+      return extra;
+    }
+    return await cache.getAnimeExtra(malId) ?? extra;
   }
 
   Future<AniListAnimeExtra> _fetchAnimeExtra(int malId) async {

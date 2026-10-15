@@ -8,6 +8,7 @@ import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/broadcast.dart';
 import 'package:animal/shared/providers/anime_notification_providers.dart';
+import 'package:animal/shared/providers/clock_provider.dart';
 import 'package:animal/shared/widgets/app_cached_image.dart';
 import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/linked_text.dart';
@@ -313,7 +314,11 @@ class NextEpisodeCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final colors = StatusColors.of(context);
-    final urgent = next.isUrgent;
+    final now = ref
+        .watch(clockProvider)
+        .maybeWhen(data: (t) => t.toUtc(), orElse: DateTime.now().toUtc);
+    final aired = next.hasAired(now);
+    final urgent = next.isUrgentAt(now);
     final date = nextAirSlotLabel(resolveAirSlot(nextAiringAt: next.airingAt)!);
     final reminderOn = ref.watch(
       animeNotificationProvider.select((s) => s.contains(animeId)),
@@ -346,14 +351,20 @@ class NextEpisodeCard extends ConsumerWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               InfoChip(
-                icon: urgent
+                icon: aired
+                    ? Icons.check_rounded
+                    : urgent
                     ? Icons.warning_amber_rounded
                     : Icons.schedule_rounded,
-                label: 'in ${next.countdown}',
-                color: urgent
+                label: aired ? 'Aired' : 'in ${next.countdownAt(now)}',
+                color: aired
+                    ? colors.onPlanContainer
+                    : urgent
                     ? colors.onDroppedContainer
                     : scheme.onPrimaryContainer,
-                background: urgent
+                background: aired
+                    ? colors.planContainer
+                    : urgent
                     ? colors.droppedContainer
                     : scheme.primaryContainer,
               ),
