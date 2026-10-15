@@ -314,6 +314,7 @@ void main() {
 
       final db2 = await AppDatabase.open(pathOverride: path);
       addTearDown(db2.close);
+      await db2.startupCleanup;
       return metaKeys(db2);
     }
 
@@ -358,6 +359,7 @@ void main() {
 
         final db2 = await AppDatabase.open(pathOverride: path);
         addTearDown(db2.close);
+        await db2.startupCleanup;
 
         final rows = (await db2.raw.query('merged_airing_entry'))
             .map((r) => r['week_key'])
@@ -402,6 +404,7 @@ void main() {
 
         final db2 = await AppDatabase.open(pathOverride: path);
         addTearDown(db2.close);
+        await db2.startupCleanup;
 
         final ids = (await db2.raw.query('anime'))
             .map((r) => r['mal_id'])
@@ -427,6 +430,7 @@ void main() {
 
       final db2 = await AppDatabase.open(pathOverride: path);
       addTearDown(db2.close);
+      await db2.startupCleanup;
 
       expect(await db2.raw.query('user_anime_list_item'), isEmpty);
       expect(await db2.raw.query('anime'), isEmpty);
@@ -452,11 +456,44 @@ void main() {
 
       final db2 = await AppDatabase.open(pathOverride: path);
       addTearDown(db2.close);
+      await db2.startupCleanup;
 
       expect(
         (await db2.raw.query('airing_schedule')).map((r) => r['anilist_id']),
         [2],
       );
     });
+  });
+
+  group('startup cleanup and the first reads', () {
+    test('a read right after open already sees the cleanup, '
+        'without waiting for it', () async {
+      final path = tmpPath('timing');
+      final db1 = await AppDatabase.open(
+        pathOverride: path,
+        runMigrations: false,
+      );
+      await putMeta(db1, 'search_old_20', const Duration(hours: 2));
+      await db1.close();
+
+      final db2 = await AppDatabase.open(pathOverride: path);
+      addTearDown(db2.close);
+
+      expect(await metaKeys(db2), isEmpty);
+      await db2.startupCleanup;
+    });
+
+    test(
+      'a database opened without the cleanup has nothing to wait for',
+      () async {
+        final db = await AppDatabase.open(
+          pathOverride: tmpPath('plain'),
+          runMigrations: false,
+        );
+        addTearDown(db.close);
+
+        await db.startupCleanup;
+      },
+    );
   });
 }

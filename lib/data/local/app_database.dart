@@ -1,3 +1,4 @@
+import 'package:animal/core/logger/app_logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -7,6 +8,13 @@ class AppDatabase {
   final Database _db;
 
   Database get raw => _db;
+
+  Future<void> _startupCleanup = Future<void>.value();
+
+  /// The removal of stale rows that [open] starts. Nothing waits for it at
+  /// startup: SQLite runs every later read after it anyway, so the first
+  /// frame need not. Tests await it to see its result.
+  Future<void> get startupCleanup => _startupCleanup;
 
   static const _schemaVersion = 5;
   static const _fileName = 'animal_cache.db';
@@ -41,13 +49,21 @@ class AppDatabase {
     );
     final appDb = AppDatabase._(db);
     if (runMigrations) {
-      await appDb._runStartupCleanup();
+      appDb._startupCleanup = appDb._cleanUpAtStartup();
     }
     return appDb;
   }
 
   static Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON;');
+  }
+
+  Future<void> _cleanUpAtStartup() async {
+    try {
+      await _runStartupCleanup();
+    } on Object catch (e, st) {
+      appLogger.w('Startup cleanup failed', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _runStartupCleanup() async {
