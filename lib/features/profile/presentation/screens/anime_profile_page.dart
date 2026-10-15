@@ -42,7 +42,10 @@ class AnimeProfilePage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (signedIn) ..._accountSections(ref) else const _SignInCard(),
+          if (signedIn)
+            ..._accountSections(context, ref)
+          else
+            const _SignInCard(),
           const ApiStatusSection(),
           const SizedBox(height: 24),
           const SectionHeader('Settings'),
@@ -151,7 +154,7 @@ class AnimeProfilePage extends ConsumerWidget {
     );
   }
 
-  List<Widget> _accountSections(WidgetRef ref) {
+  List<Widget> _accountSections(BuildContext context, WidgetRef ref) {
     final asyncUser = ref.watch(userInfoProvider);
     final user = asyncUser.value;
     final stats = user?.animeStatistics;
@@ -166,7 +169,7 @@ class AnimeProfilePage extends ConsumerWidget {
             ? const SizedBox.shrink()
             : ProfileHeader(
                 user: user,
-                onRefresh: () => ref.invalidate(userInfoProvider),
+                onRefresh: () => unawaited(_refreshUser(context, ref)),
               ),
       ),
       if (stats != null) ...[
@@ -241,6 +244,20 @@ class _SignInCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+Future<void> _refreshUser(BuildContext context, WidgetRef ref) async {
+  try {
+    await ref.read(refreshUserInfoProvider)();
+  } on Exception catch (_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Refresh failed, showing cached data'),
+        duration: Duration(seconds: 2),
       ),
     );
   }

@@ -330,7 +330,6 @@ class AiringRepository {
       final animeList = await _animeRepo.getSeasonalAnime(
         year: year,
         season: season,
-        limit: 500,
       );
 
       _logger.d('MAL seasonal returned ${animeList.length} anime');

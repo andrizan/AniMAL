@@ -235,6 +235,23 @@ class _SeasonAnimeList extends ConsumerWidget {
     'Sunday',
   ];
 
+  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(refreshSeasonalAnimeProvider)((
+        year: year,
+        season: season,
+      ));
+    } on Exception catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Refresh failed, showing cached data'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final params = (year: year, season: season);
@@ -253,14 +270,23 @@ class _SeasonAnimeList extends ConsumerWidget {
         final hasAny =
             grouped.values.any((l) => l.isNotEmpty) || noBroadcast.isNotEmpty;
         if (!hasAny) {
-          return EmptyView(
-            icon: Icons.calendar_month_outlined,
-            message: 'No anime for ${season.label} $year',
+          return RefreshIndicator(
+            onRefresh: () => _refresh(context, ref),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.6,
+                child: EmptyView(
+                  icon: Icons.calendar_month_outlined,
+                  message: 'No anime for ${season.label} $year',
+                ),
+              ),
+            ),
           );
         }
 
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(animeScheduleProvider(params)),
+          onRefresh: () => _refresh(context, ref),
           child: CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
@@ -305,6 +331,20 @@ class _SeasonAnimeList extends ConsumerWidget {
 class _LaterAnimeList extends ConsumerWidget {
   const _LaterAnimeList();
 
+  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(refreshUndatedAnimeProvider)();
+    } on Exception catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Refresh failed, showing cached data'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncAnime = ref.watch(undatedAnimeProvider);
@@ -318,14 +358,23 @@ class _LaterAnimeList extends ConsumerWidget {
       ),
       data: (animeList) {
         if (animeList.isEmpty) {
-          return const EmptyView(
-            icon: Icons.schedule,
-            message: 'No anime without a start date',
+          return RefreshIndicator(
+            onRefresh: () => _refresh(context, ref),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.6,
+                child: const EmptyView(
+                  icon: Icons.schedule,
+                  message: 'No anime without a start date',
+                ),
+              ),
+            ),
           );
         }
 
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(undatedAnimeProvider),
+          onRefresh: () => _refresh(context, ref),
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             itemCount: animeList.length,

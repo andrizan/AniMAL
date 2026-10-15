@@ -82,7 +82,7 @@ class AnimeRepository {
   Future<List<Anime>> getSeasonalAnime({
     required int year,
     required Season season,
-    int limit = 100,
+    int limit = ApiConstants.malSeasonPageSize,
   }) {
     final key = SqliteAnimeCache.seasonalKey(year, season.value, limit);
     // Empty results are cached too: a future/empty season would otherwise
@@ -92,24 +92,45 @@ class AnimeRepository {
       key: key,
       ttl: _ttlLong,
       readFresh: () => _cache.getSeasonalAnime(year, season.value, limit),
-      networkFetch: () async {
-        try {
-          return await _api.getSeasonalAnime(
-            year: year,
-            season: season,
-            limit: limit,
-          );
-        } on DioException catch (e) {
-          if (e.response?.statusCode == 404) {
-            _logger?.i('Season $season $year not available yet');
-            return <Anime>[];
-          }
-          rethrow;
-        }
-      },
+      networkFetch: () => _fetchSeasonalNetwork(year, season, limit),
       writeCache: (list) =>
           _cache.saveSeasonalAnime(year, season.value, limit, list),
     );
+  }
+
+  /// Force-fetches a season and stores it; see [_refresh].
+  Future<List<Anime>> refreshSeasonalAnime({
+    required int year,
+    required Season season,
+    int limit = ApiConstants.malSeasonPageSize,
+  }) {
+    return _refresh<List<Anime>>(
+      key: SqliteAnimeCache.seasonalKey(year, season.value, limit),
+      networkFetch: () => _fetchSeasonalNetwork(year, season, limit),
+      writeCache: (list) =>
+          _cache.saveSeasonalAnime(year, season.value, limit, list),
+    );
+  }
+
+  /// A season MAL has not published yet is an empty list, not a failure.
+  Future<List<Anime>> _fetchSeasonalNetwork(
+    int year,
+    Season season,
+    int limit,
+  ) async {
+    try {
+      return await _api.getSeasonalAnime(
+        year: year,
+        season: season,
+        limit: limit,
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        _logger?.i('Season $season $year not available yet');
+        return <Anime>[];
+      }
+      rethrow;
+    }
   }
 
   Future<List<Anime>> getAnimeRanking({
@@ -135,6 +156,17 @@ class AnimeRepository {
       key: SqliteAnimeCache.rankingKey(_undatedRankingType, limit),
       ttl: _ttlMedium,
       readFresh: () => _cache.getAnimeRanking(_undatedRankingType, limit),
+      networkFetch: _api.getUndatedUpcomingAnime,
+      writeCache: (list) =>
+          _cache.saveAnimeRanking(_undatedRankingType, limit, list),
+    );
+  }
+
+  /// Force-fetches the undated upcoming anime and stores them; see [_refresh].
+  Future<List<Anime>> refreshUndatedUpcomingAnime() {
+    const limit = ApiConstants.malRankingPageSize;
+    return _refresh<List<Anime>>(
+      key: SqliteAnimeCache.rankingKey(_undatedRankingType, limit),
       networkFetch: _api.getUndatedUpcomingAnime,
       writeCache: (list) =>
           _cache.saveAnimeRanking(_undatedRankingType, limit, list),
@@ -217,13 +249,25 @@ class AnimeRepository {
     );
   }
 
+  static const _userInfoKey = 'userInfo';
+
   Future<MalUser?> getUserInfo() {
-    const key = 'userInfo';
     return _swrNullable<MalUser>(
-      key: key,
+      key: _userInfoKey,
       ttl: _ttlMedium,
       readFresh: () => _cache.getUserInfo(),
       networkFetch: () => _api.getUserInfo(),
+      writeCache: (u) async {
+        if (u != null) await _cache.saveUserInfo(u);
+      },
+    );
+  }
+
+  /// Force-fetches the user's profile and stores it; see [_refresh].
+  Future<MalUser?> refreshUserInfo() {
+    return _refresh<MalUser?>(
+      key: _userInfoKey,
+      networkFetch: _api.getUserInfo,
       writeCache: (u) async {
         if (u != null) await _cache.saveUserInfo(u);
       },
@@ -417,6 +461,31 @@ class AnimeRepository {
         if (e is DioException) throw _mapDioException(e);
         rethrow;
       }
+    });
+  }
+
+  /// Explicit refresh, wired to a refresh gesture: fetches from the network
+  /// whatever the cache holds and stores the result. A MAL failure is thrown
+  /// mapped and the stored data is left as it was, so the caller keeps
+  /// showing it.
+  Future<T> _refresh<T>({
+    required String key,
+    required Future<T> Function() networkFetch,
+    required Future<void> Function(T) writeCache,
+  }) {
+    return _deduped<T>(key, () async {
+      final T fresh;
+      try {
+        fresh = await networkFetch();
+      } on DioException catch (e) {
+        throw _mapDioException(e);
+      }
+      try {
+        await writeCache(fresh);
+      } on Object catch (e) {
+        _logger?.w('Could not cache $key', error: e);
+      }
+      return fresh;
     });
   }
 

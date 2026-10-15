@@ -8,6 +8,7 @@ import 'package:animal/features/profile/presentation/screens/anime_profile_page.
 import 'package:animal/features/profile/presentation/widgets/profile_header.dart';
 import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
+import 'package:animal/shared/providers/anime_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -42,8 +43,21 @@ const _noInsights = ProfileInsights(
   activity: [],
 );
 
+class _Repo extends Fake implements AnimeRepository {
+  int refreshes = 0;
+  Object? refreshFailure;
+
+  @override
+  Future<MalUser?> refreshUserInfo() async {
+    refreshes++;
+    if (refreshFailure != null) throw refreshFailure!;
+    return null;
+  }
+}
+
 void main() {
   late FakeAuthRepository auth;
+  late _Repo repo;
   String? openedRoute;
 
   Future<void> open(
@@ -64,9 +78,11 @@ void main() {
       buildSignature: '',
     );
     auth = FakeAuthRepository()..authenticated = signedIn;
+    repo = _Repo();
     openedRoute = null;
     final overrides = <Override>[
       malAuthRepositoryProvider.overrideWithValue(auth),
+      animeRepositoryProvider.overrideWithValue(repo),
       userInfoProvider.overrideWith(
         (ref) async =>
             (user ??
@@ -165,7 +181,7 @@ void main() {
       expect(find.text('andrizan'), findsOneWidget);
     });
 
-    testWidgets('the refresh button reloads a loaded profile', (tester) async {
+    testWidgets('the refresh button fetches the profile again', (tester) async {
       var loads = 0;
       await open(
         tester,
@@ -179,8 +195,30 @@ void main() {
       await tester.tap(find.byTooltip('Refresh'));
       await tester.pumpAndSettle();
 
+      expect(repo.refreshes, 1);
       expect(loads, 2);
       expect(find.text('user 2'), findsOneWidget);
+    });
+
+    testWidgets('a failed refresh keeps the profile and says so', (
+      tester,
+    ) async {
+      var loads = 0;
+      await open(
+        tester,
+        user: () {
+          loads++;
+          return MalUser(id: 1, name: 'user $loads');
+        },
+      );
+      repo.refreshFailure = Exception('offline');
+
+      await tester.tap(find.byTooltip('Refresh'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Refresh failed, showing cached data'), findsOneWidget);
+      expect(loads, 1);
+      expect(find.text('user 1'), findsOneWidget);
     });
 
     testWidgets('an anonymous profile (null user) shows no header', (

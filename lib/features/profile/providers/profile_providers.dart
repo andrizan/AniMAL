@@ -12,6 +12,15 @@ final userInfoProvider = FutureProvider<MalUser?>((ref) async {
   return repo.getUserInfo();
 });
 
+/// Fetches the profile again from MAL, stores it and re-reads it. Throws
+/// when MAL fails; the stored profile stays as it was.
+final refreshUserInfoProvider = Provider<Future<void> Function()>((ref) {
+  return () async {
+    await ref.read(animeRepositoryProvider).refreshUserInfo();
+    ref.invalidate(userInfoProvider);
+  };
+});
+
 /// Aggregates the whole personal list into the numbers behind the charts.
 final profileInsightsProvider = FutureProvider<ProfileInsights>((ref) async {
   final lists = await Future.wait([

@@ -14,6 +14,7 @@ abstract final class MalEndpoints {
 abstract final class ApiConstants {
   static const notificationLeadMinutes = 15;
   static const malUserListPageSize = 500;
+  static const malSeasonPageSize = 500;
   static const malRankingPageSize = 500;
   static const malUpcomingMaxPages = 3;
   static const anilistWeekPageLimit = 10;

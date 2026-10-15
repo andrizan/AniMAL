@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/network/api_exception.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/local/anime_cache.dart';
@@ -141,6 +142,56 @@ void main() {
         ),
       );
     });
+
+    test('asks for the whole season in one page', () async {
+      await repo.getSeasonalAnime(year: 2026, season: Season.fall);
+
+      expect(
+        adapter.requests.single.queryParameters['limit'],
+        ApiConstants.malSeasonPageSize,
+      );
+    });
+
+    test(
+      'refreshSeasonalAnime ignores the cache and stores the new list',
+      () async {
+        await repo.getSeasonalAnime(year: 2026, season: Season.fall);
+        respond = (_) => FakeResponse.json(_list([3]));
+
+        final refreshed = await repo.refreshSeasonalAnime(
+          year: 2026,
+          season: Season.fall,
+        );
+
+        expect(refreshed.map((a) => a.id), [3]);
+        expect(calls('/anime/season/2026/fall'), 2);
+        final again = await repo.getSeasonalAnime(
+          year: 2026,
+          season: Season.fall,
+        );
+        expect(again.map((a) => a.id), [3]);
+        expect(calls('/anime/season/2026/fall'), 2);
+      },
+    );
+
+    test(
+      'refreshSeasonalAnime fails when MAL fails, keeping the cache',
+      () async {
+        await repo.getSeasonalAnime(year: 2026, season: Season.fall);
+        respond = (_) => const FakeResponse.json({}, status: 500);
+
+        await expectLater(
+          repo.refreshSeasonalAnime(year: 2026, season: Season.fall),
+          throwsA(isA<ServerException>()),
+        );
+
+        final kept = await repo.getSeasonalAnime(
+          year: 2026,
+          season: Season.fall,
+        );
+        expect(kept.map((a) => a.id), [1, 2]);
+      },
+    );
   });
 
   test('ranking sends its type and caches per type', () async {
@@ -185,6 +236,27 @@ void main() {
         final ranking = await repo.getAnimeRanking(rankingType: 'upcoming');
 
         expect(ranking.map((a) => a.id), [1, 2]);
+        expect(calls('/ranking'), 2);
+      },
+    );
+
+    test(
+      'refreshUndatedUpcomingAnime ignores the cache and stores the new list',
+      () async {
+        await repo.getUndatedUpcomingAnime();
+        respond = (_) => const FakeResponse.json({
+          'data': [
+            {
+              'node': {'id': 3, 'title': 'Newly announced'},
+            },
+          ],
+        });
+
+        final refreshed = await repo.refreshUndatedUpcomingAnime();
+
+        expect(refreshed.map((a) => a.id), [3]);
+        expect(calls('/ranking'), 2);
+        expect((await repo.getUndatedUpcomingAnime()).map((a) => a.id), [3]);
         expect(calls('/ranking'), 2);
       },
     );
@@ -265,6 +337,32 @@ void main() {
       expect(second!.animeStatistics!.numItemsCompleted, 120);
       expect(second.animeStatistics!.meanScore, 7.9);
       expect(calls('/users/@me'), 1);
+    });
+
+    test('refreshUserInfo fetches again and stores the new profile', () async {
+      respond = (_) => const FakeResponse.json({'id': 1, 'name': 'before'});
+      await repo.getUserInfo();
+      respond = (_) => const FakeResponse.json({'id': 1, 'name': 'after'});
+
+      final refreshed = await repo.refreshUserInfo();
+
+      expect(refreshed!.name, 'after');
+      expect(calls('/users/@me'), 2);
+      expect((await repo.getUserInfo())!.name, 'after');
+      expect(calls('/users/@me'), 2);
+    });
+
+    test('refreshUserInfo fails when MAL fails, keeping the cache', () async {
+      respond = (_) => const FakeResponse.json({'id': 1, 'name': 'before'});
+      await repo.getUserInfo();
+      respond = (_) => const FakeResponse.json({}, status: 500);
+
+      await expectLater(
+        repo.refreshUserInfo(),
+        throwsA(isA<ServerException>()),
+      );
+
+      expect((await repo.getUserInfo())!.name, 'before');
     });
   });
 

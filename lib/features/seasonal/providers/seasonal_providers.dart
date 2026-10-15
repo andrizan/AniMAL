@@ -69,6 +69,26 @@ final undatedAnimeProvider = FutureProvider<List<Anime>>((ref) {
   return repo.getUndatedUpcomingAnime();
 });
 
+/// Fetches a season again from MAL, stores it and re-reads it. Throws when
+/// MAL fails; the stored season stays as it was.
+final refreshSeasonalAnimeProvider =
+    Provider<Future<void> Function(ScheduleParams)>((ref) {
+      return (params) async {
+        await ref
+            .read(animeRepositoryProvider)
+            .refreshSeasonalAnime(year: params.year, season: params.season);
+        ref.invalidate(animeScheduleProvider(params));
+      };
+    });
+
+/// The same for the upcoming anime without a start date.
+final refreshUndatedAnimeProvider = Provider<Future<void> Function()>((ref) {
+  return () async {
+    await ref.read(animeRepositoryProvider).refreshUndatedUpcomingAnime();
+    ref.invalidate(undatedAnimeProvider);
+  };
+});
+
 /// Fetches and groups the seasonal anime schedule by broadcast day.
 // ignore: specify_nonobvious_property_types
 final groupedSeasonalAnimeProvider =

@@ -14,14 +14,24 @@ class _Repo extends Fake implements AnimeRepository {
   final calls = <({int year, Season season})>[];
   final failing = <({int year, Season season})>{};
   final data = <({int year, Season season}), List<Anime>>{};
+  final refreshed = <({int year, Season season})>[];
   var undated = <Anime>[];
   var undatedCalls = 0;
+  int undatedRefreshes = 0;
   var undatedFails = false;
+  Object? refreshFailure;
 
   @override
   Future<List<Anime>> getUndatedUpcomingAnime() async {
     undatedCalls++;
     if (undatedFails) throw Exception('offline');
+    return undated;
+  }
+
+  @override
+  Future<List<Anime>> refreshUndatedUpcomingAnime() async {
+    undatedRefreshes++;
+    if (refreshFailure != null) throw refreshFailure!;
     return undated;
   }
 
@@ -34,6 +44,18 @@ class _Repo extends Fake implements AnimeRepository {
     final key = (year: year, season: season);
     calls.add(key);
     if (failing.contains(key)) throw Exception('offline');
+    return data[key] ?? const <Anime>[];
+  }
+
+  @override
+  Future<List<Anime>> refreshSeasonalAnime({
+    required int year,
+    required Season season,
+    int limit = 100,
+  }) async {
+    final key = (year: year, season: season);
+    refreshed.add(key);
+    if (refreshFailure != null) throw refreshFailure!;
     return data[key] ?? const <Anime>[];
   }
 }
@@ -199,6 +221,75 @@ void main() {
 
       expect(find.text('Select Year'), findsNothing);
       expect(find.text('${year - 2}'), findsOneWidget);
+    });
+  });
+
+  group('pull to refresh', () {
+    List<int> shownIds(WidgetTester tester) => tester
+        .widgetList<AnimeCard>(find.byType(AnimeCard))
+        .map((c) => c.anime.id)
+        .toList();
+
+    Future<void> pull(WidgetTester tester) async {
+      await tester.fling(
+        find.byType(RefreshIndicator),
+        const Offset(0, 400),
+        1000,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('fetches the season again and shows what came back', (
+      tester,
+    ) async {
+      await open(tester);
+      repo.data[(year: year, season: season)] = [
+        _anime(4, day: 'monday', time: '01:00'),
+      ];
+
+      await pull(tester);
+
+      expect(repo.refreshed, [(year: year, season: season)]);
+      expect(shownIds(tester), [4]);
+    });
+
+    testWidgets('a failed refresh keeps the season and says so', (
+      tester,
+    ) async {
+      await open(tester);
+      repo.refreshFailure = Exception('offline');
+
+      await pull(tester);
+
+      expect(find.text('Refresh failed, showing cached data'), findsOneWidget);
+      expect(shownIds(tester), [1, 2, 3]);
+    });
+
+    testWidgets('an empty season can be refreshed too', (tester) async {
+      repo.data.clear();
+      await open(tester);
+      repo.data[(year: year, season: season)] = [_anime(5)];
+
+      await pull(tester);
+
+      expect(repo.refreshed, [(year: year, season: season)]);
+      expect(shownIds(tester), [5]);
+    });
+
+    testWidgets('the Later tab fetches the undated anime again', (
+      tester,
+    ) async {
+      repo.undated = [_anime(11)];
+      await open(tester);
+      await tester.tap(find.widgetWithText(Tab, 'Later'));
+      await tester.pumpAndSettle();
+      repo.undated = [_anime(11), _anime(12)];
+
+      await pull(tester);
+
+      expect(repo.undatedRefreshes, 1);
+      expect(repo.refreshed, isEmpty);
+      expect(shownIds(tester), [11, 12]);
     });
   });
 

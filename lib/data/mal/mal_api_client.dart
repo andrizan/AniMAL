@@ -48,7 +48,7 @@ class MalApiClient {
   Future<List<Anime>> getSeasonalAnime({
     required int year,
     required Season season,
-    int limit = 100,
+    int limit = ApiConstants.malSeasonPageSize,
     int offset = 0,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
