@@ -512,15 +512,9 @@ class SqliteAnimeCache implements AnimeCache {
     int malId,
     List<Genre> genres,
   ) async {
-    if (genres.isEmpty) return;
-    await txn.delete('anime_genre', where: 'mal_id = ?', whereArgs: [malId]);
-    for (final g in genres) {
-      await txn.insert('genre', {
-        'id': g.id,
-        'name': g.name,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
-      await txn.insert('anime_genre', {'mal_id': malId, 'genre_id': g.id});
-    }
+    final batch = txn.batch();
+    _queueGenres(batch, malId, genres);
+    await batch.commit(noResult: true);
   }
 
   Future<void> _upsertCacheMeta(DatabaseExecutor txn, String key) async {

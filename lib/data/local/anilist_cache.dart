@@ -702,27 +702,32 @@ class SqliteAniListCache implements AniListCache {
             ? null
             : jsonEncode(staff.map(_staffToJson).toList()),
       };
+      // One batch for the row and its children, which run in order so the
+      // children find their row. A link, studio or (character, voice actor)
+      // pair AniList repeats is stored once; a voice actor voicing two
+      // characters is two pairs and a staff member with two roles stays two
+      // entries, so nothing is folded by person.
+      final batch = txn.batch();
       if (existing == null) {
-        await txn.insert('anilist_anime_extra', row);
+        batch.insert('anilist_anime_extra', row);
       } else {
         // Update instead of REPLACE: REPLACE would cascade-delete the child
         // link/studio/voice-actor rows before we can decide to keep them.
-        await txn.update(
+        batch.update(
           'anilist_anime_extra',
           row,
           where: 'mal_id = ?',
           whereArgs: [malId],
         );
       }
-
       if (extra.externalLinks.isNotEmpty) {
-        await txn.delete(
+        batch.delete(
           'anilist_anime_extra_link',
           where: 'mal_id = ?',
           whereArgs: [malId],
         );
         for (final l in extra.externalLinks) {
-          await txn.insert('anilist_anime_extra_link', {
+          batch.insert('anilist_anime_extra_link', {
             'mal_id': malId,
             'id': l.id,
             'url': l.url,
@@ -730,35 +735,35 @@ class SqliteAniListCache implements AniListCache {
             'type': l.type,
             'language': l.language,
             'icon': l.icon,
-          });
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
         }
       }
       if (extra.studios.isNotEmpty) {
-        await txn.delete(
+        batch.delete(
           'anilist_anime_extra_studio',
           where: 'mal_id = ?',
           whereArgs: [malId],
         );
         for (final s in extra.studios) {
-          await txn.insert('anilist_anime_extra_studio', {
+          batch.insert('anilist_anime_extra_studio', {
             'mal_id': malId,
             'studio_id': s.id,
             'name': s.name,
             'is_animation_studio': s.isAnimationStudio ? 1 : 0,
             'site_url': s.siteUrl,
             'is_main': s.isMain ? 1 : 0,
-          });
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
         }
       }
       if (characters.isNotEmpty) {
-        await txn.delete(
+        batch.delete(
           'anilist_anime_extra_voice_actor',
           where: 'anime_mal_id = ?',
           whereArgs: [malId],
         );
         for (final c in characters) {
           for (final va in c.voiceActors) {
-            await txn.insert('anilist_anime_extra_voice_actor', {
+            batch.insert('anilist_anime_extra_voice_actor', {
               'anime_mal_id': malId,
               'character_id': c.id,
               'va_id': va.id,
@@ -766,10 +771,11 @@ class SqliteAniListCache implements AniListCache {
               'native_name': va.nativeName,
               'image_url': va.imageUrl,
               'language': va.language,
-            });
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
           }
         }
       }
+      await batch.commit(noResult: true);
       await _upsertMeta(txn, key);
     });
   }

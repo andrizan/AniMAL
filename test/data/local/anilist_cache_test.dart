@@ -852,6 +852,65 @@ void main() {
       expect((await cache.getAnimeExtra(59))!.nextAiring!.episode, 5);
     });
 
+    test('a voice actor voicing two characters and a staff member with two '
+        'roles are kept as such', () async {
+      const va = AniListVoiceActor(id: 5, name: 'Same Voice');
+      const extra = AniListAnimeExtra(
+        people: AniListAnimePeople(
+          characters: [
+            AniListCharacter(
+              id: 1,
+              name: 'Hero',
+              role: 'MAIN',
+              voiceActors: [va],
+            ),
+            AniListCharacter(
+              id: 2,
+              name: 'Rival',
+              role: 'SUPPORTING',
+              voiceActors: [va],
+            ),
+          ],
+          staff: [
+            AniListStaff(id: 9, name: 'Busy Person', role: 'Director'),
+            AniListStaff(id: 9, name: 'Busy Person', role: 'Storyboard'),
+          ],
+        ),
+      );
+
+      await cache.saveAnimeExtra(60, extra);
+
+      final out = (await cache.getAnimeExtra(60))!;
+      expect(out.people.characters.map((c) => c.voiceActors.single.id), [5, 5]);
+      expect(out.people.staff.map((s) => s.role), ['Director', 'Storyboard']);
+      final pairs = await appDb.raw.query(
+        'anilist_anime_extra_voice_actor',
+        where: 'anime_mal_id = ?',
+        whereArgs: [60],
+        orderBy: 'character_id',
+      );
+      expect(pairs.map((r) => r['character_id']), [1, 2]);
+    });
+
+    test('a link or studio AniList repeats does not fail the save', () async {
+      const extra = AniListAnimeExtra(
+        externalLinks: [
+          AniListExternalLink(id: 1, url: 'https://a.test', site: 'A'),
+          AniListExternalLink(id: 1, url: 'https://a.test', site: 'A'),
+        ],
+        studios: [
+          AniListStudio(id: 7, name: 'Bones', isAnimationStudio: true),
+          AniListStudio(id: 7, name: 'Bones', isAnimationStudio: true),
+        ],
+      );
+
+      await cache.saveAnimeExtra(61, extra);
+
+      final out = (await cache.getAnimeExtra(61))!;
+      expect(out.externalLinks.map((l) => l.id), [1]);
+      expect(out.studios.map((s) => s.id), [7]);
+    });
+
     test('partial extra refresh preserves cached characters/staff', () async {
       const full = AniListAnimeExtra(
         people: AniListAnimePeople(
