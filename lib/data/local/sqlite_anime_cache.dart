@@ -80,9 +80,9 @@ class SqliteAnimeCache implements AnimeCache {
   @override
   Future<AnimeDetail?> getAnimeDetail(int malId) async {
     // Serve whatever rows we have even when `cache_meta` is gone (e.g. after
-    // invalidateAnimeDetail from a list mutation): the SWR layer refreshes in
-    // the background, and a failed refetch now falls back to stored data
-    // instead of showing an error or an empty page.
+    // the startup cleanup expired the key): the repository then refetches,
+    // and a failed refetch falls back to the stored data instead of showing
+    // an error or an empty page.
     final row = await _db.query(
       'anime',
       columns: ['*'],
@@ -184,24 +184,6 @@ class SqliteAnimeCache implements AnimeCache {
   // ---------- Public invalidation API ----------
 
   @override
-  Future<void> invalidateAnimeDetail(int malId) async {
-    await _db.delete(
-      'cache_meta',
-      where: 'cache_key = ?',
-      whereArgs: [detailKey(malId)],
-    );
-  }
-
-  @override
-  Future<void> invalidateUserAnimeLists() async {
-    await _db.delete(
-      'cache_meta',
-      where: 'cache_key LIKE ?',
-      whereArgs: ['userlist_%'],
-    );
-  }
-
-  @override
   Future<void> invalidateUserAnimeList(
     String status,
     int limit,
@@ -274,8 +256,15 @@ class SqliteAnimeCache implements AnimeCache {
   }
 
   @override
-  Future<void> clearCachedAnimeListStatus(int malId) async {
-    await _writeMyListStatus(malId, null);
+  Future<void> applyUserListRemoval(int malId) async {
+    await _db.transaction((txn) async {
+      await _setMyListStatus(txn, malId, null);
+      await txn.delete(
+        'user_anime_list_item',
+        where: 'mal_id = ?',
+        whereArgs: [malId],
+      );
+    });
   }
 
   // ---------- Internal helpers ----------

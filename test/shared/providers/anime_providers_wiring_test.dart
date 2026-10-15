@@ -135,6 +135,36 @@ void main() {
       );
       expect(container.read(malAnimeApiProvider), isA<MalApiClient>());
     });
+
+    test('a list edit updates the open detail without refetching it', () async {
+      final sub = container.listen(animeDetailProvider(5), (_, _) {});
+      addTearDown(sub.close);
+      await container.read(animeDetailProvider(5).future);
+
+      await container
+          .read(animeRepositoryProvider)
+          .updateAnimeListStatus(5, numWatchedEpisodes: 3);
+      final detail = await container.read(animeDetailProvider(5).future);
+
+      expect(detail!.myListStatus?.numEpisodesWatched, 3);
+      expect(adapter.requests.map((r) => r.method), ['GET', 'PUT']);
+    });
+
+    test('a removal updates the open detail without refetching it', () async {
+      final sub = container.listen(animeDetailProvider(5), (_, _) {});
+      addTearDown(sub.close);
+      await container.read(animeDetailProvider(5).future);
+      await container
+          .read(animeRepositoryProvider)
+          .updateAnimeListStatus(5, numWatchedEpisodes: 3);
+      await container.read(animeDetailProvider(5).future);
+
+      await container.read(animeRepositoryProvider).deleteAnimeFromList(5);
+      final detail = await container.read(animeDetailProvider(5).future);
+
+      expect(detail!.myListStatus, isNull);
+      expect(adapter.requests.map((r) => r.method), ['GET', 'PUT', 'DELETE']);
+    });
   });
 
   group('providers over a repository', () {

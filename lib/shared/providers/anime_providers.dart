@@ -235,10 +235,7 @@ class AnimeRepository {
   Future<void> deleteAnimeFromList(int animeId) async {
     try {
       await _api.deleteAnimeFromList(animeId);
-      await _cache.invalidateAnimeDetail(animeId);
-      await _cache.invalidateUserAnimeLists();
-      await _cache.clearCachedAnimeListStatus(animeId);
-      await _ref.read(airingCacheProvider).updateMyListStatus(animeId, null);
+      await _applyListRemoval(animeId);
       _bumpListVersion();
     } on DioException catch (e) {
       _logger?.e('deleteAnimeFromList failed', error: e);
@@ -276,7 +273,8 @@ class AnimeRepository {
     }
   }
 
-  /// Apply a list mutation to SQLite caches.
+  /// Apply a list mutation to SQLite caches. The status MAL returned is the
+  /// whole truth, so the cached detail is patched, never refetched.
   Future<void> _applyListMutation(int animeId, MyListStatus updated) async {
     try {
       await _cache.applyUserListMutation(
@@ -286,10 +284,24 @@ class AnimeRepository {
         0,
       );
       await _ref.read(airingCacheProvider).updateMyListStatus(animeId, updated);
-      await _cache.invalidateAnimeDetail(animeId);
     } catch (e, st) {
       _logger?.e(
         'Failed to apply list mutation to cache',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  /// Apply a list removal to SQLite caches: the cached lists lose the anime
+  /// and stay valid, so no list is refetched.
+  Future<void> _applyListRemoval(int animeId) async {
+    try {
+      await _cache.applyUserListRemoval(animeId);
+      await _ref.read(airingCacheProvider).updateMyListStatus(animeId, null);
+    } on Object catch (e, st) {
+      _logger?.e(
+        'Failed to apply list removal to cache',
         error: e,
         stackTrace: st,
       );

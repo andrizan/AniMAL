@@ -38,8 +38,6 @@ abstract interface class AnimeCache {
   Future<void> saveUserInfo(MalUser user);
 
   // Invalidation
-  Future<void> invalidateAnimeDetail(int malId);
-  Future<void> invalidateUserAnimeLists();
   Future<void> invalidateUserAnimeList(String status, int limit, int offset);
   Future<void> updateCachedAnimeListStatus(int malId, MyListStatus status);
   Future<void> applyUserListMutation(
@@ -48,5 +46,8 @@ abstract interface class AnimeCache {
     int limit,
     int offset,
   );
-  Future<void> clearCachedAnimeListStatus(int malId);
+
+  /// Forgets the personal status of [malId] and drops it from every cached
+  /// user list. The lists stay valid, so nothing is refetched.
+  Future<void> applyUserListRemoval(int malId);
 }

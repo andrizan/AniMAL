@@ -223,5 +223,30 @@ void main() {
       final watching = await cache.getUserAnimeList('watching', limit, 0);
       expect(watching, isEmpty);
     });
+
+    test('removing an anime takes it out of the cached list, which stays '
+        'valid', () async {
+      await cache.saveUserAnimeList('watching', limit, 0, [
+        makeAnime(1),
+        makeAnime(2),
+      ]);
+      await cache.saveUserAnimeList('completed', limit, 0, [makeAnime(3)]);
+      final key = SqliteAnimeCache.userListKey('watching', limit, 0);
+      final fetchedAt = await cache.getFetchedAt(key);
+
+      await repo.deleteAnimeFromList(1);
+
+      final watching = await cache.getUserAnimeList('watching', limit, 0);
+      expect(watching!.map((a) => a.id).toList(), [2]);
+      expect(await cache.getFetchedAt(key), fetchedAt);
+      final completed = await cache.getUserAnimeList('completed', limit, 0);
+      expect(completed!.map((a) => a.id).toList(), [3]);
+      expect(
+        await cache.getFetchedAt(
+          SqliteAnimeCache.userListKey('completed', limit, 0),
+        ),
+        isNotNull,
+      );
+    });
   });
 }

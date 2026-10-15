@@ -227,34 +227,49 @@ void main() {
       expect(out.first.myListStatus?.score, 9);
     });
 
-    test('invalidateAnimeDetail removes only that detail key', () async {
-      const d = AnimeDetail(id: 1, title: 'T', mainPicture: MainPicture());
-      await cache.saveAnimeDetail(d);
-      expect(await cache.getFetchedAt('detail_1'), isNotNull);
-      await cache.invalidateAnimeDetail(1);
-      expect(await cache.getFetchedAt('detail_1'), isNull);
+    test('applyUserListRemoval drops the anime from every cached list '
+        'and keeps the lists valid', () async {
+      await cache.saveUserAnimeList('watching', 100, 0, [
+        makeAnime(1),
+        makeAnime(2),
+      ]);
+      await cache.saveUserAnimeList('completed', 100, 0, [makeAnime(3)]);
+
+      await cache.applyUserListRemoval(1);
+
+      final watching = await cache.getUserAnimeList('watching', 100, 0);
+      expect(watching!.map((a) => a.id), [2]);
+      final completed = await cache.getUserAnimeList('completed', 100, 0);
+      expect(completed!.map((a) => a.id), [3]);
+      expect(await cache.getFetchedAt('userlist_watching_100_0'), isNotNull);
+      expect(await cache.getFetchedAt('userlist_completed_100_0'), isNotNull);
     });
 
-    test('invalidateUserAnimeLists removes all userlist_* keys', () async {
-      await cache.saveUserAnimeList('watching', 100, 0, [makeAnime(1)]);
-      await cache.saveUserAnimeList('completed', 100, 0, [makeAnime(2)]);
-      await cache.invalidateUserAnimeLists();
-      expect(await cache.getFetchedAt('userlist_watching_100_0'), isNull);
-      expect(await cache.getFetchedAt('userlist_completed_100_0'), isNull);
-    });
+    test(
+      'applyUserListRemoval clears the status seen by other caches',
+      () async {
+        await cache.saveSearchResults('q', 10, [
+          makeAnime(
+            1,
+            myListStatus: const MyListStatus(status: WatchStatus.watching),
+          ),
+        ]);
+        await cache.saveAnimeDetail(
+          const AnimeDetail(
+            id: 1,
+            title: 'T',
+            myListStatus: MyListStatus(status: WatchStatus.watching),
+          ),
+        );
 
-    test('clearCachedAnimeListStatus sets columns to NULL', () async {
-      final list = [
-        makeAnime(
-          1,
-          myListStatus: const MyListStatus(status: WatchStatus.watching),
-        ),
-      ];
-      await cache.saveSearchResults('q', 10, list);
-      await cache.clearCachedAnimeListStatus(1);
-      final out = await cache.getSearchResults('q', 10);
-      expect(out!.first.myListStatus, isNull);
-    });
+        await cache.applyUserListRemoval(1);
+
+        final search = await cache.getSearchResults('q', 10);
+        expect(search!.single.myListStatus, isNull);
+        expect((await cache.getAnimeDetail(1))!.myListStatus, isNull);
+        expect(await cache.getFetchedAt('detail_1'), isNotNull);
+      },
+    );
 
     test('search key normalization is stable', () async {
       final list = [makeAnime(1)];
