@@ -1,12 +1,43 @@
-## [Unreleased]
+## [2.12.0] - 2026-10-15
+
+### Bug Fixes
+
+- Count down from the air time and refresh aired next episodes
+- Show AniList's fallback score out of ten
+
+### Chores
+
+- Bump version to 2.11.2+16 [skip ci]
+
+### Features
+
+- Fetch seasons and the profile again on an explicit refresh
+
+### Other
+
+- Merge branch 'main' of https://github.com/andrizan/AniMAL
+
+### Performance
+
+- Patch cached lists on edit and removal instead of refetching
+- Refresh a list without fetching the airing schedule again
+- Store an anime's extra and genres in one batch
+- Draw works cards from AniList instead of asking MAL per card
+- Run the database cleanup without holding the first frame
+## [2.11.2] - 2026-10-13
 
 ### Bug Fixes
 
 - Drop duplicate works so studio detail saves
+- Keep mal lists whole when the api repeats an anime
 
 ### Chores
 
 - Bump version to 2.11.1+15 [skip ci]
+
+### Performance
+
+- Store anilist works lists in one batch
 ## [2.11.1] - 2026-10-12
 
 ### Chores
