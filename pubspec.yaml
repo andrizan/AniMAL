@@ -2,7 +2,7 @@ name: animal
 description: "Unofficial MyAnimeList client built with Flutter."
 publish_to: 'none'
 
-version: 2.11.1+15
+version: 2.11.2+16
 
 environment:
   sdk: ^3.13.0
