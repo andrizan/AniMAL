@@ -17,11 +17,21 @@ AniListMediaAppearance _work(
   int? malId,
   String type = 'ANIME',
   bool noMal = false,
+  String? native,
+  String? format,
+  int? episodes,
+  String? status,
+  double? meanScore,
 }) => AniListMediaAppearance(
   anilistId: n + 500,
   malId: noMal ? null : malId ?? n,
   title: 'Work $n',
+  titleNative: native,
   type: type,
+  format: format,
+  episodes: episodes,
+  status: status,
+  meanScore: meanScore,
 );
 
 List<AniListMediaAppearance> _works(int from, int count) => [
@@ -47,19 +57,18 @@ class _Api extends Fake implements AniListClient {
   }
 }
 
+/// The MAL rows already in SQLite: every anime unless listed as missing.
 class _Repo extends Fake implements AnimeRepository {
   final requested = <int>[];
   final missing = <int>{};
   Completer<void>? gate;
 
   @override
-  Future<List<Anime>> getAnimeList(List<int> malIds) async {
-    requested.addAll(malIds);
+  Future<Anime?> getCachedAnime(int malId) async {
+    requested.add(malId);
     await gate?.future;
-    return [
-      for (final id in malIds)
-        if (!missing.contains(id)) Anime(id: id, title: 'Anime $id'),
-    ];
+    if (missing.contains(malId)) return null;
+    return Anime(id: malId, title: 'Anime $malId');
   }
 }
 
@@ -144,6 +153,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  AnimeCard cardOf(WidgetTester tester, String title) => tester.widget(
+    find.ancestor(of: find.text(title), matching: find.byType(AnimeCard)),
+  );
+
   setUp(() {
     api = _Api();
     repo = _Repo();
@@ -195,8 +208,8 @@ void main() {
     });
   });
 
-  group('laziness', () {
-    testWidgets('only the cards near the screen fetch their MAL data', (
+  group('the stored MAL row', () {
+    testWidgets('is looked up only for the cards near the screen', (
       tester,
     ) async {
       api.gate = Completer<void>();
@@ -207,7 +220,7 @@ void main() {
       expect(repo.requested.toSet().length, repo.requested.length);
     });
 
-    testWidgets('a card that scrolls into view fetches then', (tester) async {
+    testWidgets('is looked up once a card scrolls into view', (tester) async {
       api.gate = Completer<void>();
       await show(tester, first: _works(1, 10));
       expect(repo.requested, isNot(contains(10)));
@@ -217,11 +230,82 @@ void main() {
       expect(repo.requested, contains(10));
     });
 
-    testWidgets('each work is looked up by its own MAL id', (tester) async {
+    testWidgets("is looked up by the work's own MAL id", (tester) async {
       await show(tester, first: [_work(1, malId: 5114), _work(2, malId: 777)]);
 
       expect(repo.requested, containsAll([5114, 777]));
       expect(find.text('Anime 5114'), findsOneWidget);
+    });
+
+    testWidgets('wins over what AniList said', (tester) async {
+      await show(tester, first: [_work(1, meanScore: 70, episodes: 24)]);
+
+      final card = cardOf(tester, 'Anime 1');
+      expect(card.anime.title, 'Anime 1');
+      expect(card.anime.mean, isNull);
+      expect(find.text('Work 1'), findsNothing);
+    });
+
+    testWidgets('is drawn from AniList while it is being read', (tester) async {
+      repo.gate = Completer<void>();
+      await show(tester, first: _works(1, 2));
+
+      expect(find.text('Work 1'), findsOneWidget);
+      expect(find.byType(AnimeCard), findsNWidgets(2));
+
+      repo.gate!.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Anime 1'), findsOneWidget);
+      expect(find.text('Work 1'), findsNothing);
+    });
+  });
+
+  group('a work MAL does not know yet', () {
+    testWidgets("is drawn from what AniList said, on MAL's scale", (
+      tester,
+    ) async {
+      repo.missing.add(2);
+      await show(
+        tester,
+        first: [
+          _work(1),
+          _work(
+            2,
+            native: 'ワーク',
+            format: 'TV',
+            episodes: 12,
+            status: 'FINISHED',
+            meanScore: 85,
+          ),
+          _work(3),
+        ],
+      );
+
+      expect(find.text('Anime 1'), findsOneWidget);
+      expect(find.text('Anime 3'), findsOneWidget);
+      final card = cardOf(tester, 'Work 2');
+      expect(card.anime.id, 2);
+      expect(card.anime.alternativeTitles?.ja, 'ワーク');
+      expect(card.anime.mean, 8.5);
+      expect(card.anime.numEpisodes, 12);
+      expect(card.anime.status, 'finished_airing');
+      expect(card.anime.mediaType, 'tv');
+      expect(find.text('8.5'), findsOneWidget);
+      expect(find.text('TV · 12 eps · Finished'), findsOneWidget);
+    });
+
+    testWidgets('shows no score or meta line when AniList has none', (
+      tester,
+    ) async {
+      repo.missing.add(1);
+      await show(tester, first: [_work(1)]);
+
+      final card = cardOf(tester, 'Work 1');
+      expect(card.anime.mean, isNull);
+      expect(card.anime.mediaType, isNull);
+      expect(card.anime.status, isNull);
     });
   });
 
@@ -432,38 +516,6 @@ void main() {
       );
 
       expect(find.text('Works'), findsNothing);
-    });
-
-    testWidgets('a work MAL fails to return simply does not appear', (
-      tester,
-    ) async {
-      repo.missing.add(2);
-      await show(tester, first: _works(1, 3));
-
-      expect(find.text('Anime 1'), findsOneWidget);
-      expect(find.text('Anime 2'), findsNothing);
-      expect(find.text('Anime 3'), findsOneWidget);
-    });
-  });
-
-  group('loading cards', () {
-    testWidgets('show a placeholder until the MAL data arrives', (
-      tester,
-    ) async {
-      final handle = tester.ensureSemantics();
-      repo.gate = Completer<void>();
-      await show(tester, first: _works(1, 2));
-
-      expect(find.bySemanticsLabel('Loading'), findsNWidgets(2));
-      expect(find.byType(AnimeCard), findsNothing);
-
-      repo.gate!.complete();
-      await tester.pump();
-      await tester.pump();
-
-      expect(find.bySemanticsLabel('Loading'), findsNothing);
-      expect(find.byType(AnimeCard), findsNWidgets(2));
-      handle.dispose();
     });
   });
 }

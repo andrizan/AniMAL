@@ -366,23 +366,21 @@ void main() {
     });
   });
 
-  group('batch getAnimeList', () {
-    test('is empty for no ids and makes no request', () async {
-      expect(await repo.getAnimeList(const []), isEmpty);
+  group('getCachedAnime', () {
+    test('serves a stored anime and makes no request', () async {
+      await cache.saveSearchResults('q', 20, [
+        const Anime(id: 1, title: 'Stored'),
+      ]);
+
+      final anime = await repo.getCachedAnime(1);
+
+      expect(anime!.title, 'Stored');
       expect(adapter.requests, isEmpty);
     });
 
-    test('maps details to cards and silently skips failures', () async {
-      respond = (o) => o.path.endsWith('/2')
-          ? const FakeResponse.json({}, status: 500)
-          : FakeResponse.json({
-              'id': int.parse(o.path.split('/').last),
-              'title': 'T',
-            });
-
-      final result = await repo.getAnimeList([1, 2, 3]);
-
-      expect(result.map((a) => a.id), [1, 3]);
+    test('is null for an anime never fetched, without asking', () async {
+      expect(await repo.getCachedAnime(1), isNull);
+      expect(adapter.requests, isEmpty);
     });
   });
 

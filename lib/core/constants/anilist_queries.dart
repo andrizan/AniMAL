@@ -69,7 +69,10 @@ abstract final class AniListQueries {
           pageInfo { hasNextPage }
           edges {
             characterRole
-            node { id idMal title { romaji english } coverImage { medium } type }
+            node {
+              id idMal title { romaji english native } coverImage { medium }
+              type format episodes status meanScore
+            }
           }
         }
       }
@@ -87,7 +90,10 @@ abstract final class AniListQueries {
           pageInfo { hasNextPage }
           edges {
             staffRole
-            node { id idMal title { romaji english } coverImage { medium } type }
+            node {
+              id idMal title { romaji english native } coverImage { medium }
+              type format episodes status meanScore
+            }
           }
         }
       }
@@ -101,7 +107,10 @@ abstract final class AniListQueries {
         media(sort: POPULARITY_DESC, perPage: $perPage) {
           pageInfo { hasNextPage }
           edges {
-            node { id idMal title { romaji english } coverImage { medium } type }
+            node {
+              id idMal title { romaji english native } coverImage { medium }
+              type format episodes status meanScore
+            }
           }
         }
       }
@@ -119,7 +128,10 @@ abstract final class AniListQueries {
           pageInfo { hasNextPage total }
           edges {
             characterRole
-            node { id idMal title { romaji english } coverImage { medium } type }
+            node {
+              id idMal title { romaji english native } coverImage { medium }
+              type format episodes status meanScore
+            }
           }
         }
       }
@@ -133,7 +145,10 @@ abstract final class AniListQueries {
           pageInfo { hasNextPage total }
           edges {
             staffRole
-            node { id idMal title { romaji english } coverImage { medium } type }
+            node {
+              id idMal title { romaji english native } coverImage { medium }
+              type format episodes status meanScore
+            }
           }
         }
       }
@@ -146,7 +161,10 @@ abstract final class AniListQueries {
         media(sort: POPULARITY_DESC, page: $page, perPage: $perPage) {
           pageInfo { hasNextPage total }
           edges {
-            node { id idMal title { romaji english } coverImage { medium } type }
+            node {
+              id idMal title { romaji english native } coverImage { medium }
+              type format episodes status meanScore
+            }
           }
         }
       }

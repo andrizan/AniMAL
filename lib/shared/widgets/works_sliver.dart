@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:animal/core/theme/app_spacing.dart';
+import 'package:animal/core/utils/anilist_mappings.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/shared/providers/anilist_works_providers.dart';
@@ -23,9 +24,9 @@ String _unsupportedNote(AniListMediaAppearance media) {
 /// The works of a character, staff member or studio as a sliver: a header
 /// and a lazy list that loads the next page as the user nears the end.
 ///
-/// The cards are built lazily and each one fetches its own MyAnimeList data
-/// only once it is built, so a long list never fans out into hundreds of
-/// requests, whatever the page size.
+/// Each card is drawn from what AniList already said about the work, with
+/// the MAL row stored for it on top when there is one, so no card ever asks
+/// MyAnimeList over the network: that happens when the card is opened.
 class WorksSliver extends ConsumerWidget {
   const WorksSliver({
     required this.title,
@@ -132,72 +133,24 @@ class _WorkTile extends ConsumerWidget {
       );
     }
 
-    return ref
-        .watch(animeListProvider('$malId'))
-        .when(
-          data: (list) => list.isEmpty
-              ? const SizedBox.shrink()
-              : AnimeCard(anime: list.first),
-          loading: () => const _WorkSkeleton(),
-          error: (_, _) => const SizedBox.shrink(),
-        );
-  }
-}
-
-/// A card-shaped placeholder while a work's MyAnimeList data loads.
-class _WorkSkeleton extends StatelessWidget {
-  const _WorkSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    final block = Theme.of(context).colorScheme.surfaceContainerHigh;
-
-    Widget bar(double width, double height) => Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: block,
-        borderRadius: BorderRadius.circular(height / 2),
-      ),
+    // What AniList said is enough for the card. The MAL row stored for the
+    // anime, when there is one, wins over it: its score, its list status.
+    final fromAniList = Anime(
+      id: malId,
+      title: media.titleEnglish ?? media.title,
+      mainPicture: media.imageUrl != null
+          ? MainPicture(medium: media.imageUrl)
+          : null,
+      alternativeTitles: media.titleNative == null
+          ? null
+          : AlternativeTitles(ja: media.titleNative),
+      mean: scoreOutOfTen(media.meanScore),
+      numEpisodes: media.episodes,
+      status: malStatusOf(media.status),
+      mediaType: malMediaTypeOf(media.format),
     );
-
-    return Semantics(
-      label: 'Loading',
-      child: Card(
-        margin: const EdgeInsets.symmetric(
-          vertical: AppSpacing.md / 2,
-          horizontal: AppSpacing.page,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 84,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: block,
-                  borderRadius: BorderRadius.circular(AppRadius.cover),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    bar(160, 16),
-                    const SizedBox(height: AppSpacing.md),
-                    bar(110, 12),
-                    const SizedBox(height: AppSpacing.md),
-                    bar(80, 12),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    final stored = ref.watch(cachedAnimeProvider(malId)).value;
+    return AnimeCard(anime: stored ?? fromAniList);
   }
 }
 

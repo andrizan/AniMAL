@@ -90,6 +90,23 @@ void main() {
           'fetched_at': DateTime.now().millisecondsSinceEpoch,
         });
       }
+      if (version < 5) {
+        for (final table in [
+          'anilist_character_media',
+          'anilist_staff_media',
+          'anilist_studio_media',
+        ]) {
+          for (final col in [
+            'title_native',
+            'format',
+            'episodes',
+            'status',
+            'mean_score',
+          ]) {
+            await db.raw.execute('ALTER TABLE $table DROP COLUMN $col');
+          }
+        }
+      }
       if (version < 4) {
         await db.raw.execute('DROP TABLE anilist_works_progress');
       }
@@ -120,7 +137,7 @@ void main() {
         );
         addTearDown(db.close);
 
-        expect(await db.raw.getVersion(), 4);
+        expect(await db.raw.getVersion(), 5);
         expect(
           await columns(db, 'anilist_anime_extra'),
           containsAll(['characters_json', 'staff_json']),
@@ -162,7 +179,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 4);
+      expect(await db.raw.getVersion(), 5);
       expect(await columns(db, 'airing_schedule'), contains('next_airing_at'));
       expect(
         (await db.raw.query('anilist_anime_extra')).single['characters_json'],
@@ -182,7 +199,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 4);
+      expect(await db.raw.getVersion(), 5);
       expect((await db.raw.query('anime')).single['title'], 'Kept anime');
     });
 
@@ -195,7 +212,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 4);
+      expect(await db.raw.getVersion(), 5);
       expect(await columns(db, 'anilist_works_progress'), {
         'source',
         'id',
@@ -217,8 +234,42 @@ void main() {
       );
     });
 
-    test('a database already at v4 keeps its works lists', () async {
+    test('v4 gains the works columns and refetches works lists', () async {
       final path = await oldDatabase(4);
+
+      final db = await AppDatabase.open(
+        pathOverride: path,
+        runMigrations: false,
+      );
+      addTearDown(db.close);
+
+      expect(await db.raw.getVersion(), 5);
+      for (final table in [
+        'anilist_character_media',
+        'anilist_staff_media',
+        'anilist_studio_media',
+      ]) {
+        expect(
+          await columns(db, table),
+          containsAll([
+            'title_native',
+            'format',
+            'episodes',
+            'status',
+            'mean_score',
+          ]),
+          reason: table,
+        );
+      }
+      expect(await metaKeys(db), {'detail_5', 'animeExtra_5'});
+      expect(
+        (await db.raw.query('anilist_staff_media')).single['title'],
+        'Kept work',
+      );
+    });
+
+    test('a database already at v5 keeps its works lists', () async {
+      final path = await oldDatabase(5);
 
       final db = await AppDatabase.open(
         pathOverride: path,

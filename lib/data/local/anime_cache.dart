@@ -10,6 +10,10 @@ abstract interface class AnimeCache {
   Future<List<Anime>?> getSearchResults(String query, int limit);
   Future<List<Anime>?> getSeasonalAnime(int year, String season, int limit);
   Future<AnimeDetail?> getAnimeDetail(int malId);
+
+  /// The stored row of an anime, with no network: null when the anime was
+  /// never fetched or is only a stub made for its AniList extra.
+  Future<Anime?> getCachedAnime(int malId);
   Future<List<Anime>?> getAnimeRanking(String rankingType, int limit);
   Future<List<Anime>?> getUserAnimeList(String status, int limit, int offset);
   Future<MalUser?> getUserInfo();

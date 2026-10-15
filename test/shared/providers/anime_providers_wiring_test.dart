@@ -49,7 +49,7 @@ class _BrokenCache extends SqliteAnimeCache {
 
 class _Repo extends Fake implements AnimeRepository {
   final details = <int>[];
-  final lists = <List<int>>[];
+  final cached = <int>[];
 
   @override
   Future<AnimeDetail?> getAnimeDetail(int animeId) async {
@@ -58,9 +58,9 @@ class _Repo extends Fake implements AnimeRepository {
   }
 
   @override
-  Future<List<Anime>> getAnimeList(List<int> malIds) async {
-    lists.add(malIds);
-    return [for (final id in malIds) Anime(id: id, title: 'Anime $id')];
+  Future<Anime?> getCachedAnime(int malId) async {
+    cached.add(malId);
+    return Anime(id: malId, title: 'Anime $malId');
   }
 }
 
@@ -165,6 +165,22 @@ void main() {
       expect(detail!.myListStatus, isNull);
       expect(adapter.requests.map((r) => r.method), ['GET', 'PUT', 'DELETE']);
     });
+
+    test('a stored anime is read without a request', () async {
+      await SqliteAnimeCache(appDb).saveUserAnimeList('watching', 500, 0, [
+        const Anime(id: 6, title: 'Stored'),
+      ]);
+
+      final anime = await container.read(cachedAnimeProvider(6).future);
+
+      expect(anime!.title, 'Stored');
+      expect(adapter.requests, isEmpty);
+    });
+
+    test('an anime never fetched is null, still without a request', () async {
+      expect(await container.read(cachedAnimeProvider(6).future), isNull);
+      expect(adapter.requests, isEmpty);
+    });
   });
 
   group('providers over a repository', () {
@@ -197,35 +213,22 @@ void main() {
       expect(repo.details, [1, 2]);
     });
 
-    test('an empty key is an empty list without asking', () async {
-      final list = await container.read(animeListProvider('').future);
+    test('a stored anime is read through the repository', () async {
+      final anime = await container.read(cachedAnimeProvider(4).future);
 
-      expect(list, isEmpty);
-      expect(repo.lists, isEmpty);
+      expect(anime!.title, 'Anime 4');
+      expect(repo.cached, [4]);
     });
 
-    test('a comma separated key is one batch of ids', () async {
-      final list = await container.read(animeListProvider('3,1,2').future);
-
-      expect(list.map((a) => a.id), [3, 1, 2]);
-      expect(repo.lists, [
-        [3, 1, 2],
-      ]);
-    });
-
-    test('a key that is not numbers is an error', () async {
-      final sub = container.listen(
-        animeListProvider('1,x'),
-        (_, _) {},
-        onError: (_, _) {},
-      );
+    test('a stored anime is read again when the list changes', () async {
+      final sub = container.listen(cachedAnimeProvider(4), (_, _) {});
       addTearDown(sub.close);
+      await container.read(cachedAnimeProvider(4).future);
 
-      await expectLater(
-        container.read(animeListProvider('1,x').future),
-        throwsA(isA<FormatException>()),
-      );
-      expect(repo.lists, isEmpty);
+      container.read(animeListVersionProvider.notifier).bump();
+      await container.read(cachedAnimeProvider(4).future);
+
+      expect(repo.cached, [4, 4]);
     });
   });
 

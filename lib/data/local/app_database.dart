@@ -8,7 +8,7 @@ class AppDatabase {
 
   Database get raw => _db;
 
-  static const _schemaVersion = 4;
+  static const _schemaVersion = 5;
   static const _fileName = 'animal_cache.db';
 
   static Future<AppDatabase> open({
@@ -33,6 +33,9 @@ class AppDatabase {
         }
         if (oldVersion < 4) {
           await _migrateV3ToV4(db);
+        }
+        if (oldVersion < 5) {
+          await _migrateV4ToV5(db);
         }
       },
     );
@@ -336,8 +339,13 @@ class AppDatabase {
         mal_id        INTEGER,
         title         TEXT NOT NULL,
         title_english TEXT,
+        title_native  TEXT,
         image_url     TEXT,
         type          TEXT,
+        format        TEXT,
+        episodes      INTEGER,
+        status        TEXT,
+        mean_score    REAL,
         role          TEXT,
         position      INTEGER NOT NULL,
         PRIMARY KEY (character_id, anilist_id),
@@ -373,8 +381,13 @@ class AppDatabase {
         mal_id        INTEGER,
         title         TEXT NOT NULL,
         title_english TEXT,
+        title_native  TEXT,
         image_url     TEXT,
         type          TEXT,
+        format        TEXT,
+        episodes      INTEGER,
+        status        TEXT,
+        mean_score    REAL,
         role          TEXT,
         position      INTEGER NOT NULL,
         PRIMARY KEY (staff_id, anilist_id),
@@ -399,8 +412,13 @@ class AppDatabase {
         mal_id       INTEGER,
         title        TEXT NOT NULL,
         title_english TEXT,
+        title_native TEXT,
         image_url    TEXT,
         type         TEXT,
+        format       TEXT,
+        episodes     INTEGER,
+        status       TEXT,
+        mean_score   REAL,
         role         TEXT,
         position     INTEGER NOT NULL,
         PRIMARY KEY (studio_id, anilist_id),
@@ -542,7 +560,39 @@ class AppDatabase {
   /// Works lists were cached 10 at a time with no record of where they
   /// stopped. Forgetting those details makes the next visit fetch a full page
   /// and store its cursor; the stale rows are replaced when that happens.
-  static Future<void> _migrateV3ToV4(Database db) async {
+  static Future<void> _migrateV3ToV4(Database db) => _forgetWorksDetails(db);
+
+  /// Works gained the native title, format, episode count, status and score
+  /// AniList knows, so a card can be drawn before MAL is asked. Rows stored
+  /// before have none of it, so the details are forgotten and fetched again
+  /// on the next visit.
+  static Future<void> _migrateV4ToV5(Database db) async {
+    const columns = {
+      'title_native': 'TEXT',
+      'format': 'TEXT',
+      'episodes': 'INTEGER',
+      'status': 'TEXT',
+      'mean_score': 'REAL',
+    };
+    for (final table in [
+      'anilist_character_media',
+      'anilist_staff_media',
+      'anilist_studio_media',
+    ]) {
+      final existing = (await db.rawQuery('PRAGMA table_info($table)'))
+          .map((c) => c['name'])
+          .toSet();
+      for (final column in columns.entries) {
+        if (existing.contains(column.key)) continue;
+        await db.execute(
+          'ALTER TABLE $table ADD COLUMN ${column.key} ${column.value}',
+        );
+      }
+    }
+    await _forgetWorksDetails(db);
+  }
+
+  static Future<void> _forgetWorksDetails(Database db) async {
     for (final prefix in ['character_%', 'staff_%', 'studio_%']) {
       await db.delete(
         'cache_meta',

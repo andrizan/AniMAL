@@ -560,8 +560,13 @@ class AniListClient {
             malId: node['idMal'] as int?,
             title: title['romaji'] as String,
             titleEnglish: title['english'] as String?,
+            titleNative: title['native'] as String?,
             imageUrl: cover['medium'] as String?,
             type: node['type'] as String?,
+            format: node['format'] as String?,
+            episodes: node['episodes'] as int?,
+            status: node['status'] as String?,
+            meanScore: (node['meanScore'] as num?)?.toDouble(),
             role: roleKey == null ? null : edge[roleKey] as String?,
           );
         })

@@ -179,8 +179,7 @@ class AnimeRepository {
     final key = SqliteAnimeCache.detailKey(animeId);
     // SQLite first: only fetch MAL when cache is missing/expired.
     // AniList extra is loaded exclusively via `anilistAnimeExtraProvider`
-    // so a detail open (or a batch `getAnimeList`) never fans out to
-    // AniList implicitly.
+    // so a detail open never fans out to AniList implicitly.
     return _swrNullable<AnimeDetail>(
       key: key,
       ttl: _ttlLong,
@@ -356,37 +355,10 @@ class AnimeRepository {
     _ref.read(animeListVersionProvider.notifier).bump();
   }
 
-  // ---------- Batch helper ----------
+  // ---------- Stored data only ----------
 
-  Future<List<Anime>> getAnimeList(List<int> malIds) async {
-    if (malIds.isEmpty) return <Anime>[];
-    final futures = malIds.map((id) async {
-      try {
-        final detail = await getAnimeDetail(id);
-        if (detail == null) return null;
-        return Anime(
-          id: detail.id,
-          title: detail.title,
-          mainPicture: detail.mainPicture,
-          mean: detail.mean,
-          rank: detail.rank,
-          popularity: detail.popularity,
-          numEpisodes: detail.numEpisodes,
-          status: detail.status,
-          rating: detail.rating,
-          mediaType: detail.mediaType,
-          broadcast: detail.broadcast,
-          alternativeTitles: detail.alternativeTitles,
-          genres: detail.genres,
-          myListStatus: detail.myListStatus,
-        );
-      } on Object catch (_) {
-        return null;
-      }
-    }).toList();
-    final settled = await Future.wait(futures);
-    return settled.whereType<Anime>().toList();
-  }
+  /// The MAL data already stored for an anime, if any, without any request.
+  Future<Anime?> getCachedAnime(int malId) => _cache.getCachedAnime(malId);
 
   // ---------- Generic helpers ----------
 
@@ -547,13 +519,13 @@ final animeDetailProvider = FutureProvider.autoDispose
       return repo.getAnimeDetail(animeId);
     });
 
-/// FutureProvider family for a batch of Anime by MAL IDs.
-/// Uses a comma-separated string key for stable provider identity.
+/// The MAL data already stored for an anime, if any, read with no request.
+/// Listens to [animeListVersionProvider] so a list edit reaches the card.
 // ignore: specify_nonobvious_property_types
-final animeListProvider = FutureProvider.autoDispose
-    .family<List<Anime>, String>((ref, key) async {
-      if (key.isEmpty) return <Anime>[];
-      final malIds = key.split(',').map(int.parse).toList();
-      final repo = ref.watch(animeRepositoryProvider);
-      return repo.getAnimeList(malIds);
-    });
+final cachedAnimeProvider = FutureProvider.autoDispose.family<Anime?, int>((
+  ref,
+  malId,
+) {
+  ref.watch(animeListVersionProvider);
+  return ref.watch(animeRepositoryProvider).getCachedAnime(malId);
+});

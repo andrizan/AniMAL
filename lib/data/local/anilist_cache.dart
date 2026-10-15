@@ -120,6 +120,44 @@ class SqliteAniListCache implements AniListCache {
     ),
   };
 
+  static Map<String, Object?> _worksRow(
+    String owner,
+    int id,
+    AniListMediaAppearance m,
+    int position,
+  ) => {
+    owner: id,
+    'anilist_id': m.anilistId,
+    'mal_id': m.malId,
+    'title': m.title,
+    'title_english': m.titleEnglish,
+    'title_native': m.titleNative,
+    'image_url': m.imageUrl,
+    'type': m.type,
+    'format': m.format,
+    'episodes': m.episodes,
+    'status': m.status,
+    'mean_score': m.meanScore,
+    'role': m.role,
+    'position': position,
+  };
+
+  static AniListMediaAppearance _appearanceFromRow(Map<String, Object?> m) =>
+      AniListMediaAppearance(
+        anilistId: m['anilist_id']! as int,
+        title: m['title']! as String,
+        malId: m['mal_id'] as int?,
+        titleEnglish: m['title_english'] as String?,
+        titleNative: m['title_native'] as String?,
+        imageUrl: m['image_url'] as String?,
+        type: m['type'] as String?,
+        format: m['format'] as String?,
+        episodes: m['episodes'] as int?,
+        status: m['status'] as String?,
+        meanScore: (m['mean_score'] as num?)?.toDouble(),
+        role: m['role'] as String?,
+      );
+
   Future<AniListWorksCursor> _readCursor(
     DatabaseExecutor db,
     AniListWorksSource source,
@@ -161,18 +199,11 @@ class SqliteAniListCache implements AniListCache {
     final store = _worksStore(source);
     final batch = db.batch();
     for (var i = 0; i < works.length; i++) {
-      final m = works[i];
-      batch.insert(store.table, {
-        store.owner: id,
-        'anilist_id': m.anilistId,
-        'mal_id': m.malId,
-        'title': m.title,
-        'title_english': m.titleEnglish,
-        'image_url': m.imageUrl,
-        'type': m.type,
-        'role': m.role,
-        'position': i,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      batch.insert(
+        store.table,
+        _worksRow(store.owner, id, works[i], i),
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
     }
     await batch.commit(noResult: true);
   }
@@ -210,17 +241,10 @@ class SqliteAniListCache implements AniListCache {
       });
       for (final m in page.items) {
         if (!known.add(m.anilistId)) continue;
-        await txn.insert(store.table, {
-          store.owner: id,
-          'anilist_id': m.anilistId,
-          'mal_id': m.malId,
-          'title': m.title,
-          'title_english': m.titleEnglish,
-          'image_url': m.imageUrl,
-          'type': m.type,
-          'role': m.role,
-          'position': position++,
-        });
+        await txn.insert(
+          store.table,
+          _worksRow(store.owner, id, m, position++),
+        );
       }
       await _writeCursor(
         txn,
@@ -861,19 +885,7 @@ class SqliteAniListCache implements AniListCache {
       birthDay: row['birth_day'] as int?,
       age: row['age'] as String?,
       gender: row['gender'] as String?,
-      mediaAppearances: mediaRows
-          .map(
-            (m) => AniListMediaAppearance(
-              anilistId: m['anilist_id']! as int,
-              title: m['title']! as String,
-              malId: m['mal_id'] as int?,
-              titleEnglish: m['title_english'] as String?,
-              imageUrl: m['image_url'] as String?,
-              type: m['type'] as String?,
-              role: m['role'] as String?,
-            ),
-          )
-          .toList(),
+      mediaAppearances: mediaRows.map(_appearanceFromRow).toList(),
       worksCursor: cursor,
     );
   }
@@ -981,19 +993,7 @@ class SqliteAniListCache implements AniListCache {
       occupations: occJson == null
           ? null
           : (jsonDecode(occJson) as List<dynamic>).cast<String>(),
-      mediaWorks: mediaRows
-          .map(
-            (m) => AniListMediaAppearance(
-              anilistId: m['anilist_id']! as int,
-              title: m['title']! as String,
-              malId: m['mal_id'] as int?,
-              titleEnglish: m['title_english'] as String?,
-              imageUrl: m['image_url'] as String?,
-              type: m['type'] as String?,
-              role: m['role'] as String?,
-            ),
-          )
-          .toList(),
+      mediaWorks: mediaRows.map(_appearanceFromRow).toList(),
       worksCursor: cursor,
     );
   }
@@ -1024,19 +1024,7 @@ class SqliteAniListCache implements AniListCache {
       isAnimationStudio: (rows.first['is_animation_studio']! as int) == 1,
       siteUrl: rows.first['site_url'] as String?,
       favourites: rows.first['favourites'] as int?,
-      mediaWorks: media
-          .map(
-            (m) => AniListMediaAppearance(
-              anilistId: m['anilist_id']! as int,
-              title: m['title']! as String,
-              malId: m['mal_id'] as int?,
-              titleEnglish: m['title_english'] as String?,
-              imageUrl: m['image_url'] as String?,
-              type: m['type'] as String?,
-              role: m['role'] as String?,
-            ),
-          )
-          .toList(),
+      mediaWorks: media.map(_appearanceFromRow).toList(),
       worksCursor: cursor,
     );
   }

@@ -185,8 +185,8 @@ void main() {
               ],
             ),
           ),
-          animeListProvider('5114').overrideWith(
-            (ref) async => const [Anime(id: 5114, title: 'FMA Brotherhood')],
+          cachedAnimeProvider(5114).overrideWith(
+            (ref) async => const Anime(id: 5114, title: 'FMA Brotherhood'),
           ),
         ]);
 
@@ -276,8 +276,8 @@ void main() {
             mediaWorks: [_media(1, malId: 5114, role: 'Original Creator')],
           ),
         ),
-        animeListProvider('5114').overrideWith(
-          (ref) async => const [Anime(id: 5114, title: 'FMA Brotherhood')],
+        cachedAnimeProvider(5114).overrideWith(
+          (ref) async => const Anime(id: 5114, title: 'FMA Brotherhood'),
         ),
       ]);
 
@@ -349,8 +349,8 @@ void main() {
             mediaWorks: [_media(1, malId: 5114), _media(2)],
           ),
         ),
-        animeListProvider('5114').overrideWith(
-          (ref) async => const [Anime(id: 5114, title: 'FMA Brotherhood')],
+        cachedAnimeProvider(5114).overrideWith(
+          (ref) async => const Anime(id: 5114, title: 'FMA Brotherhood'),
         ),
       ]);
 

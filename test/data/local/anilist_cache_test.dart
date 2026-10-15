@@ -165,6 +165,34 @@ void main() {
       expect(out.mediaAppearances.first.malId, 1);
       expect(out.mediaAppearances.last.malId, isNull);
     });
+
+    test('keeps what AniList says about each appearance', () async {
+      const c = AniListCharacterDetail(
+        id: 43,
+        name: 'Faye',
+        mediaAppearances: [
+          AniListMediaAppearance(
+            anilistId: 1,
+            malId: 1,
+            title: 'Cowboy Bebop',
+            titleNative: 'カウボーイビバップ',
+            format: 'TV',
+            episodes: 26,
+            status: 'FINISHED',
+            meanScore: 86,
+          ),
+        ],
+      );
+      await cache.saveCharacter(c);
+
+      final out = (await cache.getCharacter(43))!.mediaAppearances.single;
+
+      expect(out.titleNative, 'カウボーイビバップ');
+      expect(out.format, 'TV');
+      expect(out.episodes, 26);
+      expect(out.status, 'FINISHED');
+      expect(out.meanScore, 86);
+    });
   });
 
   group('AniListCache.studio', () {
@@ -228,6 +256,8 @@ void main() {
           titleEnglish: 'English $n',
           imageUrl: 'w$n.jpg',
           type: 'ANIME',
+          format: 'TV',
+          meanScore: 80,
           role: role,
         );
 
@@ -291,6 +321,22 @@ void main() {
     List<int> ids(List<AniListMediaAppearance> items) => [
       for (final m in items) m.anilistId,
     ];
+
+    test('an appended page keeps what AniList says about each work', () async {
+      await save(AniListWorksSource.character, 5, works(1, 2));
+
+      await cache.appendWorks(
+        AniListWorksSource.character,
+        5,
+        2,
+        page(3, 1, next: false),
+      );
+
+      final (items, _) = (await read(AniListWorksSource.character, 5))!;
+      expect(items, hasLength(3));
+      expect(items.last.format, 'TV');
+      expect(items.last.meanScore, 80);
+    });
 
     for (final source in AniListWorksSource.values) {
       group(source.name, () {

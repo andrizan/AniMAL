@@ -137,16 +137,30 @@ class AniListMediaAppearance {
     required this.title,
     this.malId,
     this.titleEnglish,
+    this.titleNative,
     this.imageUrl,
     this.type,
+    this.format,
+    this.episodes,
+    this.status,
+    this.meanScore,
     this.role,
   });
   final int anilistId;
   final int? malId;
   final String title;
   final String? titleEnglish;
+  final String? titleNative;
   final String? imageUrl;
   final String? type;
+
+  /// AniList's format (`TV`, `MOVIE`, ...), episode count, status
+  /// (`RELEASING`, ...) and mean score out of 100, so a work can be shown
+  /// before MAL is ever asked about it.
+  final String? format;
+  final int? episodes;
+  final String? status;
+  final double? meanScore;
   final String? role;
 }
 

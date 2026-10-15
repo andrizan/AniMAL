@@ -111,6 +111,20 @@ class SqliteAnimeCache implements AnimeCache {
   }
 
   @override
+  Future<Anime?> getCachedAnime(int malId) async {
+    final rows = await _db.query(
+      'anime',
+      where: 'mal_id = ?',
+      whereArgs: [malId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    final row = rows.first;
+    if ((row['title'] as String?)?.isEmpty ?? true) return null;
+    return _mappers.animeFromRow(row);
+  }
+
+  @override
   Future<MalUser?> getUserInfo() async {
     if (await getFetchedAt(_userInfoKey) == null) return null;
     final rows = await _db.query(

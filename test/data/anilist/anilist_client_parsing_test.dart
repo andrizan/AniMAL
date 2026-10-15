@@ -89,9 +89,17 @@ Map<String, dynamic> _extraMedia() => {
 Map<String, dynamic> _media(int id, {int? malId}) => {
   'id': id,
   'idMal': malId,
-  'title': {'romaji': 'Title $id', 'english': 'English $id'},
+  'title': {
+    'romaji': 'Title $id',
+    'english': 'English $id',
+    'native': 'Native $id',
+  },
   'coverImage': {'medium': 'm$id.jpg'},
   'type': 'ANIME',
+  'format': 'TV',
+  'episodes': 12,
+  'status': 'FINISHED',
+  'meanScore': 85,
 };
 
 class _FailingCache extends SqliteAniListCache {
@@ -409,6 +417,11 @@ void main() {
       expect(c.mediaAppearances.single.malId, 5114);
       expect(c.mediaAppearances.single.role, 'SUPPORTING');
       expect(c.mediaAppearances.single.titleEnglish, 'English 10');
+      expect(c.mediaAppearances.single.titleNative, 'Native 10');
+      expect(c.mediaAppearances.single.format, 'TV');
+      expect(c.mediaAppearances.single.episodes, 12);
+      expect(c.mediaAppearances.single.status, 'FINISHED');
+      expect(c.mediaAppearances.single.meanScore, 85);
     });
 
     test('getCharacterDetail tolerates a missing birth date', () async {

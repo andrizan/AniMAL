@@ -271,6 +271,18 @@ void main() {
       },
     );
 
+    test(
+      'getCachedAnime returns a stored anime, not a stub or an unknown one',
+      () async {
+        await cache.saveSearchResults('q', 10, [makeAnime(1, title: 'Stored')]);
+        await appDb.raw.insert('anime', {'mal_id': 2, 'title': ''});
+
+        expect((await cache.getCachedAnime(1))!.title, 'Stored');
+        expect(await cache.getCachedAnime(2), isNull);
+        expect(await cache.getCachedAnime(3), isNull);
+      },
+    );
+
     test('search key normalization is stable', () async {
       final list = [makeAnime(1)];
       await cache.saveSearchResults('  NARUTO  ONE  ', 20, list);

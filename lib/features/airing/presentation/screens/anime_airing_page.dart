@@ -1,4 +1,5 @@
 import 'package:animal/core/theme/app_spacing.dart';
+import 'package:animal/core/utils/anilist_mappings.dart';
 import 'package:animal/core/utils/date_utils.dart';
 import 'package:animal/data/models/anime.dart';
 import 'package:animal/data/models/anime_detail.dart';
@@ -187,7 +188,7 @@ class _AiringCardState extends State<_AiringCard> {
           : null,
       mean: entry.malScore,
       numEpisodes: entry.episodes,
-      status: _mapAniListStatus(entry.status),
+      status: malStatusOf(entry.status),
       genres: entry.genres.map((g) => Genre(id: 0, name: g)).toList(),
       alternativeTitles: AlternativeTitles(
         en: entry.titleEnglish,
@@ -236,14 +237,6 @@ class _AiringCardState extends State<_AiringCard> {
       onTap: _onTap,
     );
   }
-
-  String? _mapAniListStatus(String? status) => switch (status) {
-    'RELEASING' => 'currently_airing',
-    'FINISHED' => 'finished_airing',
-    'NOT_YET_RELEASED' => 'not_yet_aired',
-    'CANCELLED' => 'finished_airing',
-    _ => status,
-  };
 }
 
 class _AiringHeader extends StatelessWidget {
