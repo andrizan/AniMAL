@@ -30,6 +30,18 @@ abstract final class AniListQueries {
     }
   ''';
 
+  static const nextAiringBatch = r'''
+    query ($ids: [Int]) {
+      Page(page: 1, perPage: 50) {
+        media(idMal_in: $ids, type: ANIME) {
+          idMal
+          status
+          nextAiringEpisode { airingAt episode timeUntilAiring }
+        }
+      }
+    }
+  ''';
+
   static const animeExtra = r'''
     query ($idMal: Int) {
       Media(idMal: $idMal, type: ANIME) {

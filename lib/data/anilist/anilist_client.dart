@@ -43,6 +43,7 @@ class AniListClient {
   static const _ttlSchedule = Duration(minutes: 15);
   static const _ttlAnimeExtra = Duration(minutes: 15);
   static const _ttlDetail = Duration(minutes: 30);
+  static const _batchSize = 50;
 
   final Map<String, Future<dynamic>> _inFlight = <String, Future<dynamic>>{};
 
@@ -256,6 +257,42 @@ class AniListClient {
       nextEpisode: parsedNextEp,
       nextTimeUntilAiring: parsedNextUntil,
     );
+  }
+
+  /// The status and next episode AniList reports right now for each of
+  /// [malIds] it knows, in one request per 50 ids. A null `next` means no
+  /// episode is scheduled.
+  Future<Map<int, ({String? status, AniListNextAiring? next})>> getNextAirings(
+    List<int> malIds,
+  ) async {
+    final result = <int, ({String? status, AniListNextAiring? next})>{};
+    for (var i = 0; i < malIds.length; i += _batchSize) {
+      final ids = malIds.sublist(i, min(i + _batchSize, malIds.length));
+      final data = await _query(AniListQueries.nextAiringBatch, {
+        'ids': ids,
+      }) as Map<String, dynamic>;
+      final media = (data['Page'] as Map<String, dynamic>)['media'];
+      for (final raw in media as List<dynamic>) {
+        final item = raw as Map<String, dynamic>;
+        final malId = item['idMal'] as int?;
+        if (malId == null) continue;
+        final nextRaw = item['nextAiringEpisode'] as Map<String, dynamic>?;
+        result[malId] = (
+          status: item['status'] as String?,
+          next: nextRaw == null
+              ? null
+              : AniListNextAiring(
+                  airingAt: DateTime.fromMillisecondsSinceEpoch(
+                    (nextRaw['airingAt'] as int) * 1000,
+                    isUtc: true,
+                  ),
+                  episode: nextRaw['episode'] as int,
+                  timeUntilAiring: nextRaw['timeUntilAiring'] as int,
+                ),
+        );
+      }
+    }
+    return result;
   }
 
   // ---------- Anime extra ----------

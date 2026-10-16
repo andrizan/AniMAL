@@ -37,6 +37,7 @@ Map<String, dynamic> _schedule({
   String? english,
   double? meanScore,
   int? episodes,
+  String status = 'RELEASING',
 }) => {
   'id': id * 100 + episode,
   'airingAt': _weekStartSec() + hoursFromWeekStart * 3600,
@@ -47,7 +48,7 @@ Map<String, dynamic> _schedule({
     'idMal': idMal,
     'title': {'romaji': romaji, 'english': english, 'native': null},
     'coverImage': {'medium': 'm$id.jpg', 'large': 'l$id.jpg'},
-    'status': 'RELEASING',
+    'status': status,
     'episodes': episodes,
     'meanScore': meanScore,
     'genres': ['Action'],
@@ -88,6 +89,7 @@ void main() {
   late ProviderContainer container;
   var anilistPages = <Map<String, dynamic>>[];
   var anilistFails = false;
+  var nextAiringMedia = <Map<String, dynamic>>[];
   var seasonal = <Map<String, dynamic>>[];
   var watching = <Map<String, dynamic>>[];
   var malFails = false;
@@ -101,6 +103,7 @@ void main() {
     cache = SqliteAiringCache(appDb);
     anilistPages = [];
     anilistFails = false;
+    nextAiringMedia = [];
     seasonal = [];
     watching = [];
     malFails = false;
@@ -111,6 +114,15 @@ void main() {
     );
     anilistAdapter = FakeAdapter((o) async {
       if (anilistFails) return const FakeResponse.json({}, status: 500);
+      if ((o.data as Map<String, dynamic>)['query'].toString().contains(
+        'idMal_in',
+      )) {
+        return FakeResponse.json({
+          'data': {
+            'Page': {'media': nextAiringMedia},
+          },
+        });
+      }
       return FakeResponse.json({
         'data': {
           'Page': {
@@ -411,6 +423,192 @@ void main() {
 
       final expected = e.airingAt.difference(DateTime.now().toUtc()).inSeconds;
       expect((e.timeUntilAiring - expected).abs(), lessThan(5));
+    });
+  });
+
+  group('refreshing a stale next episode', () {
+    int nextAiringRequests() => anilistAdapter.count(
+      (o) => (o.data as Map<String, dynamic>)['query'].toString().contains(
+        'idMal_in',
+      ),
+    );
+
+    Map<String, dynamic> listed(int id, {int? episodes}) => _malNode(
+      id,
+      'Anime $id',
+      eps: episodes,
+      list: {'status': 'watching', 'num_episodes_watched': 1},
+    );
+
+    Map<String, dynamic> next(int idMal, {int episode = 4, int days = 3}) => {
+      'idMal': idMal,
+      'status': 'RELEASING',
+      'nextAiringEpisode': {
+        'airingAt':
+            DateTime.now()
+                .toUtc()
+                .add(Duration(days: days))
+                .millisecondsSinceEpoch ~/
+            1000,
+        'episode': episode,
+        'timeUntilAiring': days * 86400,
+      },
+    };
+
+    Future<Map<String, List<AiringEntry>>> storedWeek() async {
+      await repo.refreshWeeklySchedule();
+      return repo.getWeeklySchedule();
+    }
+
+    test('asks AniList and stores the next episode of a listed anime '
+        'whose stored episode has aired', () async {
+      anilistPages = [
+        _schedule(id: 1, hoursFromWeekStart: 0, idMal: 100, episode: 3),
+      ];
+      seasonal = [listed(100)];
+      nextAiringMedia = [next(100)];
+      final week = await storedWeek();
+      expect(
+        week.values.expand((l) => l).single.upcomingAt(DateTime.now()),
+        isNull,
+      );
+
+      final changed = await repo.refreshStaleNextAiring(week);
+
+      expect(changed, isTrue);
+      expect(nextAiringRequests(), 1);
+      final stored = (await repo.getWeeklySchedule()).values
+          .expand((l) => l)
+          .single;
+      final upcoming = stored.upcomingAt(DateTime.now().toUtc())!;
+      expect(upcoming.episode, 4);
+      expect(upcoming.malId, 100);
+    });
+
+    test('asks once per anime until the throttle runs out', () async {
+      anilistPages = [
+        _schedule(id: 1, hoursFromWeekStart: 0, idMal: 100, episode: 3),
+      ];
+      seasonal = [listed(100)];
+      nextAiringMedia = [];
+      final week = await storedWeek();
+
+      await repo.refreshStaleNextAiring(week);
+      final again = await repo.refreshStaleNextAiring(week);
+
+      expect(again, isFalse);
+      expect(nextAiringRequests(), 1);
+    });
+
+    test(
+      'does not ask for an anime that already has an episode ahead',
+      () async {
+        anilistPages = [
+          _schedule(id: 1, hoursFromWeekStart: 0, idMal: 100, episode: 3),
+          _schedule(id: 1, hoursFromWeekStart: 24 * 8, idMal: 100, episode: 4),
+        ];
+        seasonal = [listed(100)];
+        final week = await storedWeek();
+
+        expect(await repo.refreshStaleNextAiring(week), isFalse);
+        expect(nextAiringRequests(), 0);
+      },
+    );
+
+    test('does not ask for anime outside the list, finished ones or a final '
+        'episode', () async {
+      anilistPages = [
+        _schedule(id: 1, hoursFromWeekStart: 0, idMal: 100, episode: 3),
+        _schedule(
+          id: 2,
+          hoursFromWeekStart: 0,
+          idMal: 200,
+          episode: 3,
+          status: 'FINISHED',
+        ),
+        _schedule(
+          id: 3,
+          hoursFromWeekStart: 0,
+          idMal: 300,
+          episode: 12,
+          episodes: 12,
+        ),
+      ];
+      seasonal = [listed(200), listed(300, episodes: 12)];
+      final week = await storedWeek();
+
+      expect(await repo.refreshStaleNextAiring(week), isFalse);
+      expect(nextAiringRequests(), 0);
+    });
+
+    test('the weekly provider heals the week in the background', () async {
+      anilistPages = [
+        _schedule(id: 1, hoursFromWeekStart: 0, idMal: 100, episode: 3),
+      ];
+      seasonal = [listed(100)];
+      nextAiringMedia = [next(100)];
+      await repo.refreshWeeklySchedule();
+      final healing = ProviderContainer(
+        retry: noProviderRetry,
+        overrides: [airingRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(healing.dispose);
+      healing.listen(weeklyAiringProvider, (_, _) {});
+
+      final first = await healing.read(weeklyAiringProvider.future);
+      expect(
+        first.values.expand((l) => l).single.upcomingAt(DateTime.now()),
+        isNull,
+      );
+
+      AiringEntry? healed;
+      for (var i = 0; i < 100 && healed == null; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        final week = await healing.read(weeklyAiringProvider.future);
+        healed = week.values
+            .expand((l) => l)
+            .single
+            .upcomingAt(DateTime.now().toUtc());
+      }
+
+      expect(healed?.episode, 4);
+      expect(nextAiringRequests(), 1);
+    });
+
+    test(
+      'a failed request changes nothing and is not repeated at once',
+      () async {
+        anilistPages = [
+          _schedule(id: 1, hoursFromWeekStart: 0, idMal: 100, episode: 3),
+        ];
+        seasonal = [listed(100)];
+        final week = await storedWeek();
+        anilistFails = true;
+
+        expect(await repo.refreshStaleNextAiring(week), isFalse);
+        expect(await repo.refreshStaleNextAiring(week), isFalse);
+        expect(nextAiringRequests(), 1);
+      },
+    );
+
+    test('a finished anime is stored as finished so it is not asked again '
+        'after a restart', () async {
+      anilistPages = [
+        _schedule(id: 1, hoursFromWeekStart: 0, idMal: 100, episode: 3),
+      ];
+      seasonal = [listed(100)];
+      nextAiringMedia = [
+        {'idMal': 100, 'status': 'FINISHED', 'nextAiringEpisode': null},
+      ];
+      final week = await storedWeek();
+
+      await repo.refreshStaleNextAiring(week);
+
+      final stored = (await repo.getWeeklySchedule()).values
+          .expand((l) => l)
+          .single;
+      expect(stored.status, 'FINISHED');
+      expect(stored.upcomingAt(DateTime.now().toUtc()), isNull);
     });
   });
 

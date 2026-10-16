@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:animal/data/local/app_database.dart';
+import 'package:animal/data/models/anilist/anilist_models.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
@@ -15,6 +16,14 @@ abstract interface class AiringCache {
     Map<String, List<AiringEntry>> week,
   );
   Future<void> updateMyListStatus(int malId, MyListStatus? status);
+
+  /// Replaces the stored next episode of [malId] (and its AniList [status],
+  /// when known) in every stored entry of that anime.
+  Future<void> updateNextAiring(
+    int malId, {
+    required AniListNextAiring? next,
+    String? status,
+  });
 
   /// Copies the personal status of every anime from its shared `anime` row
   /// into the stored weeks, so a user list fetched again reaches the Airing
@@ -143,6 +152,27 @@ class SqliteAiringCache implements AiringCache {
     await _db.update(
       'merged_airing_entry',
       {'my_list_status_json': status == null ? null : _encodeStatus(status)},
+      where: 'mal_id = ?',
+      whereArgs: [malId],
+    );
+  }
+
+  @override
+  Future<void> updateNextAiring(
+    int malId, {
+    required AniListNextAiring? next,
+    String? status,
+  }) async {
+    await _db.update(
+      'merged_airing_entry',
+      {
+        'next_airing_at': next == null
+            ? null
+            : next.airingAt.toUtc().millisecondsSinceEpoch ~/ 1000,
+        'next_airing_episode': next?.episode,
+        'next_airing_time_until': next?.timeUntilAiring,
+        'status': ?status,
+      },
       where: 'mal_id = ?',
       whereArgs: [malId],
     );

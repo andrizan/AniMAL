@@ -111,7 +111,10 @@ class AiringRepository {
   final AiringCache cache;
   final Logger _logger;
 
+  static const _staleNextTtl = Duration(minutes: 15);
+
   final Map<String, Future<Map<String, List<AiringEntry>>>> _inFlight = {};
+  final Map<int, DateTime> _nextCheckedAt = {};
 
   int _currentWeekStartEpochSec() {
     final now = DateTime.now().toUtc();
@@ -309,6 +312,71 @@ class AiringRepository {
     return fut;
   }
 
+  /// A stored week keeps the next episode AniList reported when it was
+  /// fetched, which stops being the answer once that episode has aired. For
+  /// every listed anime that is still airing and has no episode ahead, ask
+  /// AniList in one batch what comes next and store it. Returns true when
+  /// the stored week changed. An anime is asked about at most once per
+  /// [_staleNextTtl], answer or not.
+  Future<bool> refreshStaleNextAiring(
+    Map<String, List<AiringEntry>> week,
+  ) async {
+    final now = DateTime.now().toUtc();
+    final ids = _staleNextAiringIds(week, now)
+        .where(
+          (id) =>
+              now.difference(_nextCheckedAt[id] ?? DateTime(0)) >=
+              _staleNextTtl,
+        )
+        .toList();
+    if (ids.isEmpty) return false;
+    for (final id in ids) {
+      _nextCheckedAt[id] = now;
+    }
+    try {
+      final found = await _anilistApi.getNextAirings(ids);
+      for (final entry in found.entries) {
+        await cache.updateNextAiring(
+          entry.key,
+          next: entry.value.next,
+          status: entry.value.status,
+        );
+      }
+      return found.isNotEmpty;
+    } on Object catch (e) {
+      _logger.w('Could not refresh the next episodes of $ids: $e');
+      return false;
+    }
+  }
+
+  Set<int> _staleNextAiringIds(
+    Map<String, List<AiringEntry>> week,
+    DateTime now,
+  ) {
+    final ahead = <int>{};
+    final latest = <int, AiringEntry>{};
+    for (final entry in week.values.expand((entries) => entries)) {
+      final id = entry.malId;
+      if (id == null) continue;
+      if (entry.upcomingAt(now) != null) {
+        ahead.add(id);
+      } else if (entry.episode > (latest[id]?.episode ?? -1)) {
+        latest[id] = entry;
+      }
+    }
+    return {
+      for (final MapEntry(:key, :value) in latest.entries)
+        if (!ahead.contains(key) && _expectsMoreEpisodes(value)) key,
+    };
+  }
+
+  bool _expectsMoreEpisodes(AiringEntry entry) {
+    final total = entry.episodes ?? 0;
+    return entry.myListStatus != null &&
+        entry.status == 'RELEASING' &&
+        (total <= 0 || entry.episode < total);
+  }
+
   Future<Map<String, List<AniListScheduleEntry>>> _fetchAniListSchedule({
     bool force = false,
   }) async {
@@ -373,7 +441,13 @@ final weeklyAiringProvider =
     FutureProvider.autoDispose<Map<String, List<AiringEntry>>>((ref) async {
       ref.watch(animeListVersionProvider);
       final repo = ref.watch(airingRepositoryProvider);
-      return repo.getWeeklySchedule();
+      final week = await repo.getWeeklySchedule();
+      unawaited(
+        repo.refreshStaleNextAiring(week).then((changed) {
+          if (changed && ref.mounted) ref.invalidateSelf();
+        }),
+      );
+      return week;
     });
 
 /// Map of MAL ID to next AiringEntry for quick lookup.

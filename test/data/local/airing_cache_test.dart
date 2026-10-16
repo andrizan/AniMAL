@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:animal/data/local/airing_cache.dart';
 import 'package:animal/data/local/app_database.dart';
+import 'package:animal/data/models/anilist/anilist_models.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
@@ -207,4 +208,77 @@ void main() {
       expect(week[3].myListStatus?.numEpisodesWatched, 1);
     },
   );
+
+  test('updateNextAiring replaces the next episode in every entry of an '
+      'anime and leaves the others alone', () async {
+    final now = DateTime.now().toUtc();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+    final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+    AiringEntry entry(int anilistId, int malId, int episode) => AiringEntry(
+      anilistId: anilistId,
+      malId: malId,
+      title: 'T$anilistId',
+      airingAt: weekStart.add(Duration(hours: anilistId)),
+      episode: episode,
+      timeUntilAiring: 0,
+      status: 'RELEASING',
+      nextAiringAt: weekStart.add(Duration(hours: anilistId)),
+      nextEpisode: episode,
+      nextTimeUntilAiring: 0,
+    );
+    await cache.saveMergedWeek(weekStartSec, {
+      'monday': [entry(1, 10, 2), entry(2, 20, 5)],
+      'tuesday': [entry(1, 10, 3)],
+    });
+    final next = AniListNextAiring(
+      airingAt: DateTime.utc(2030, 1, 2, 3, 4),
+      episode: 4,
+      timeUntilAiring: 600,
+    );
+
+    await cache.updateNextAiring(10, next: next, status: 'FINISHED');
+
+    final week = (await cache.getMergedWeek(weekStartSec))!;
+    for (final e in [week['monday']![0], week['tuesday']![0]]) {
+      expect(e.nextAiringAt, next.airingAt);
+      expect(e.nextEpisode, 4);
+      expect(e.nextTimeUntilAiring, 600);
+      expect(e.status, 'FINISHED');
+    }
+    final other = week['monday']![1];
+    expect(other.nextEpisode, 5);
+    expect(other.status, 'RELEASING');
+  });
+
+  test('updateNextAiring with no next episode clears it and keeps the '
+      'status when none is given', () async {
+    final now = DateTime.now().toUtc();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime.utc(monday.year, monday.month, monday.day);
+    final weekStartSec = weekStart.millisecondsSinceEpoch ~/ 1000;
+    await cache.saveMergedWeek(weekStartSec, {
+      'monday': [
+        AiringEntry(
+          anilistId: 1,
+          malId: 10,
+          title: 'T1',
+          airingAt: weekStart.add(const Duration(hours: 1)),
+          episode: 2,
+          timeUntilAiring: 0,
+          status: 'RELEASING',
+          nextAiringAt: weekStart.add(const Duration(hours: 1)),
+          nextEpisode: 2,
+          nextTimeUntilAiring: 0,
+        ),
+      ],
+    });
+
+    await cache.updateNextAiring(10, next: null);
+
+    final e = (await cache.getMergedWeek(weekStartSec))!['monday']!.single;
+    expect(e.nextAiringAt, isNull);
+    expect(e.nextEpisode, isNull);
+    expect(e.status, 'RELEASING');
+  });
 }

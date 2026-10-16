@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:logger/logger.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../support/fake_adapter.dart';
+
 class _SchedulePages implements HttpClientAdapter {
   _SchedulePages(this.total, {this.alwaysHasNext = false, this.failPage});
 
@@ -142,6 +144,86 @@ void main() {
       client.dio.httpClientAdapter = _SchedulePages(320, failPage: 3);
 
       expect(client.refreshWeeklySchedule(), throwsA(isA<ApiException>()));
+    });
+  });
+
+  group('AniListClient next airings', () {
+    FakeAdapter nextAiringAdapter(Map<int, Map<String, dynamic>> media) =>
+        FakeAdapter((o) async {
+          final ids =
+              ((o.data as Map<String, dynamic>)['variables']
+                      as Map<String, dynamic>)['ids']
+                  as List<dynamic>;
+          return FakeResponse.json({
+            'data': {
+              'Page': {
+                'media': [
+                  for (final id in ids)
+                    if (media[id] != null) {'idMal': id, ...media[id]!},
+                ],
+              },
+            },
+          });
+        });
+
+    test('maps each anime to its status and next episode', () async {
+      final adapter = nextAiringAdapter({
+        1: {
+          'status': 'RELEASING',
+          'nextAiringEpisode': {
+            'airingAt': 1700000000,
+            'episode': 4,
+            'timeUntilAiring': 600,
+          },
+        },
+        2: {'status': 'FINISHED', 'nextAiringEpisode': null},
+      });
+      client.dio.httpClientAdapter = adapter;
+
+      final found = await client.getNextAirings([1, 2, 3]);
+
+      expect(found.keys, unorderedEquals([1, 2]));
+      expect(found[1]!.status, 'RELEASING');
+      expect(found[1]!.next!.episode, 4);
+      expect(
+        found[1]!.next!.airingAt,
+        DateTime.fromMillisecondsSinceEpoch(1700000000 * 1000, isUtc: true),
+      );
+      expect(found[1]!.next!.timeUntilAiring, 600);
+      expect(found[2]!.status, 'FINISHED');
+      expect(found[2]!.next, isNull);
+    });
+
+    test('asks for fifty ids at a time', () async {
+      final adapter = nextAiringAdapter({});
+      client.dio.httpClientAdapter = adapter;
+
+      await client.getNextAirings([for (var i = 1; i <= 120; i++) i]);
+
+      final sizes = [
+        for (final r in adapter.requests)
+          (((r.data as Map<String, dynamic>)['variables']
+                      as Map<String, dynamic>)['ids']
+                  as List<dynamic>)
+              .length,
+      ];
+      expect(sizes, [50, 50, 20]);
+    });
+
+    test('makes no request without ids', () async {
+      final adapter = nextAiringAdapter({});
+      client.dio.httpClientAdapter = adapter;
+
+      expect(await client.getNextAirings([]), isEmpty);
+      expect(adapter.requests, isEmpty);
+    });
+
+    test('a failing request fails the call', () async {
+      client.dio.httpClientAdapter = FakeAdapter(
+        (_) async => const FakeResponse.json({}, status: 500),
+      );
+
+      expect(client.getNextAirings([1]), throwsA(isA<ApiException>()));
     });
   });
 }
