@@ -1,3 +1,13 @@
+## [2.12.1] - 2026-10-16
+
+### Bug Fixes
+
+- Refresh the next episode of listed anime whose stored one has aired
+
+### Chores
+
+- Bump version to 2.12.0+17 [skip ci]
+- Upgrade packages and pin CI to Flutter 3.47.7
 ## [2.12.0] - 2026-10-15
 
 ### Bug Fixes
