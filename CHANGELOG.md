@@ -1,3 +1,12 @@
+## [2.12.2] - 2026-10-16
+
+### Bug Fixes
+
+- Schedule airing reminders as exact alarms
+
+### Chores
+
+- Bump version to 2.12.1+18 [skip ci]
 ## [2.12.1] - 2026-10-16
 
 ### Bug Fixes
