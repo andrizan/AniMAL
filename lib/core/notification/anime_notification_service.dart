@@ -158,6 +158,13 @@ class AnimeNotificationService {
       return ScheduleResult.tooLate;
     }
     try {
+      final exact =
+          await _plugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >()
+              ?.canScheduleExactNotifications() ??
+          false;
       await _plugin.zonedSchedule(
         id: animeId,
         title: 'Episode $episode Airing Soon',
@@ -182,7 +189,9 @@ class AnimeNotificationService {
             presentSound: true,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: exact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
       );
       _notificationIds.add(animeId);
       await _saveIds();

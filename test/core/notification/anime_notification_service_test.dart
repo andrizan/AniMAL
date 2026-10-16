@@ -15,6 +15,7 @@ class _Native {
   bool permissionGranted = true;
   bool notificationsEnabled = true;
   bool failSchedule = false;
+  bool? canScheduleExact = true;
   bool failPending = false;
   bool failCancel = false;
   Object? darwinPermission = true;
@@ -38,6 +39,8 @@ class _Native {
         return notificationsEnabled;
       case 'requestPermissions':
         return darwinPermission;
+      case 'canScheduleExactNotifications':
+        return canScheduleExact;
       case 'zonedSchedule':
         if (failSchedule)
           throw PlatformException(code: 'exact_alarms_not_permitted');
@@ -93,10 +96,43 @@ void main() {
     airingAt: DateTime.now().add(airsIn),
   );
 
+  String? scheduleMode() {
+    final args = native.of('zonedSchedule').single.arguments as Map;
+    return (args['platformSpecifics'] as Map)['scheduleMode'] as String?;
+  }
+
   Future<List<String>?> storedIds() async =>
       (await SharedPreferences.getInstance()).getStringList(_prefsKey);
 
   group('scheduleAnimeNotification', () {
+    test('is exact so Doze cannot hold the reminder back', () async {
+      await schedule();
+
+      expect(scheduleMode(), 'exactAllowWhileIdle');
+    });
+
+    test(
+      'falls back to an inexact alarm when exact alarms are not allowed',
+      () async {
+        native.canScheduleExact = false;
+
+        expect(await schedule(), ScheduleResult.scheduled);
+
+        expect(scheduleMode(), 'inexactAllowWhileIdle');
+      },
+    );
+
+    test(
+      'falls back to an inexact alarm when the platform cannot say',
+      () async {
+        native.canScheduleExact = null;
+
+        expect(await schedule(), ScheduleResult.scheduled);
+
+        expect(scheduleMode(), 'inexactAllowWhileIdle');
+      },
+    );
+
     test('schedules a reminder and remembers the anime', () async {
       expect(await schedule(), ScheduleResult.scheduled);
 
