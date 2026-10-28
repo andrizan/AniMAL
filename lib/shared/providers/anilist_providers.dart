@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/data/anilist/anilist_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +29,17 @@ final anilistStaffDetailProvider = FutureProvider.autoDispose
 final anilistAnimeExtraProvider = FutureProvider.autoDispose
     .family<AniListAnimeExtra, int>((ref, malId) async {
       final api = ref.watch(anilistApiProvider);
-      return api.getAnimeExtraInfo(malId);
+      final extra = await api.getAnimeExtraInfo(malId);
+      final now = DateTime.now().toUtc();
+      if (extra.nextAiring?.airingAt.toUtc() case final at?
+          when at.isAfter(now)) {
+        final timer = Timer(
+          at.difference(now) + ApiConstants.airedRefreshDelay,
+          ref.invalidateSelf,
+        );
+        ref.onDispose(timer.cancel);
+      }
+      return extra;
     });
 
 final anilistStudioDetailProvider = FutureProvider.autoDispose

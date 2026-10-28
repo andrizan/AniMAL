@@ -9,6 +9,7 @@ class _Cache extends Fake implements AniListCache {}
 
 class _Client extends Fake implements AniListClient {
   final asked = <String>[];
+  final extras = <AniListAnimeExtra>[];
   Object? failure;
 
   Future<T> _answer<T>(String what, T value) async {
@@ -30,8 +31,10 @@ class _Client extends Fake implements AniListClient {
       _answer('studio $id', AniListStudioDetail(id: id, name: 'Z$id'));
 
   @override
-  Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) =>
-      _answer('extra $malId', const AniListAnimeExtra());
+  Future<AniListAnimeExtra> getAnimeExtraInfo(int malId) => _answer(
+    'extra $malId',
+    extras.isEmpty ? const AniListAnimeExtra() : extras.removeAt(0),
+  );
 }
 
 void main() {
@@ -92,6 +95,51 @@ void main() {
 
       expect(client.asked, ['extra 5114']);
     });
+
+    testWidgets('the extra info is asked again once its next episode has '
+        'aired', (tester) async {
+      AniListAnimeExtra airing(int episode, Duration from) => AniListAnimeExtra(
+        nextAiring: AniListNextAiring(
+          airingAt: DateTime.now().toUtc().add(from),
+          episode: episode,
+          timeUntilAiring: from.inSeconds,
+        ),
+      );
+      client.extras.addAll([
+        airing(4, const Duration(minutes: 10)),
+        airing(5, const Duration(days: 7)),
+      ]);
+      final local = ProviderContainer(
+        retry: noProviderRetry,
+        overrides: [anilistApiProvider.overrideWithValue(client)],
+      );
+      local.listen(anilistAnimeExtraProvider(7), (_, _) {});
+
+      final first = await local.read(anilistAnimeExtraProvider(7).future);
+      await tester.pump(const Duration(minutes: 9));
+      expect(client.asked, ['extra 7']);
+
+      await tester.pump(const Duration(minutes: 3));
+      final second = await local.read(anilistAnimeExtraProvider(7).future);
+      local.dispose();
+
+      expect(first.nextAiring?.episode, 4);
+      expect(second.nextAiring?.episode, 5);
+      expect(client.asked, ['extra 7', 'extra 7']);
+    });
+
+    test(
+      'an extra with no next episode is not asked again by itself',
+      () async {
+        final sub = container.listen(anilistAnimeExtraProvider(7), (_, _) {});
+        addTearDown(sub.close);
+
+        await container.read(anilistAnimeExtraProvider(7).future);
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(client.asked, ['extra 7']);
+      },
+    );
 
     test('each id is its own request', () async {
       await container.read(anilistStaffDetailProvider(1).future);

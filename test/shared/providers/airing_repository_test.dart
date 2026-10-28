@@ -7,6 +7,7 @@ import 'package:animal/data/local/anilist_cache.dart';
 import 'package:animal/data/local/app_database.dart';
 import 'package:animal/data/local/sqlite_anime_cache.dart';
 import 'package:animal/data/mal/mal_api_client.dart';
+import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/data/models/watch_status.dart';
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
@@ -609,6 +610,175 @@ void main() {
           .single;
       expect(stored.status, 'FINISHED');
       expect(stored.upcomingAt(DateTime.now().toUtc()), isNull);
+    });
+  });
+
+  group('refreshing when a listed episode has aired', () {
+    final now = DateTime.utc(2030, 1, 1, 12);
+    const watching = MyListStatus(
+      status: WatchStatus.watching,
+      numEpisodesWatched: 1,
+    );
+
+    AiringEntry entry(
+      int id, {
+      required Duration airsIn,
+      int? malId,
+      String status = 'RELEASING',
+      MyListStatus? list = watching,
+    }) => AiringEntry(
+      anilistId: id,
+      malId: malId ?? id * 10,
+      title: 'T$id',
+      airingAt: now.add(airsIn),
+      episode: 3,
+      timeUntilAiring: airsIn.inSeconds,
+      status: status,
+      myListStatus: list,
+    );
+
+    int nextAiringRequests() => anilistAdapter.count(
+      (o) => (o.data as Map<String, dynamic>)['query'].toString().contains(
+        'idMal_in',
+      ),
+    );
+
+    AiringRepository delayed(Duration delay) => AiringRepository(
+      animeRepo: container.read(animeRepositoryProvider),
+      anilistApi: anilist,
+      cache: cache,
+      refreshDelay: delay,
+      logger: Logger(level: Level.off),
+    );
+
+    test('is the soonest air time of a listed anime plus the delay', () {
+      final due = delayed(const Duration(seconds: 90)).refreshDueAt({
+        'monday': [entry(1, airsIn: const Duration(hours: 5))],
+        'tuesday': [entry(2, airsIn: const Duration(hours: 2))],
+      }, now);
+
+      expect(due, now.add(const Duration(hours: 2, seconds: 90)));
+    });
+
+    test('skips anime outside the list, finished ones and ones without a '
+        'MAL id', () {
+      final repo = delayed(Duration.zero);
+
+      expect(
+        repo.refreshDueAt({
+          'monday': [
+            entry(1, airsIn: const Duration(hours: 1), list: null),
+            entry(2, airsIn: const Duration(hours: 1), status: 'FINISHED'),
+          ],
+          'tuesday': [
+            AiringEntry(
+              anilistId: 3,
+              title: 'T3',
+              airingAt: now.add(const Duration(hours: 1)),
+              episode: 1,
+              timeUntilAiring: 3600,
+              status: 'RELEASING',
+              myListStatus: watching,
+            ),
+          ],
+        }, now),
+        isNull,
+      );
+    });
+
+    test('ignores episodes that already aired and is null for an empty '
+        'week', () {
+      final repo = delayed(Duration.zero);
+
+      expect(
+        repo.refreshDueAt({
+          'monday': [entry(1, airsIn: const Duration(hours: -2))],
+        }, now),
+        isNull,
+      );
+      expect(repo.refreshDueAt({}, now), isNull);
+    });
+
+    test('counts the next episode of an aired one that AniList knows', () {
+      final aired = AiringEntry(
+        anilistId: 1,
+        malId: 10,
+        title: 'T1',
+        airingAt: now.subtract(const Duration(hours: 1)),
+        episode: 3,
+        timeUntilAiring: 0,
+        status: 'RELEASING',
+        myListStatus: watching,
+        nextAiringAt: now.add(const Duration(days: 7)),
+        nextEpisode: 4,
+        nextTimeUntilAiring: 7 * 86400,
+      );
+
+      expect(
+        delayed(Duration.zero).refreshDueAt({
+          'monday': [aired],
+        }, now),
+        now.add(const Duration(days: 7)),
+      );
+    });
+
+    test('the weekly provider asks again by itself once the episode has '
+        'aired', () async {
+      final weekStartSec = _weekStartSec();
+      final airsAt = DateTime.now().toUtc().add(
+        const Duration(milliseconds: 1200),
+      );
+      await cache.saveMergedWeek(weekStartSec, {
+        'monday': [
+          AiringEntry(
+            anilistId: 1,
+            malId: 100,
+            title: 'T1',
+            airingAt: airsAt,
+            episode: 3,
+            timeUntilAiring: 1,
+            status: 'RELEASING',
+            myListStatus: watching,
+          ),
+        ],
+      });
+      nextAiringMedia = [
+        {
+          'idMal': 100,
+          'status': 'RELEASING',
+          'nextAiringEpisode': {
+            'airingAt':
+                airsAt.add(const Duration(days: 7)).millisecondsSinceEpoch ~/
+                1000,
+            'episode': 4,
+            'timeUntilAiring': 7 * 86400,
+          },
+        },
+      ];
+      final waiting = ProviderContainer(
+        retry: noProviderRetry,
+        overrides: [
+          airingRepositoryProvider.overrideWithValue(delayed(Duration.zero)),
+        ],
+      );
+      addTearDown(waiting.dispose);
+      waiting.listen(weeklyAiringProvider, (_, _) {});
+
+      await waiting.read(weeklyAiringProvider.future);
+      expect(nextAiringRequests(), 0);
+
+      AiringEntry? next;
+      for (var i = 0; i < 150 && next?.episode != 4; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        final week = await waiting.read(weeklyAiringProvider.future);
+        next = week.values
+            .expand((l) => l)
+            .single
+            .upcomingAt(DateTime.now().toUtc());
+      }
+
+      expect(next?.episode, 4);
+      expect(nextAiringRequests(), 1);
     });
   });
 

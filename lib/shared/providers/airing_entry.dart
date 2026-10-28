@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/logger/app_logger.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/utils/anilist_mappings.dart';
@@ -103,12 +104,16 @@ class AiringRepository {
     required this._animeRepo,
     required this._anilistApi,
     required this.cache,
+    this.refreshDelay = ApiConstants.airedRefreshDelay,
     Logger? logger,
   }) : _logger = logger ?? appLogger;
 
   final AnimeRepository _animeRepo;
   final AniListClient _anilistApi;
   final AiringCache cache;
+
+  /// How long after an episode airs AniList is asked what comes next.
+  final Duration refreshDelay;
   final Logger _logger;
 
   static const _staleNextTtl = Duration(minutes: 15);
@@ -349,6 +354,19 @@ class AiringRepository {
     }
   }
 
+  /// When the stored week should be looked at again: [refreshDelay] after the
+  /// soonest episode of a listed, still airing anime has aired, or null when
+  /// no such episode is ahead.
+  DateTime? refreshDueAt(Map<String, List<AiringEntry>> week, DateTime now) {
+    DateTime? soonest;
+    for (final entry in week.values.expand((entries) => entries)) {
+      if (entry.malId == null || !_expectsMoreEpisodes(entry)) continue;
+      final at = entry.upcomingAt(now)?.airingAt;
+      if (at != null && (soonest == null || at.isBefore(soonest))) soonest = at;
+    }
+    return soonest?.add(refreshDelay);
+  }
+
   Set<int> _staleNextAiringIds(
     Map<String, List<AiringEntry>> week,
     DateTime now,
@@ -447,6 +465,11 @@ final weeklyAiringProvider =
           if (changed && ref.mounted) ref.invalidateSelf();
         }),
       );
+      final now = DateTime.now().toUtc();
+      if (repo.refreshDueAt(week, now) case final dueAt?) {
+        final timer = Timer(dueAt.difference(now), ref.invalidateSelf);
+        ref.onDispose(timer.cancel);
+      }
       return week;
     });
 
