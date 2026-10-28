@@ -1,3 +1,15 @@
+## [2.13.0] - 2026-10-28
+
+### Chores
+
+- Bump version to 2.12.2+19 [skip ci]
+- Update package versions in pubspec.lock
+- Update Flutter version to 3.47.8 in CI workflows
+
+### Features
+
+- Refresh by itself once a listed episode has aired
+- Pin Save and tighten the edit modal
 ## [2.12.2] - 2026-10-16
 
 ### Bug Fixes
