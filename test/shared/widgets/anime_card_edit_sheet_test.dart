@@ -175,6 +175,129 @@ void main() {
     await tester.pump();
   }
 
+  group('on a phone', () {
+    const dpr = 3.0;
+    const longTitle = 'Kikansha no Mahou wa Tokubetsu desu 2nd Season';
+
+    Future<void> openOnPhone(
+      WidgetTester tester, {
+      required Size size,
+      double keyboard = 0,
+      bool airing = true,
+    }) async {
+      tester.view
+        ..devicePixelRatio = dpr
+        ..physicalSize = size * dpr
+        ..padding = const FakeViewPadding(top: 32 * dpr, bottom: 24 * dpr)
+        ..viewPadding = const FakeViewPadding(top: 32 * dpr, bottom: 24 * dpr)
+        ..viewInsets = FakeViewPadding(bottom: keyboard * dpr);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            animeRepositoryProvider.overrideWithValue(repo),
+            notificationServiceProvider.overrideWithValue(notifications),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: AnimeCard(
+                anime: Anime(
+                  id: 1,
+                  title: longTitle,
+                  status: airing ? 'currently_airing' : 'finished_airing',
+                  numEpisodes: 12,
+                  myListStatus: const MyListStatus(
+                    status: WatchStatus.watching,
+                    numEpisodesWatched: 5,
+                    score: 7,
+                  ),
+                  alternativeTitles: const AlternativeTitles(
+                    ja: '帰還者の魔法は特別です 2期',
+                  ),
+                ),
+                nextAiring: airing ? _next() : null,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+    }
+
+    ScrollPosition content(WidgetTester tester) => tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: find.descendant(
+                  of: find.byType(BottomSheet),
+                  matching: find.byType(SingleChildScrollView),
+                ),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        )
+        .position;
+
+    testWidgets('an airing anime fits without scrolling and Save is in view', (
+      tester,
+    ) async {
+      await openOnPhone(tester, size: const Size(393, 851));
+
+      expect(content(tester).maxScrollExtent, 0);
+      expect(
+        tester.getBottomLeft(find.widgetWithText(FilledButton, 'Save')).dy,
+        lessThanOrEqualTo(851 - 24),
+      );
+    });
+
+    testWidgets('an airing anime still fits a compact phone', (tester) async {
+      await openOnPhone(tester, size: const Size(360, 800));
+
+      expect(content(tester).maxScrollExtent, 0);
+    });
+
+    testWidgets('a finished anime fits without scrolling too', (tester) async {
+      await openOnPhone(tester, size: const Size(393, 851), airing: false);
+
+      expect(content(tester).maxScrollExtent, 0);
+    });
+
+    testWidgets(
+      'on a short screen the content scrolls but Save stays in view',
+      (tester) async {
+        await openOnPhone(tester, size: const Size(360, 600));
+
+        expect(content(tester).maxScrollExtent, greaterThan(0));
+        final save = tester.getRect(find.widgetWithText(FilledButton, 'Save'));
+        expect(save.top, greaterThanOrEqualTo(0));
+        expect(save.bottom, lessThanOrEqualTo(600 - 24));
+      },
+    );
+
+    testWidgets('with the keyboard open Save stays above it', (tester) async {
+      await openOnPhone(tester, size: const Size(393, 851), keyboard: 300);
+
+      final save = tester.getRect(find.widgetWithText(FilledButton, 'Save'));
+      expect(save.bottom, lessThanOrEqualTo(851 - 300));
+      expect(save.top, greaterThanOrEqualTo(0));
+    });
+
+    testWidgets('scrolled content can still reach the reminder', (
+      tester,
+    ) async {
+      await openOnPhone(tester, size: const Size(360, 600));
+
+      await tester.ensureVisible(find.byType(Switch));
+      await tester.pump();
+
+      final reminder = tester.getRect(find.byType(Switch));
+      final save = tester.getRect(find.widgetWithText(FilledButton, 'Save'));
+      expect(reminder.bottom, lessThanOrEqualTo(save.top));
+    });
+  });
+
   group('opening', () {
     testWidgets('starts from the current status, episodes and score', (
       tester,

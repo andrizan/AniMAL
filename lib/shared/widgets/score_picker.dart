@@ -2,25 +2,56 @@ import 'package:animal/core/theme/app_spacing.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Ten score pills in two rows. Tapping the selected score clears it (0).
+///
+/// With a [label] the hint sits beside it above the pills instead of under
+/// them, which saves a line.
 class ScorePicker extends StatelessWidget {
   const ScorePicker({
     required this.value,
     required this.onChanged,
     super.key,
     this.enabled = true,
+    this.label,
   });
 
   final int value;
   final ValueChanged<int> onChanged;
   final bool enabled;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hint = Text(
+      value == 0 ? 'Not rated' : 'Tap the score again to clear it',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (label case final label?) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Align(alignment: Alignment.centerRight, child: hint),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         for (final start in const [1, 6]) ...[
           if (start > 1) const SizedBox(height: AppSpacing.sm),
           Row(
@@ -34,13 +65,7 @@ class ScorePicker extends StatelessWidget {
             ],
           ),
         ],
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          value == 0 ? 'Not rated' : 'Tap the score again to clear it',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
+        if (label == null) ...[const SizedBox(height: AppSpacing.sm), hint],
       ],
     );
   }

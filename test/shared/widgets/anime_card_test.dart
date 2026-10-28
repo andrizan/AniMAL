@@ -515,7 +515,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Save'), findsOneWidget);
-        expect(find.text('Episodes Watched'), findsOneWidget);
+        expect(find.text('Episodes'), findsOneWidget);
         expect(find.text('7'), findsWidgets);
       },
     );

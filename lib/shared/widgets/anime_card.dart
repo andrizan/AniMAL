@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show max;
 
 import 'package:animal/core/constants/mal_endpoints.dart';
 import 'package:animal/core/theme/app_colors.dart';
@@ -453,228 +454,239 @@ class _UpdateListStatusModalState
       animeNotificationProvider.select((s) => s.contains(widget.anime.id)),
     );
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.page,
-        0,
-        AppSpacing.page,
-        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.anime.title,
-              style: theme.textTheme.titleLarge,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (jaTitle != null && jaTitle.isNotEmpty)
-              Text(
-                jaTitle,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+    final bottomInset = max(
+      MediaQuery.viewInsetsOf(context).bottom,
+      MediaQuery.viewPaddingOf(context).bottom,
+    );
 
-            if (widget.nextAiring != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.anime.title,
+                  style: theme.textTheme.titleLarge,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.card - 4),
+                if (jaTitle != null && jaTitle.isNotEmpty)
+                  Text(
+                    jaTitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                const SizedBox(height: AppSpacing.md),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: WatchStatus.values.map((s) {
+                    final isCompleted = s == WatchStatus.completed;
+                    final canMarkCompleted =
+                        !isCompleted ||
+                        widget.anime.status == 'finished_airing';
+                    return Tooltip(
+                      message:
+                          isCompleted &&
+                              widget.anime.status != 'finished_airing'
+                          ? 'Only available for finished anime'
+                          : '',
+                      child: ChoiceChip(
+                        label: Text(s.label),
+                        selected: _selectedStatus == s,
+                        onSelected: _saving || !canMarkCompleted
+                            ? null
+                            : (_) {
+                                setState(() {
+                                  _selectedStatus = s;
+                                  if (isCompleted && totalEps != null) {
+                                    _selectedEps = totalEps;
+                                    _epsController.text = '$totalEps';
+                                  }
+                                });
+                              },
+                      ),
+                    );
+                  }).toList(),
                 ),
-                child: Row(
+                if (widget.anime.status != 'finished_airing')
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    child: Text(
+                      'Completed can only be set for finished anime',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: AppSpacing.md),
+                Row(
                   children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: scheme.primaryContainer,
-                      child: Icon(
-                        notifEnabled
-                            ? Icons.notifications_active
-                            : Icons.notifications_none,
-                        size: 20,
-                        color: scheme.onPrimaryContainer,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Notify me before Ep ${widget.nextAiring!.episode}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            '${ApiConstants.notificationLeadMinutes} minutes '
-                            'ahead',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: notifEnabled,
-                      onChanged: _saving
+                    const Expanded(child: _SheetLabel('Episodes')),
+                    IconButton.filledTonal(
+                      tooltip: 'One episode less',
+                      icon: const Icon(Icons.remove),
+                      onPressed: (_saving || _selectedEps <= 0)
                           ? null
-                          : (value) async {
-                              final episode = widget.nextAiring!.episode;
-                              final result = await ref
-                                  .read(animeNotificationProvider.notifier)
-                                  .toggle(
-                                    animeId: widget.anime.id,
-                                    title: widget.anime.title,
-                                    episode: episode,
-                                    airingAt: widget.nextAiring!.airingAt,
-                                  );
-                              if (!result.changedState && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(result.message(episode)),
-                                  ),
-                                );
-                              }
+                          : () {
+                              setState(() => _selectedEps--);
+                              _epsController.text = '$_selectedEps';
+                            },
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    SizedBox(
+                      width: 128,
+                      child: TextField(
+                        controller: _epsController,
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        enabled: !_saving,
+                        style: theme.textTheme.titleMedium,
+                        decoration: InputDecoration(
+                          suffixText: totalEps != null ? '/ $totalEps' : null,
+                        ),
+                        onChanged: (v) {
+                          final parsed = int.tryParse(v);
+                          if (parsed != null && parsed >= 0) {
+                            setState(() => _selectedEps = parsed);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    IconButton.filledTonal(
+                      tooltip: 'One episode more',
+                      icon: const Icon(Icons.add),
+                      onPressed:
+                          (_saving ||
+                              (totalEps != null && _selectedEps >= totalEps))
+                          ? null
+                          : () {
+                              setState(() => _selectedEps++);
+                              _epsController.text = '$_selectedEps';
                             },
                     ),
                   ],
                 ),
-              ),
-            ],
 
-            const SizedBox(height: AppSpacing.lg),
-            const _SheetLabel('Status'),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: WatchStatus.values.map((s) {
-                final isCompleted = s == WatchStatus.completed;
-                final canMarkCompleted =
-                    !isCompleted || widget.anime.status == 'finished_airing';
-                return Tooltip(
-                  message:
-                      isCompleted && widget.anime.status != 'finished_airing'
-                      ? 'Only available for finished anime'
-                      : '',
-                  child: ChoiceChip(
-                    label: Text(s.label),
-                    selected: _selectedStatus == s,
-                    onSelected: _saving || !canMarkCompleted
-                        ? null
-                        : (_) {
-                            setState(() {
-                              _selectedStatus = s;
-                              if (isCompleted && totalEps != null) {
-                                _selectedEps = totalEps;
-                                _epsController.text = '$totalEps';
-                              }
-                            });
-                          },
-                  ),
-                );
-              }).toList(),
-            ),
-            if (widget.anime.status != 'finished_airing')
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Text(
-                  'Completed can only be set for finished anime',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+                const SizedBox(height: AppSpacing.md),
+                ScorePicker(
+                  label: 'Score',
+                  value: _selectedScore,
+                  enabled: !_saving,
+                  onChanged: (v) => setState(() => _selectedScore = v),
                 ),
-              ),
 
-            const SizedBox(height: AppSpacing.lg),
-            const _SheetLabel('Episodes Watched'),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                IconButton.filledTonal(
-                  tooltip: 'One episode less',
-                  icon: const Icon(Icons.remove),
-                  onPressed: (_saving || _selectedEps <= 0)
-                      ? null
-                      : () {
-                          setState(() => _selectedEps--);
-                          _epsController.text = '$_selectedEps';
-                        },
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: TextField(
-                    controller: _epsController,
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    enabled: !_saving,
-                    style: theme.textTheme.titleMedium,
-                    decoration: InputDecoration(
-                      suffixText: totalEps != null ? '/ $totalEps' : null,
+                if (widget.nextAiring != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
                     ),
-                    onChanged: (v) {
-                      final parsed = int.tryParse(v);
-                      if (parsed != null && parsed >= 0) {
-                        setState(() => _selectedEps = parsed);
-                      }
-                    },
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.card - 4),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: scheme.primaryContainer,
+                          child: Icon(
+                            notifEnabled
+                                ? Icons.notifications_active
+                                : Icons.notifications_none,
+                            size: 20,
+                            color: scheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Notify me before Ep '
+                                '${widget.nextAiring!.episode}',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                '${ApiConstants.notificationLeadMinutes} '
+                                'minutes ahead',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: notifEnabled,
+                          onChanged: _saving
+                              ? null
+                              : (value) async {
+                                  final episode = widget.nextAiring!.episode;
+                                  final result = await ref
+                                      .read(animeNotificationProvider.notifier)
+                                      .toggle(
+                                        animeId: widget.anime.id,
+                                        title: widget.anime.title,
+                                        episode: episode,
+                                        airingAt: widget.nextAiring!.airingAt,
+                                      );
+                                  if (!result.changedState && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(result.message(episode)),
+                                      ),
+                                    );
+                                  }
+                                },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                IconButton.filledTonal(
-                  tooltip: 'One episode more',
-                  icon: const Icon(Icons.add),
-                  onPressed:
-                      (_saving ||
-                          (totalEps != null && _selectedEps >= totalEps))
-                      ? null
-                      : () {
-                          setState(() => _selectedEps++);
-                          _epsController.text = '$_selectedEps';
-                        },
-                ),
+                ],
               ],
             ),
-
-            const SizedBox(height: AppSpacing.lg),
-            const _SheetLabel('Score'),
-            const SizedBox(height: AppSpacing.sm),
-            ScorePicker(
-              value: _selectedScore,
-              enabled: !_saving,
-              onChanged: (v) => setState(() => _selectedScore = v),
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: FilledButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            AppSpacing.md,
+            AppSpacing.page,
+            bottomInset + AppSpacing.lg,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton(
+              onPressed: _saving ? null : _save,
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

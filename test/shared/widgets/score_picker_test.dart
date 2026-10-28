@@ -9,6 +9,7 @@ Future<void> _show(
   required ValueChanged<int> onChanged,
   int value = 0,
   bool enabled = true,
+  String? label,
 }) => tester.pumpWidget(
   MaterialApp(
     home: Scaffold(
@@ -18,6 +19,7 @@ Future<void> _show(
           value: value,
           onChanged: onChanged,
           enabled: enabled,
+          label: label,
         ),
       ),
     ),
@@ -128,6 +130,49 @@ void main() {
 
       expect(find.text('Tap the score again to clear it'), findsOneWidget);
       expect(find.text('Not rated'), findsNothing);
+    });
+  });
+
+  group('label', () {
+    testWidgets('puts the hint beside the label, above the pills', (
+      tester,
+    ) async {
+      await _show(tester, value: 5, onChanged: (_) {}, label: 'Score');
+
+      final label = tester.getRect(find.text('Score'));
+      final hint = tester.getRect(find.text('Tap the score again to clear it'));
+      final firstPill = tester.getRect(find.text('1'));
+      expect(hint.top, lessThan(firstPill.top));
+      expect(label.top, lessThan(firstPill.top));
+      expect(label.right, lessThan(hint.left));
+      expect(
+        (label.center.dy - hint.center.dy).abs(),
+        lessThan(8),
+        reason: 'the label and its hint share a line',
+      );
+    });
+
+    testWidgets('is shorter than the hint-below layout by one line', (
+      tester,
+    ) async {
+      await _show(tester, onChanged: (_) {});
+      final below = tester.getSize(find.byType(ScorePicker)).height;
+
+      await _show(tester, onChanged: (_) {}, label: 'Score');
+      final beside = tester.getSize(find.byType(ScorePicker)).height;
+
+      expect(beside, lessThanOrEqualTo(below + 8));
+    });
+
+    testWidgets('without a label the hint stays under the pills', (
+      tester,
+    ) async {
+      await _show(tester, onChanged: (_) {});
+
+      expect(
+        tester.getTopLeft(find.text('Not rated')).dy,
+        greaterThan(tester.getTopLeft(find.text('10')).dy),
+      );
     });
   });
 
