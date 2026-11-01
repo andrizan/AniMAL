@@ -41,6 +41,27 @@
                     android:host="oauth"
                     android:pathPrefix="/callback"/>
             </intent-filter>
+            <!-- Open myanimelist.net/anime/<id> links from the browser here. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:scheme="http"/>
+                <data android:host="myanimelist.net"/>
+                <data android:host="www.myanimelist.net"/>
+                <data android:pathPattern="/anime/1.*"/>
+                <data android:pathPattern="/anime/2.*"/>
+                <data android:pathPattern="/anime/3.*"/>
+                <data android:pathPattern="/anime/4.*"/>
+                <data android:pathPattern="/anime/5.*"/>
+                <data android:pathPattern="/anime/6.*"/>
+                <data android:pathPattern="/anime/7.*"/>
+                <data android:pathPattern="/anime/8.*"/>
+                <data android:pathPattern="/anime/9.*"/>
+            </intent-filter>
+            <!-- Links reach the app through app_links, not as a Flutter route. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

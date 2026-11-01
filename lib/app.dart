@@ -22,6 +22,10 @@ class _AppState extends ConsumerState<App> {
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<int>? _notificationSubscription;
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+  Uri? _lastLink;
+  DateTime? _lastLinkAt;
+
+  static const _linkRepeatWindow = Duration(seconds: 2);
 
   @override
   void initState() {
@@ -76,13 +80,32 @@ class _AppState extends ConsumerState<App> {
   }
 
   void _handleLink(Uri uri) {
+    if (!mounted) return;
     final location = oauthCallbackLocation(uri);
-    if (location == null || !mounted) return;
-    WidgetsBinding.instance
-      ..addPostFrameCallback((_) {
-        if (mounted) ref.read(routerProvider).go(location);
-      })
-      ..ensureVisualUpdate();
+    if (location != null) {
+      WidgetsBinding.instance
+        ..addPostFrameCallback((_) {
+          if (mounted) ref.read(routerProvider).go(location);
+        })
+        ..ensureVisualUpdate();
+      return;
+    }
+    if (malAnimeId(uri) case final animeId? when !_isRepeat(uri)) {
+      _openAnime(animeId);
+    }
+  }
+
+  /// The link that launched the app reaches [_handleLink] twice: from
+  /// `getInitialLink` and again from the stream. Opening it twice would stack
+  /// two detail pages.
+  bool _isRepeat(Uri uri) {
+    final now = DateTime.now();
+    final repeat =
+        uri == _lastLink &&
+        now.difference(_lastLinkAt ?? now) < _linkRepeatWindow;
+    _lastLink = uri;
+    _lastLinkAt = now;
+    return repeat;
   }
 
   void _initNotificationListener() {

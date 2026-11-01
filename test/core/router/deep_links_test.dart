@@ -58,4 +58,53 @@ void main() {
       expect(map('animal://oauth/callback/extra?code=abc'), isNull);
     });
   });
+
+  group('a MyAnimeList anime page', () {
+    int? id(String url) => malAnimeId(Uri.parse(url));
+
+    test('gives the anime id', () {
+      expect(id('https://myanimelist.net/anime/5114'), 5114);
+      expect(id('https://myanimelist.net/anime/5114/'), 5114);
+    });
+
+    test('ignores the title slug and any sub page', () {
+      expect(
+        id(
+          'https://myanimelist.net/anime/5114/Fullmetal_Alchemist__Brotherhood',
+        ),
+        5114,
+      );
+      expect(id('https://myanimelist.net/anime/5114/x/reviews?p=2'), 5114);
+      expect(id('https://myanimelist.net/anime/5114?q=1#top'), 5114);
+    });
+
+    test('works on the www host and over http', () {
+      expect(id('https://www.myanimelist.net/anime/1'), 1);
+      expect(id('http://myanimelist.net/anime/1'), 1);
+    });
+
+    test('is not an anime page without a numeric id', () {
+      expect(id('https://myanimelist.net/anime/season/2026/fall'), isNull);
+      expect(id('https://myanimelist.net/anime/genre/1/Action'), isNull);
+      expect(id('https://myanimelist.net/anime'), isNull);
+      expect(id('https://myanimelist.net/anime/0'), isNull);
+      expect(id('https://myanimelist.net/anime/-3'), isNull);
+    });
+
+    test('is not another MyAnimeList page', () {
+      expect(id('https://myanimelist.net/manga/5114'), isNull);
+      expect(id('https://myanimelist.net/profile/someone'), isNull);
+      expect(
+        id('https://myanimelist.net/v1/oauth2/authorize?client_id=1'),
+        isNull,
+      );
+    });
+
+    test('is not another site or scheme', () {
+      expect(id('https://example.com/anime/5114'), isNull);
+      expect(id('https://notmyanimelist.net/anime/5114'), isNull);
+      expect(id('https://myanimelist.net.evil.test/anime/5114'), isNull);
+      expect(id('animal://myanimelist.net/anime/5114'), isNull);
+    });
+  });
 }

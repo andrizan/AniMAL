@@ -368,6 +368,80 @@ void main() {
       expect(find.text('CALLBACK'), findsOneWidget);
     });
 
+    testWidgets('a MyAnimeList anime link that opened the app shows it', (
+      tester,
+    ) async {
+      initialLink = 'https://myanimelist.net/anime/5114/Fullmetal_Alchemist';
+      await open(tester);
+
+      expect(find.text('DETAIL 5114'), findsOneWidget);
+    });
+
+    testWidgets('a MyAnimeList anime link opened while running shows it', (
+      tester,
+    ) async {
+      await open(tester);
+
+      linkSink!.success('https://myanimelist.net/anime/21');
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('DETAIL 21'), findsOneWidget);
+    });
+
+    testWidgets('the launching link arriving twice opens one page', (
+      tester,
+    ) async {
+      initialLink = 'https://myanimelist.net/anime/5114';
+      await open(tester);
+
+      linkSink!.success('https://myanimelist.net/anime/5114');
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text('START'), findsOneWidget);
+    });
+
+    testWidgets('another anime link, even right after, still opens', (
+      tester,
+    ) async {
+      initialLink = 'https://myanimelist.net/anime/5114';
+      await open(tester);
+
+      linkSink!.success('https://myanimelist.net/anime/21');
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('DETAIL 21'), findsOneWidget);
+    });
+
+    testWidgets('a MyAnimeList page that is not an anime is ignored', (
+      tester,
+    ) async {
+      await open(tester);
+
+      linkSink!.success('https://myanimelist.net/anime/season/2026/fall');
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('START'), findsOneWidget);
+      expect(visited, isEmpty);
+    });
+
     testWidgets('unrelated links are ignored', (tester) async {
       await open(tester);
 
