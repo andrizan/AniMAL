@@ -1,3 +1,13 @@
+## [2.14.0] - 2026-11-01
+
+### Chores
+
+- Bump version to 2.13.0+20 [skip ci]
+- Upgrade packages and pin CI to Flutter 3.47.9
+
+### Features
+
+- Open MyAnimeList anime pages in the app
 ## [2.13.0] - 2026-10-28
 
 ### Chores
