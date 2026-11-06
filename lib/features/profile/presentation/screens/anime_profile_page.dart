@@ -4,6 +4,7 @@ import 'package:animal/core/config/env.dart';
 import 'package:animal/core/providers.dart';
 import 'package:animal/core/theme/app_colors.dart';
 import 'package:animal/core/theme/app_spacing.dart';
+import 'package:animal/core/utils/link_settings.dart';
 import 'package:animal/core/utils/version_utils.dart';
 import 'package:animal/features/profile/presentation/widgets/api_status_section.dart';
 import 'package:animal/features/profile/presentation/widgets/profile_header.dart';
@@ -14,6 +15,8 @@ import 'package:animal/shared/widgets/info_chip.dart';
 import 'package:animal/shared/widgets/linked_text.dart';
 import 'package:animal/shared/widgets/section_card.dart';
 import 'package:animal/shared/widgets/section_header.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -92,6 +95,18 @@ class AnimeProfilePage extends ConsumerWidget {
                         .setThemeMode(selection.first),
                   ),
                 ),
+                if (defaultTargetPlatform == TargetPlatform.android) ...[
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const _SettingsIcon(Icons.link),
+                    title: const Text('MyAnimeList links'),
+                    subtitle: const Text(
+                      'Open anime pages from the browser here',
+                    ),
+                    trailing: const Icon(Icons.open_in_new, size: 20),
+                    onTap: () => unawaited(_openLinkSettings(context)),
+                  ),
+                ],
                 const Divider(height: 1),
                 ListTile(
                   leading: const _SettingsIcon(Icons.info_outline),
@@ -261,6 +276,13 @@ Future<void> _refreshUser(BuildContext context, WidgetRef ref) async {
       ),
     );
   }
+}
+
+Future<void> _openLinkSettings(BuildContext context) async {
+  if (await openLinkSettings() || !context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Could not open the link settings')),
+  );
 }
 
 Future<void> _launchGitHub() async {

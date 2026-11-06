@@ -29,7 +29,7 @@ AniMAL is an unofficial app and is not affiliated with or endorsed by MyAnimeLis
 - **Notifications** — Per-anime reminder 15 minutes before the next episode airs.
 - **Updates** — On launch the app looks up the latest GitHub release and, when a newer version exists, shows a notice with a Download button. It appears once per launch, goes away by itself, and stays silent when you are offline. The profile page can also check by hand.
 - **Auth** — MAL OAuth2 PKCE with a manual-code fallback, secure token storage, token refresh on 401 (retried once), `animal://` deep links.
-- **MyAnimeList links** — On Android, `myanimelist.net/anime/<id>` links from the browser (or any app) can open that anime's page here. Android 12+ does not hand links of a site you do not own to an app by itself: turn on *Settings → Apps → AniMAL → Open by default → Add link → myanimelist.net*.
+- **MyAnimeList links** — On Android, `myanimelist.net/anime/<id>` links from the browser (or any app) can open that anime's page here. Android 12+ does not hand links of a site you do not own to an app by itself: tap *Profile → Settings → MyAnimeList links* and, on the page that opens, turn on *Open supported links* (or *Add link → myanimelist.net*). Browsers then offer *Open in app*.
 - **Offline** — Persistent SQLite cache survives cold start; cached screens work offline.
 - **Theme** — Material 3 with a lavender and indigo palette that meets WCAG 2.2 AA, dark by default, switchable and remembered.
 

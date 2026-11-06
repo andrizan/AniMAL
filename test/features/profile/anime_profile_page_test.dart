@@ -9,6 +9,8 @@ import 'package:animal/features/profile/presentation/widgets/profile_header.dart
 import 'package:animal/features/profile/presentation/widgets/profile_sections.dart';
 import 'package:animal/features/profile/providers/profile_providers.dart';
 import 'package:animal/shared/providers/anime_providers.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -445,6 +447,61 @@ void main() {
       await open(tester, signedIn: false);
 
       expect(find.text('Logout'), findsNothing);
+    });
+  });
+
+  group('link settings', () {
+    const channel = MethodChannel('com.andrizan.animal/link_settings');
+    late List<String> opened;
+    var result = true;
+
+    setUp(() {
+      opened = [];
+      result = true;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            opened.add(call.method);
+            return result;
+          });
+    });
+
+    tearDown(() {
+      debugDefaultTargetPlatformOverride = null;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    testWidgets('the tile opens the system link settings', (tester) async {
+      await open(tester);
+
+      await tapVisible(tester, find.text('MyAnimeList links'));
+
+      expect(opened, ['open']);
+      expect(find.text('Could not open the link settings'), findsNothing);
+    });
+
+    testWidgets('says so when the settings cannot be opened', (tester) async {
+      result = false;
+      await open(tester);
+
+      await tapVisible(tester, find.text('MyAnimeList links'));
+      await tester.pump();
+
+      expect(find.text('Could not open the link settings'), findsOneWidget);
+    });
+
+    testWidgets('is shown when signed out too', (tester) async {
+      await open(tester, signedIn: false);
+
+      expect(find.text('MyAnimeList links'), findsOneWidget);
+    });
+
+    testWidgets('is left out where the OS has no such page', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      await open(tester);
+
+      expect(find.text('MyAnimeList links'), findsNothing);
+      debugDefaultTargetPlatformOverride = null;
     });
   });
 
