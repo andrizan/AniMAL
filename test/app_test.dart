@@ -11,6 +11,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fake_auth_repository.dart';
+
 const _method = MethodChannel('com.llfbandit.app_links/messages');
 const _events = EventChannel('com.llfbandit.app_links/events');
 const _launcher = MethodChannel('plugins.flutter.io/url_launcher');
@@ -114,6 +116,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          malAuthRepositoryProvider.overrideWithValue(
+            FakeAuthRepository()..authenticated = true,
+          ),
           notificationServiceProvider.overrideWithValue(notifications),
           routerProvider.overrideWithValue(fakeRouter()),
           latestReleaseProvider.overrideWithValue(() {

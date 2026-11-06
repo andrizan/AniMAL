@@ -91,7 +91,7 @@ class _AppState extends ConsumerState<App> {
       return;
     }
     if (malAnimeId(uri) case final animeId? when !_isRepeat(uri)) {
-      _openAnime(animeId);
+      unawaited(_openAnime(animeId));
     }
   }
 
@@ -111,22 +111,39 @@ class _AppState extends ConsumerState<App> {
   void _initNotificationListener() {
     final service = ref.read(notificationServiceProvider);
     final launchId = service.consumeLaunchAnimeId();
-    if (launchId != null) _openAnime(launchId);
-    _notificationSubscription = service.onNotificationTapped.listen(_openAnime);
+    if (launchId != null) unawaited(_openAnime(launchId));
+    _notificationSubscription = service.onNotificationTapped.listen(
+      (animeId) => unawaited(_openAnime(animeId)),
+    );
   }
 
-  void _openAnime(int animeId) {
+  Future<void> _openAnime(int animeId) async {
     if (!mounted) return;
+    final router = ref.read(routerProvider);
+    var status = ref.read(authControllerProvider);
+    if (status == AuthStatus.unknown) status = await _signInResolved();
+    if (!mounted || status != AuthStatus.authenticated) return;
     WidgetsBinding.instance
       ..addPostFrameCallback((_) {
         if (!mounted) return;
         unawaited(
-          ref
-              .read(routerProvider)
-              .pushNamed('animeDetail', pathParameters: {'id': '$animeId'}),
+          router.pushNamed('animeDetail', pathParameters: {'id': '$animeId'}),
         );
       })
       ..ensureVisualUpdate();
+  }
+
+  /// A link or notification that launches the app arrives before the stored
+  /// sign-in has been read. Until then the auth guard treats the user as
+  /// signed out and would send the page to login, then home.
+  Future<AuthStatus> _signInResolved() {
+    final done = Completer<AuthStatus>();
+    final subscription = ref.listenManual(authControllerProvider, (_, status) {
+      if (status != AuthStatus.unknown && !done.isCompleted) {
+        done.complete(status);
+      }
+    });
+    return done.future.whenComplete(subscription.close);
   }
 
   @override
