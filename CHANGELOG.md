@@ -1,3 +1,16 @@
+## [2.15.0] - 2026-11-06
+
+### Bug Fixes
+
+- Wait for the stored sign-in before opening an anime
+
+### Chores
+
+- Bump version to 2.14.0+21 [skip ci]
+
+### Features
+
+- Add a settings shortcut to allow MyAnimeList links
 ## [2.14.0] - 2026-11-01
 
 ### Chores
