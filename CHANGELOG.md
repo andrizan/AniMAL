@@ -1,3 +1,12 @@
+## [2.16.0] - 2026-11-07
+
+### Chores
+
+- Bump version to 2.15.0+22 [skip ci]
+
+### Features
+
+- Add an unaired anime to Plan to Watch
 ## [2.15.0] - 2026-11-06
 
 ### Bug Fixes
