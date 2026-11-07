@@ -167,7 +167,7 @@ If two features need the same data, lift the provider to `core/providers.dart` o
 - **Full-screen image viewer** on cover tap (zoom supported).
 - **Order = importance**, one `SectionCard` per block, 12 apart:
   1. Header: `headlineMedium` title (a semantic header), Japanese title, `HeroPanel` with type/episodes/status/rating chips and score, rank, popularity.
-  2. Your list: `MyListCard` (status and score picker buttons, `watched / total` with a progress bar, −/"Mark episode N watched"/+ row, remove) or the Add to Watching button. The page edits the list only through these; typing an episode number is done from a list card's edit sheet.
+  2. Your list: `MyListCard` (status and score picker buttons, `watched / total` with a progress bar, −/"Mark episode N watched"/+ row, remove) or the Add button (`Add to Watching`, or `Add to Plan to Watch` while the anime has not aired yet). The page edits the list only through these; typing an episode number is done from a list card's edit sheet.
   3. Next episode (AniList, when airing) with the reminder `SwitchListTile`; there is no bell in the app bar.
   4. Synopsis with genres (long synopsis collapses behind Read more).
   5. Information: aired/airing, season, broadcast (`Fridays, 23:30 your time`), duration (`24 min per episode`), source, studios.

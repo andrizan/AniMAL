@@ -450,14 +450,18 @@ class _PickerButton extends StatelessWidget {
   }
 }
 
+/// Adds the anime to the list: to Plan to Watch while it has not aired yet,
+/// to Watching otherwise. [airingStatus] is MAL's `status` of the anime.
 class AddToListButton extends ConsumerStatefulWidget {
   const AddToListButton({
     required this.animeId,
     required this.onAdded,
     super.key,
+    this.airingStatus,
   });
 
   final int animeId;
+  final String? airingStatus;
   final void Function(MyListStatus updatedStatus) onAdded;
 
   @override
@@ -467,17 +471,22 @@ class AddToListButton extends ConsumerStatefulWidget {
 class _AddToListButtonState extends ConsumerState<AddToListButton> {
   bool _busy = false;
 
+  WatchStatus get _target => widget.airingStatus == 'not_yet_aired'
+      ? WatchStatus.planToWatch
+      : WatchStatus.watching;
+
   Future<void> _add() async {
     if (_busy) return;
+    final target = _target;
     setState(() => _busy = true);
     try {
       final updated = await ref
           .read(animeRepositoryProvider)
-          .updateAnimeListStatus(widget.animeId, status: WatchStatus.watching);
+          .updateAnimeListStatus(widget.animeId, status: target);
       widget.onAdded(updated);
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Added to Watching')));
+            .showSnackBar(SnackBar(content: Text('Added to ${target.label}')));
       }
     } on Object catch (e) {
       if (mounted) {
@@ -503,7 +512,7 @@ class _AddToListButtonState extends ConsumerState<AddToListButton> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.add),
-        label: const Text('Add to Watching'),
+        label: Text('Add to ${_target.label}'),
       ),
     );
   }

@@ -686,6 +686,43 @@ void main() {
       expect(find.text('Remove from List'), findsOneWidget);
     });
 
+    testWidgets('an anime that has not aired yet is added to Plan to Watch', (
+      tester,
+    ) async {
+      await open(tester, detail: () => _detail(status: 'not_yet_aired'));
+
+      expect(find.text('Add to Watching'), findsNothing);
+      await tapVisible(tester, find.text('Add to Plan to Watch'));
+      await tester.pumpAndSettle();
+
+      expect(repo.updates.single['status'], WatchStatus.planToWatch);
+      expect(find.text('Added to Plan to Watch'), findsOneWidget);
+      expect(find.text('Remove from List'), findsOneWidget);
+      expect(find.text('Plan to Watch'), findsWidgets);
+    });
+
+    testWidgets('an anime that is airing is added to Watching', (tester) async {
+      await open(tester, detail: () => _detail(status: 'currently_airing'));
+
+      await tapVisible(tester, find.text('Add to Watching'));
+      await tester.pumpAndSettle();
+
+      expect(repo.updates.single['status'], WatchStatus.watching);
+    });
+
+    testWidgets('a failed add of an unaired anime is reported and nothing '
+        'changes', (tester) async {
+      await open(tester, detail: () => _detail(status: 'not_yet_aired'));
+      repo.failure = Exception('server down');
+
+      await tapVisible(tester, find.text('Add to Plan to Watch'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Failed to add'), findsOneWidget);
+      expect(find.text('Add to Plan to Watch'), findsOneWidget);
+      expect(find.text('Added to Plan to Watch'), findsNothing);
+    });
+
     testWidgets('removing asks for confirmation first', (tester) async {
       await open(
         tester,

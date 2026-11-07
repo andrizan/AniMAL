@@ -128,7 +128,11 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
           onRemoved: _onAnimeRemoved,
         )
       else
-        AddToListButton(animeId: animeId, onAdded: _onListStatusUpdated),
+        AddToListButton(
+          animeId: animeId,
+          airingStatus: detail.status,
+          onAdded: _onListStatusUpdated,
+        ),
       if (nextAiring != null)
         NextEpisodeCard(
           next: nextAiring,
