@@ -1,3 +1,12 @@
+## [2.17.0] - 2026-11-16
+
+### Chores
+
+- Bump version to 2.16.2+24 [skip ci]
+
+### Features
+
+- Show MAL videos and gallery on the anime page
 ## [2.16.2] - 2026-11-16
 
 ### Bug Fixes
