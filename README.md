@@ -5,7 +5,7 @@
 [![Latest release](https://img.shields.io/github/v/release/andrizan/AniMAL?include_prereleases&label=download)](https://github.com/andrizan/AniMAL/releases/latest)
 [![Quality Checks](https://github.com/andrizan/AniMAL/actions/workflows/quality.yml/badge.svg)](https://github.com/andrizan/AniMAL/actions/workflows/quality.yml)
 [![Release APK](https://github.com/andrizan/AniMAL/actions/workflows/release-apk.yml/badge.svg)](https://github.com/andrizan/AniMAL/actions/workflows/release-apk.yml)
-[![Flutter](https://img.shields.io/badge/Flutter-3.47-blue?logo=flutter)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.50-blue?logo=flutter)](https://flutter.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
@@ -219,7 +219,7 @@ refetch fails, the stored rows are served instead of an error.
 
 ### Prerequisites
 
-- Flutter 3.47+ (`flutter --version`)
+- Flutter 3.50+ (`flutter --version`)
 - Dart 3.13+
 - Android SDK / Xcode for device builds
 - MAL API credentials — create a client at https://myanimelist.net/apiconfig (Application Type: `web`, Non-Commercial: `yes`)
