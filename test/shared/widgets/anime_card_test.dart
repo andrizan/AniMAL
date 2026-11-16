@@ -11,6 +11,7 @@ import 'package:animal/features/detail/presentation/widgets/detail_sections.dart
     show broadcastLabel;
 import 'package:animal/shared/providers/airing_entry.dart';
 import 'package:animal/shared/widgets/anime_card.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -434,6 +435,22 @@ void main() {
 
       expect(find.text('#3'), findsOneWidget);
     });
+
+    for (final (ratio, width) in [(1.5, 126), (2.0, 168), (3.0, 252)]) {
+      testWidgets('the cover is decoded at $width px on a $ratio× screen', (
+        tester,
+      ) async {
+        tester.view.devicePixelRatio = ratio;
+        addTearDown(tester.view.reset);
+
+        await pumpCard(tester, anime());
+
+        final cover = tester.widget<CachedNetworkImage>(
+          find.byType(CachedNetworkImage),
+        );
+        expect(cover.memCacheWidth, width);
+      });
+    }
 
     testWidgets('a note is shown under the footer', (tester) async {
       await pumpCard(tester, anime(), note: 'Not on MyAnimeList yet');
