@@ -6,6 +6,8 @@ import 'package:animal/shared/widgets/status_chip.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../support/theme_fonts.dart';
+
 Future<void> _show(WidgetTester tester, Widget child, {ThemeData? theme}) =>
     tester.pumpWidget(
       MaterialApp(
@@ -19,6 +21,9 @@ Container _chipBox(WidgetTester tester) => tester.widget<Container>(
 );
 
 void main() {
+  setUpAll(loadThemeFonts);
+  tearDownAll(restoreFontFetching);
+
   group('ListStatusChip', () {
     testWidgets('pairs every status with a word and an icon', (tester) async {
       for (final status in WatchStatus.values) {

@@ -11,7 +11,12 @@ import 'package:animal/core/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/theme_fonts.dart';
+
 void main() {
+  setUpAll(loadThemeFonts);
+  tearDownAll(restoreFontFetching);
+
   testWidgets('App should render', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
