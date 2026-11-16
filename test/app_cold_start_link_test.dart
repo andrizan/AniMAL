@@ -13,6 +13,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fake_auth_repository.dart';
+import 'support/theme_fonts.dart';
 
 const _method = MethodChannel('com.llfbandit.app_links/messages');
 const _events = EventChannel('com.llfbandit.app_links/events');
@@ -47,6 +48,9 @@ class _Notifications extends Fake implements AnimeNotificationService {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(loadThemeFonts);
+  tearDownAll(restoreFontFetching);
 
   String? initialLink;
   MockStreamHandlerEventSink? linkSink;
