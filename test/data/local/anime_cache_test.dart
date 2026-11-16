@@ -202,6 +202,15 @@ void main() {
         numScoringUsers: 100,
         startSeason: StartSeason(year: 2020, season: 'winter'),
         averageEpisodeDuration: 1440,
+        pictures: [MainPicture(medium: 'pm', large: 'pl')],
+        videos: [
+          AnimeVideo(
+            id: 7,
+            url: 'https://youtu.be/x',
+            title: 'PV 1',
+            thumbnail: 'tn',
+          ),
+        ],
       );
       await cache.saveAnimeDetail(detail);
       final out = await cache.getAnimeDetail(42);
@@ -210,6 +219,8 @@ void main() {
       expect(out.source, 'manga');
       expect(out.startSeason?.year, 2020);
       expect(out.averageEpisodeDuration, 1440);
+      expect(out.pictures, detail.pictures);
+      expect(out.videos, detail.videos);
     });
 
     test('updateCachedAnimeListStatus updates embedded status without dropping cache', () async {
@@ -330,6 +341,23 @@ void main() {
       expect(out.startDate, '2020-01-01');
       expect(out.mean, 8.2);
       expect(out.genres.map((g) => g.name), ['Action']);
+    });
+
+    test('a detail without pictures or videos keeps the cached ones', () async {
+      await cache.saveAnimeDetail(
+        const AnimeDetail(
+          id: 5,
+          title: 'Full',
+          pictures: [MainPicture(medium: 'pm')],
+          videos: [AnimeVideo(id: 1, url: 'https://youtu.be/x')],
+        ),
+      );
+
+      await cache.saveAnimeDetail(const AnimeDetail(id: 5, title: 'Full'));
+
+      final out = await cache.getAnimeDetail(5);
+      expect(out!.pictures.map((p) => p.medium), ['pm']);
+      expect(out.videos.map((v) => v.url), ['https://youtu.be/x']);
     });
 
     test('empty genres in new data do not wipe cached genres', () async {

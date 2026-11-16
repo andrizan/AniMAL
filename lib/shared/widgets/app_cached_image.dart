@@ -2,6 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:material_ui/material_ui.dart';
 
+/// The pixel width to decode an image that is drawn [logicalWidth] wide, for
+/// the screen the widget is on: 168 for 84 on a 2x screen, 252 on a 3x one.
+int decodeWidthFor(BuildContext context, double logicalWidth) =>
+    (logicalWidth * MediaQuery.devicePixelRatioOf(context)).round();
+
 /// Shared cached image widget with consistent placeholder/error handling.
 class AppCachedImage extends StatelessWidget {
   const AppCachedImage({

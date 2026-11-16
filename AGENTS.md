@@ -171,8 +171,9 @@ If two features need the same data, lift the provider to `core/providers.dart` o
   3. Next episode (AniList, when airing) with the reminder `SwitchListTile`; there is no bell in the app bar.
   4. Synopsis with genres (long synopsis collapses behind Read more).
   5. Information: aired/airing, season, broadcast (`Fridays, 23:30 your time`), duration (`24 min per episode`), source, studios.
-  6. Characters & voice actors, then staff (AniList).
-  7. Related anime, alternative titles, external links.
+  6. Videos (MAL `videos`: trailers and PVs, opened in the app that handles the link), then Gallery (MAL `pictures`, opened in `FullScreenGalleryViewer`). Both are horizontal lists inside a `SectionCard`, left out when MAL lists none, and ride on the detail request and its cache (`pictures_json`, `videos_json`).
+  7. Characters & voice actors, then staff (AniList).
+  8. Related anime, alternative titles, external links.
 - Broadcast is stored in JST by MAL; show it converted to the device zone (day included) via `convertJstBroadcastToLocal`.
 - Characters & staff from **AniList** (not MAL).
 - 4 items default, "See All" button to expand.

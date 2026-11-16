@@ -33,10 +33,25 @@ sealed class AnimeDetail with _$AnimeDetail {
     @JsonKey(name: 'my_list_status') MyListStatus? myListStatus,
     @JsonKey(name: 'start_season') StartSeason? startSeason,
     @JsonKey(name: 'average_episode_duration') int? averageEpisodeDuration,
+    @Default([]) List<MainPicture> pictures,
+    @Default([]) List<AnimeVideo> videos,
   }) = _AnimeDetail;
 
   factory AnimeDetail.fromJson(Map<String, dynamic> json) =>
       _$AnimeDetailFromJson(json);
+}
+
+@freezed
+sealed class AnimeVideo with _$AnimeVideo {
+  const factory AnimeVideo({
+    required int id,
+    required String url,
+    String? title,
+    String? thumbnail,
+  }) = _AnimeVideo;
+
+  factory AnimeVideo.fromJson(Map<String, dynamic> json) =>
+      _$AnimeVideoFromJson(json);
 }
 
 @freezed

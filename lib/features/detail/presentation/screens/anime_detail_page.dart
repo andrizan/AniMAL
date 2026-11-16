@@ -6,6 +6,7 @@ import 'package:animal/data/models/anilist/anilist_models.dart';
 import 'package:animal/data/models/anime_detail.dart';
 import 'package:animal/data/models/my_list_status.dart';
 import 'package:animal/features/detail/presentation/widgets/detail_header.dart';
+import 'package:animal/features/detail/presentation/widgets/detail_media.dart';
 import 'package:animal/features/detail/presentation/widgets/detail_people.dart';
 import 'package:animal/features/detail/presentation/widgets/detail_sections.dart';
 import 'package:animal/features/detail/presentation/widgets/my_list_card.dart';
@@ -150,6 +151,10 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
           studios: studios,
           nextAiringAt: nextAiring?.airingAt,
         ),
+      if (VideosCard.hasContent(detail.videos))
+        VideosCard(videos: detail.videos),
+      if (GalleryCard.hasContent(detail.pictures))
+        GalleryCard(pictures: detail.pictures),
       if (characters.isNotEmpty) CharactersCard(characters: characters),
       if (staff.isNotEmpty) StaffCard(staff: staff),
       if (detail.relatedAnime.isNotEmpty)

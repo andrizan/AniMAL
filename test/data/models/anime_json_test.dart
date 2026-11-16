@@ -58,6 +58,21 @@ Map<String, dynamic> _malDetail() => {
       'relation_type': 'side_story',
     },
   ],
+  'pictures': [
+    {'medium': 'https://cdn.test/p1.jpg', 'large': 'https://cdn.test/p1l.jpg'},
+    {'medium': 'https://cdn.test/p2.jpg'},
+  ],
+  'videos': [
+    {
+      'id': 14718,
+      'title': 'PV 5',
+      'url': 'https://youtu.be/ZEkwCGJ3o7M',
+      'created_at': 1707492558000,
+      'updated_at': 1707492558000,
+      'thumbnail': 'https://i.ytimg.com/vi/ZEkwCGJ3o7M/mqdefault.jpg',
+    },
+    {'id': 2, 'url': 'https://youtu.be/b'},
+  ],
 };
 
 void main() {
@@ -135,6 +150,34 @@ void main() {
       expect(side.relationType, 'side_story');
       expect(side.relationTypeFormatted, isNull);
     });
+
+    test('reads the extra pictures in order, a size may be missing', () {
+      expect(detail.pictures, hasLength(2));
+      expect(detail.pictures.first.medium, 'https://cdn.test/p1.jpg');
+      expect(detail.pictures.first.large, 'https://cdn.test/p1l.jpg');
+      expect(detail.pictures.last.medium, 'https://cdn.test/p2.jpg');
+      expect(detail.pictures.last.large, isNull);
+    });
+
+    test('reads the videos, ignoring the fields the app does not use', () {
+      final video = detail.videos.first;
+
+      expect(detail.videos, hasLength(2));
+      expect(video.id, 14718);
+      expect(video.title, 'PV 5');
+      expect(video.url, 'https://youtu.be/ZEkwCGJ3o7M');
+      expect(
+        video.thumbnail,
+        'https://i.ytimg.com/vi/ZEkwCGJ3o7M/mqdefault.jpg',
+      );
+    });
+
+    test('a video needs only an id and an address', () {
+      final video = detail.videos.last;
+
+      expect(video.title, isNull);
+      expect(video.thumbnail, isNull);
+    });
   });
 
   group('AnimeDetail.fromJson with little data', () {
@@ -148,6 +191,8 @@ void main() {
       expect(detail.alternativeTitles, isNull);
       expect(detail.genres, isEmpty);
       expect(detail.relatedAnime, isEmpty);
+      expect(detail.pictures, isEmpty);
+      expect(detail.videos, isEmpty);
     });
 
     test('a picture with only one size is accepted', () {
@@ -227,6 +272,8 @@ void main() {
           'my_list_status',
           'start_season',
           'average_episode_duration',
+          'pictures',
+          'videos',
         ]),
       );
     });

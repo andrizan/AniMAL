@@ -16,7 +16,7 @@ class AppDatabase {
   /// frame need not. Tests await it to see its result.
   Future<void> get startupCleanup => _startupCleanup;
 
-  static const _schemaVersion = 5;
+  static const _schemaVersion = 6;
   static const _fileName = 'animal_cache.db';
 
   static Future<AppDatabase> open({
@@ -44,6 +44,9 @@ class AppDatabase {
         }
         if (oldVersion < 5) {
           await _migrateV4ToV5(db);
+        }
+        if (oldVersion < 6) {
+          await _migrateV5ToV6(db);
         }
       },
     );
@@ -242,6 +245,8 @@ class AppDatabase {
         start_season_year         INTEGER,
         start_season_season       TEXT,
         related_anime_json        TEXT,
+        pictures_json             TEXT,
+        videos_json               TEXT,
         FOREIGN KEY (mal_id) REFERENCES anime(mal_id) ON DELETE CASCADE
       );
     ''');
@@ -606,6 +611,24 @@ class AppDatabase {
       }
     }
     await _forgetWorksDetails(db);
+  }
+
+  /// An anime's detail gained its pictures and videos. Details stored before
+  /// have neither, so they are forgotten: the rows stay as a fallback while
+  /// the next visit asks MAL again and stores them.
+  static Future<void> _migrateV5ToV6(Database db) async {
+    final existing = (await db.rawQuery('PRAGMA table_info(anime_detail)'))
+        .map((c) => c['name'])
+        .toSet();
+    for (final column in ['pictures_json', 'videos_json']) {
+      if (existing.contains(column)) continue;
+      await db.execute('ALTER TABLE anime_detail ADD COLUMN $column TEXT');
+    }
+    await db.delete(
+      'cache_meta',
+      where: 'cache_key LIKE ?',
+      whereArgs: ['detail_%'],
+    );
   }
 
   static Future<void> _forgetWorksDetails(Database db) async {

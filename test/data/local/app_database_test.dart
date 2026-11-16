@@ -16,7 +16,7 @@ void main() {
   }
 
   group('AppDatabase', () {
-    test('opens in-memory DB and reports schema version 5', () async {
+    test('opens in-memory DB and reports schema version 6', () async {
       final db = await AppDatabase.open(
         pathOverride: inMemoryDatabasePath,
         runMigrations: false,
@@ -24,7 +24,7 @@ void main() {
       addTearDown(db.close);
 
       final version = await db.raw.getVersion();
-      expect(version, 5);
+      expect(version, 6);
     });
 
     test('foreign keys are enabled', () async {

@@ -215,6 +215,19 @@ void main() {
         ),
         RelatedAnime(node: AnimeNode(id: 9, title: 'No Picture')),
       ],
+      pictures: [
+        MainPicture(medium: 'p1m', large: 'p1l'),
+        MainPicture(medium: 'p2m'),
+      ],
+      videos: [
+        AnimeVideo(
+          id: 1,
+          url: 'https://youtu.be/a',
+          title: 'PV 1',
+          thumbnail: 't1',
+        ),
+        AnimeVideo(id: 2, url: 'https://youtu.be/b'),
+      ],
     );
 
     test('round-trips the detail-only fields', () {
@@ -242,6 +255,33 @@ void main() {
       expect(restored.relatedAnime.first.node.mainPicture!.large, 'sl');
       expect(restored.relatedAnime.first.relationTypeFormatted, 'Sequel');
       expect(restored.relatedAnime.last.node.mainPicture!.medium, isNull);
+    });
+
+    test('round-trips the pictures and videos in order', () {
+      final row = {
+        ...mappers.animeToRow(Anime(id: detail.id, title: detail.title)),
+        ...mappers.animeDetailToExtraRow(detail),
+      };
+
+      final restored = mappers.animeDetailFromRow(row);
+
+      expect(restored.pictures, detail.pictures);
+      expect(restored.videos, detail.videos);
+      expect(restored.videos.last.title, isNull);
+      expect(restored.videos.last.thumbnail, isNull);
+    });
+
+    test('stores no pictures or videos as null, and reads them back empty', () {
+      final row = {
+        ...mappers.animeToRow(const Anime(id: 1, title: 'T')),
+        ...mappers.animeDetailToExtraRow(const AnimeDetail(id: 1, title: 'T')),
+      };
+
+      expect(row['pictures_json'], isNull);
+      expect(row['videos_json'], isNull);
+      final restored = mappers.animeDetailFromRow(row);
+      expect(restored.pictures, isEmpty);
+      expect(restored.videos, isEmpty);
     });
 
     test('has no related anime or season when none were stored', () {

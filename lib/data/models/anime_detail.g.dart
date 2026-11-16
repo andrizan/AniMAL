@@ -49,6 +49,16 @@ _AnimeDetail _$AnimeDetailFromJson(Map<String, dynamic> json) => _AnimeDetail(
       ? null
       : StartSeason.fromJson(json['start_season'] as Map<String, dynamic>),
   averageEpisodeDuration: (json['average_episode_duration'] as num?)?.toInt(),
+  pictures:
+      (json['pictures'] as List<dynamic>?)
+          ?.map((e) => MainPicture.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  videos:
+      (json['videos'] as List<dynamic>?)
+          ?.map((e) => AnimeVideo.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$AnimeDetailToJson(_AnimeDetail instance) =>
@@ -75,6 +85,23 @@ Map<String, dynamic> _$AnimeDetailToJson(_AnimeDetail instance) =>
       'my_list_status': instance.myListStatus,
       'start_season': instance.startSeason,
       'average_episode_duration': instance.averageEpisodeDuration,
+      'pictures': instance.pictures,
+      'videos': instance.videos,
+    };
+
+_AnimeVideo _$AnimeVideoFromJson(Map<String, dynamic> json) => _AnimeVideo(
+  id: (json['id'] as num).toInt(),
+  url: json['url'] as String,
+  title: json['title'] as String?,
+  thumbnail: json['thumbnail'] as String?,
+);
+
+Map<String, dynamic> _$AnimeVideoToJson(_AnimeVideo instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'url': instance.url,
+      'title': instance.title,
+      'thumbnail': instance.thumbnail,
     };
 
 _Genre _$GenreFromJson(Map<String, dynamic> json) =>

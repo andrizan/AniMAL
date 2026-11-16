@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AnimeDetail {
 
- int get id; String get title;@JsonKey(name: 'main_picture') MainPicture? get mainPicture; double? get mean; int? get rank; int? get popularity;@JsonKey(name: 'num_episodes') int? get numEpisodes; String? get status; String? get rating; String? get source; String? get synopsis;@JsonKey(name: 'start_date') String? get startDate;@JsonKey(name: 'end_date') String? get endDate;@JsonKey(name: 'media_type') String? get mediaType;@JsonKey(name: 'num_scoring_users') int? get numScoringUsers; List<Genre> get genres; Broadcast? get broadcast;@JsonKey(name: 'alternative_titles') AlternativeTitles? get alternativeTitles;@JsonKey(name: 'related_anime') List<RelatedAnime> get relatedAnime;@JsonKey(name: 'my_list_status') MyListStatus? get myListStatus;@JsonKey(name: 'start_season') StartSeason? get startSeason;@JsonKey(name: 'average_episode_duration') int? get averageEpisodeDuration;
+ int get id; String get title;@JsonKey(name: 'main_picture') MainPicture? get mainPicture; double? get mean; int? get rank; int? get popularity;@JsonKey(name: 'num_episodes') int? get numEpisodes; String? get status; String? get rating; String? get source; String? get synopsis;@JsonKey(name: 'start_date') String? get startDate;@JsonKey(name: 'end_date') String? get endDate;@JsonKey(name: 'media_type') String? get mediaType;@JsonKey(name: 'num_scoring_users') int? get numScoringUsers; List<Genre> get genres; Broadcast? get broadcast;@JsonKey(name: 'alternative_titles') AlternativeTitles? get alternativeTitles;@JsonKey(name: 'related_anime') List<RelatedAnime> get relatedAnime;@JsonKey(name: 'my_list_status') MyListStatus? get myListStatus;@JsonKey(name: 'start_season') StartSeason? get startSeason;@JsonKey(name: 'average_episode_duration') int? get averageEpisodeDuration; List<MainPicture> get pictures; List<AnimeVideo> get videos;
 /// Create a copy of AnimeDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $AnimeDetailCopyWith<AnimeDetail> get copyWith => _$AnimeDetailCopyWithImpl<Anim
 @override
 bool operator ==(Object other) {
   final _this = this as AnimeDetail;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeDetail&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.mainPicture, _this.mainPicture) || other.mainPicture == _this.mainPicture)&&(identical(other.mean, _this.mean) || other.mean == _this.mean)&&(identical(other.rank, _this.rank) || other.rank == _this.rank)&&(identical(other.popularity, _this.popularity) || other.popularity == _this.popularity)&&(identical(other.numEpisodes, _this.numEpisodes) || other.numEpisodes == _this.numEpisodes)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.synopsis, _this.synopsis) || other.synopsis == _this.synopsis)&&(identical(other.startDate, _this.startDate) || other.startDate == _this.startDate)&&(identical(other.endDate, _this.endDate) || other.endDate == _this.endDate)&&(identical(other.mediaType, _this.mediaType) || other.mediaType == _this.mediaType)&&(identical(other.numScoringUsers, _this.numScoringUsers) || other.numScoringUsers == _this.numScoringUsers)&&const DeepCollectionEquality().equals(other.genres, _this.genres)&&(identical(other.broadcast, _this.broadcast) || other.broadcast == _this.broadcast)&&(identical(other.alternativeTitles, _this.alternativeTitles) || other.alternativeTitles == _this.alternativeTitles)&&const DeepCollectionEquality().equals(other.relatedAnime, _this.relatedAnime)&&(identical(other.myListStatus, _this.myListStatus) || other.myListStatus == _this.myListStatus)&&(identical(other.startSeason, _this.startSeason) || other.startSeason == _this.startSeason)&&(identical(other.averageEpisodeDuration, _this.averageEpisodeDuration) || other.averageEpisodeDuration == _this.averageEpisodeDuration));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeDetail&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.mainPicture, _this.mainPicture) || other.mainPicture == _this.mainPicture)&&(identical(other.mean, _this.mean) || other.mean == _this.mean)&&(identical(other.rank, _this.rank) || other.rank == _this.rank)&&(identical(other.popularity, _this.popularity) || other.popularity == _this.popularity)&&(identical(other.numEpisodes, _this.numEpisodes) || other.numEpisodes == _this.numEpisodes)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.synopsis, _this.synopsis) || other.synopsis == _this.synopsis)&&(identical(other.startDate, _this.startDate) || other.startDate == _this.startDate)&&(identical(other.endDate, _this.endDate) || other.endDate == _this.endDate)&&(identical(other.mediaType, _this.mediaType) || other.mediaType == _this.mediaType)&&(identical(other.numScoringUsers, _this.numScoringUsers) || other.numScoringUsers == _this.numScoringUsers)&&const DeepCollectionEquality().equals(other.genres, _this.genres)&&(identical(other.broadcast, _this.broadcast) || other.broadcast == _this.broadcast)&&(identical(other.alternativeTitles, _this.alternativeTitles) || other.alternativeTitles == _this.alternativeTitles)&&const DeepCollectionEquality().equals(other.relatedAnime, _this.relatedAnime)&&(identical(other.myListStatus, _this.myListStatus) || other.myListStatus == _this.myListStatus)&&(identical(other.startSeason, _this.startSeason) || other.startSeason == _this.startSeason)&&(identical(other.averageEpisodeDuration, _this.averageEpisodeDuration) || other.averageEpisodeDuration == _this.averageEpisodeDuration)&&const DeepCollectionEquality().equals(other.pictures, _this.pictures)&&const DeepCollectionEquality().equals(other.videos, _this.videos));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as AnimeDetail;
-  return Object.hashAll([runtimeType,_this.id,_this.title,_this.mainPicture,_this.mean,_this.rank,_this.popularity,_this.numEpisodes,_this.status,_this.rating,_this.source,_this.synopsis,_this.startDate,_this.endDate,_this.mediaType,_this.numScoringUsers,const DeepCollectionEquality().hash(_this.genres),_this.broadcast,_this.alternativeTitles,const DeepCollectionEquality().hash(_this.relatedAnime),_this.myListStatus,_this.startSeason,_this.averageEpisodeDuration]);
+  return Object.hashAll([runtimeType,_this.id,_this.title,_this.mainPicture,_this.mean,_this.rank,_this.popularity,_this.numEpisodes,_this.status,_this.rating,_this.source,_this.synopsis,_this.startDate,_this.endDate,_this.mediaType,_this.numScoringUsers,const DeepCollectionEquality().hash(_this.genres),_this.broadcast,_this.alternativeTitles,const DeepCollectionEquality().hash(_this.relatedAnime),_this.myListStatus,_this.startSeason,_this.averageEpisodeDuration,const DeepCollectionEquality().hash(_this.pictures),const DeepCollectionEquality().hash(_this.videos)]);
 }
 
 @override
 String toString() {
   final _this = this as AnimeDetail;
-  return 'AnimeDetail(id: ${_this.id}, title: ${_this.title}, mainPicture: ${_this.mainPicture}, mean: ${_this.mean}, rank: ${_this.rank}, popularity: ${_this.popularity}, numEpisodes: ${_this.numEpisodes}, status: ${_this.status}, rating: ${_this.rating}, source: ${_this.source}, synopsis: ${_this.synopsis}, startDate: ${_this.startDate}, endDate: ${_this.endDate}, mediaType: ${_this.mediaType}, numScoringUsers: ${_this.numScoringUsers}, genres: ${_this.genres}, broadcast: ${_this.broadcast}, alternativeTitles: ${_this.alternativeTitles}, relatedAnime: ${_this.relatedAnime}, myListStatus: ${_this.myListStatus}, startSeason: ${_this.startSeason}, averageEpisodeDuration: ${_this.averageEpisodeDuration})';
+  return 'AnimeDetail(id: ${_this.id}, title: ${_this.title}, mainPicture: ${_this.mainPicture}, mean: ${_this.mean}, rank: ${_this.rank}, popularity: ${_this.popularity}, numEpisodes: ${_this.numEpisodes}, status: ${_this.status}, rating: ${_this.rating}, source: ${_this.source}, synopsis: ${_this.synopsis}, startDate: ${_this.startDate}, endDate: ${_this.endDate}, mediaType: ${_this.mediaType}, numScoringUsers: ${_this.numScoringUsers}, genres: ${_this.genres}, broadcast: ${_this.broadcast}, alternativeTitles: ${_this.alternativeTitles}, relatedAnime: ${_this.relatedAnime}, myListStatus: ${_this.myListStatus}, startSeason: ${_this.startSeason}, averageEpisodeDuration: ${_this.averageEpisodeDuration}, pictures: ${_this.pictures}, videos: ${_this.videos})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $AnimeDetailCopyWith<$Res>  {
   factory $AnimeDetailCopyWith(AnimeDetail value, $Res Function(AnimeDetail) _then) = _$AnimeDetailCopyWithImpl;
 @useResult
 $Res call({
- int id, String title,@JsonKey(name: 'main_picture') MainPicture? mainPicture, double? mean, int? rank, int? popularity,@JsonKey(name: 'num_episodes') int? numEpisodes, String? status, String? rating, String? source, String? synopsis,@JsonKey(name: 'start_date') String? startDate,@JsonKey(name: 'end_date') String? endDate,@JsonKey(name: 'media_type') String? mediaType,@JsonKey(name: 'num_scoring_users') int? numScoringUsers, List<Genre> genres, Broadcast? broadcast,@JsonKey(name: 'alternative_titles') AlternativeTitles? alternativeTitles,@JsonKey(name: 'related_anime') List<RelatedAnime> relatedAnime,@JsonKey(name: 'my_list_status') MyListStatus? myListStatus,@JsonKey(name: 'start_season') StartSeason? startSeason,@JsonKey(name: 'average_episode_duration') int? averageEpisodeDuration
+ int id, String title,@JsonKey(name: 'main_picture') MainPicture? mainPicture, double? mean, int? rank, int? popularity,@JsonKey(name: 'num_episodes') int? numEpisodes, String? status, String? rating, String? source, String? synopsis,@JsonKey(name: 'start_date') String? startDate,@JsonKey(name: 'end_date') String? endDate,@JsonKey(name: 'media_type') String? mediaType,@JsonKey(name: 'num_scoring_users') int? numScoringUsers, List<Genre> genres, Broadcast? broadcast,@JsonKey(name: 'alternative_titles') AlternativeTitles? alternativeTitles,@JsonKey(name: 'related_anime') List<RelatedAnime> relatedAnime,@JsonKey(name: 'my_list_status') MyListStatus? myListStatus,@JsonKey(name: 'start_season') StartSeason? startSeason,@JsonKey(name: 'average_episode_duration') int? averageEpisodeDuration, List<MainPicture> pictures, List<AnimeVideo> videos
 });
 
 
@@ -71,7 +71,7 @@ class _$AnimeDetailCopyWithImpl<$Res>
 
 /// Create a copy of AnimeDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? mainPicture = freezed,Object? mean = freezed,Object? rank = freezed,Object? popularity = freezed,Object? numEpisodes = freezed,Object? status = freezed,Object? rating = freezed,Object? source = freezed,Object? synopsis = freezed,Object? startDate = freezed,Object? endDate = freezed,Object? mediaType = freezed,Object? numScoringUsers = freezed,Object? genres = null,Object? broadcast = freezed,Object? alternativeTitles = freezed,Object? relatedAnime = null,Object? myListStatus = freezed,Object? startSeason = freezed,Object? averageEpisodeDuration = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? mainPicture = freezed,Object? mean = freezed,Object? rank = freezed,Object? popularity = freezed,Object? numEpisodes = freezed,Object? status = freezed,Object? rating = freezed,Object? source = freezed,Object? synopsis = freezed,Object? startDate = freezed,Object? endDate = freezed,Object? mediaType = freezed,Object? numScoringUsers = freezed,Object? genres = null,Object? broadcast = freezed,Object? alternativeTitles = freezed,Object? relatedAnime = null,Object? myListStatus = freezed,Object? startSeason = freezed,Object? averageEpisodeDuration = freezed,Object? pictures = null,Object? videos = null,}) {
   return _then(AnimeDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -95,7 +95,9 @@ as AlternativeTitles?,relatedAnime: null == relatedAnime ? _self.relatedAnime : 
 as List<RelatedAnime>,myListStatus: freezed == myListStatus ? _self.myListStatus : myListStatus // ignore: cast_nullable_to_non_nullable
 as MyListStatus?,startSeason: freezed == startSeason ? _self.startSeason : startSeason // ignore: cast_nullable_to_non_nullable
 as StartSeason?,averageEpisodeDuration: freezed == averageEpisodeDuration ? _self.averageEpisodeDuration : averageEpisodeDuration // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,pictures: null == pictures ? _self.pictures : pictures // ignore: cast_nullable_to_non_nullable
+as List<MainPicture>,videos: null == videos ? _self.videos : videos // ignore: cast_nullable_to_non_nullable
+as List<AnimeVideo>,
   ));
 }
 /// Create a copy of AnimeDetail
@@ -237,10 +239,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  double? mean,  int? rank,  int? popularity, @JsonKey(name: 'num_episodes')  int? numEpisodes,  String? status,  String? rating,  String? source,  String? synopsis, @JsonKey(name: 'start_date')  String? startDate, @JsonKey(name: 'end_date')  String? endDate, @JsonKey(name: 'media_type')  String? mediaType, @JsonKey(name: 'num_scoring_users')  int? numScoringUsers,  List<Genre> genres,  Broadcast? broadcast, @JsonKey(name: 'alternative_titles')  AlternativeTitles? alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime, @JsonKey(name: 'my_list_status')  MyListStatus? myListStatus, @JsonKey(name: 'start_season')  StartSeason? startSeason, @JsonKey(name: 'average_episode_duration')  int? averageEpisodeDuration)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  double? mean,  int? rank,  int? popularity, @JsonKey(name: 'num_episodes')  int? numEpisodes,  String? status,  String? rating,  String? source,  String? synopsis, @JsonKey(name: 'start_date')  String? startDate, @JsonKey(name: 'end_date')  String? endDate, @JsonKey(name: 'media_type')  String? mediaType, @JsonKey(name: 'num_scoring_users')  int? numScoringUsers,  List<Genre> genres,  Broadcast? broadcast, @JsonKey(name: 'alternative_titles')  AlternativeTitles? alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime, @JsonKey(name: 'my_list_status')  MyListStatus? myListStatus, @JsonKey(name: 'start_season')  StartSeason? startSeason, @JsonKey(name: 'average_episode_duration')  int? averageEpisodeDuration,  List<MainPicture> pictures,  List<AnimeVideo> videos)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AnimeDetail() when $default != null:
-return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_that.popularity,_that.numEpisodes,_that.status,_that.rating,_that.source,_that.synopsis,_that.startDate,_that.endDate,_that.mediaType,_that.numScoringUsers,_that.genres,_that.broadcast,_that.alternativeTitles,_that.relatedAnime,_that.myListStatus,_that.startSeason,_that.averageEpisodeDuration);case _:
+return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_that.popularity,_that.numEpisodes,_that.status,_that.rating,_that.source,_that.synopsis,_that.startDate,_that.endDate,_that.mediaType,_that.numScoringUsers,_that.genres,_that.broadcast,_that.alternativeTitles,_that.relatedAnime,_that.myListStatus,_that.startSeason,_that.averageEpisodeDuration,_that.pictures,_that.videos);case _:
   return orElse();
 
 }
@@ -258,10 +260,10 @@ return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  double? mean,  int? rank,  int? popularity, @JsonKey(name: 'num_episodes')  int? numEpisodes,  String? status,  String? rating,  String? source,  String? synopsis, @JsonKey(name: 'start_date')  String? startDate, @JsonKey(name: 'end_date')  String? endDate, @JsonKey(name: 'media_type')  String? mediaType, @JsonKey(name: 'num_scoring_users')  int? numScoringUsers,  List<Genre> genres,  Broadcast? broadcast, @JsonKey(name: 'alternative_titles')  AlternativeTitles? alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime, @JsonKey(name: 'my_list_status')  MyListStatus? myListStatus, @JsonKey(name: 'start_season')  StartSeason? startSeason, @JsonKey(name: 'average_episode_duration')  int? averageEpisodeDuration)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  double? mean,  int? rank,  int? popularity, @JsonKey(name: 'num_episodes')  int? numEpisodes,  String? status,  String? rating,  String? source,  String? synopsis, @JsonKey(name: 'start_date')  String? startDate, @JsonKey(name: 'end_date')  String? endDate, @JsonKey(name: 'media_type')  String? mediaType, @JsonKey(name: 'num_scoring_users')  int? numScoringUsers,  List<Genre> genres,  Broadcast? broadcast, @JsonKey(name: 'alternative_titles')  AlternativeTitles? alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime, @JsonKey(name: 'my_list_status')  MyListStatus? myListStatus, @JsonKey(name: 'start_season')  StartSeason? startSeason, @JsonKey(name: 'average_episode_duration')  int? averageEpisodeDuration,  List<MainPicture> pictures,  List<AnimeVideo> videos)  $default,) {final _that = this;
 switch (_that) {
 case _AnimeDetail():
-return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_that.popularity,_that.numEpisodes,_that.status,_that.rating,_that.source,_that.synopsis,_that.startDate,_that.endDate,_that.mediaType,_that.numScoringUsers,_that.genres,_that.broadcast,_that.alternativeTitles,_that.relatedAnime,_that.myListStatus,_that.startSeason,_that.averageEpisodeDuration);}
+return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_that.popularity,_that.numEpisodes,_that.status,_that.rating,_that.source,_that.synopsis,_that.startDate,_that.endDate,_that.mediaType,_that.numScoringUsers,_that.genres,_that.broadcast,_that.alternativeTitles,_that.relatedAnime,_that.myListStatus,_that.startSeason,_that.averageEpisodeDuration,_that.pictures,_that.videos);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -275,10 +277,10 @@ return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  double? mean,  int? rank,  int? popularity, @JsonKey(name: 'num_episodes')  int? numEpisodes,  String? status,  String? rating,  String? source,  String? synopsis, @JsonKey(name: 'start_date')  String? startDate, @JsonKey(name: 'end_date')  String? endDate, @JsonKey(name: 'media_type')  String? mediaType, @JsonKey(name: 'num_scoring_users')  int? numScoringUsers,  List<Genre> genres,  Broadcast? broadcast, @JsonKey(name: 'alternative_titles')  AlternativeTitles? alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime, @JsonKey(name: 'my_list_status')  MyListStatus? myListStatus, @JsonKey(name: 'start_season')  StartSeason? startSeason, @JsonKey(name: 'average_episode_duration')  int? averageEpisodeDuration)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title, @JsonKey(name: 'main_picture')  MainPicture? mainPicture,  double? mean,  int? rank,  int? popularity, @JsonKey(name: 'num_episodes')  int? numEpisodes,  String? status,  String? rating,  String? source,  String? synopsis, @JsonKey(name: 'start_date')  String? startDate, @JsonKey(name: 'end_date')  String? endDate, @JsonKey(name: 'media_type')  String? mediaType, @JsonKey(name: 'num_scoring_users')  int? numScoringUsers,  List<Genre> genres,  Broadcast? broadcast, @JsonKey(name: 'alternative_titles')  AlternativeTitles? alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime, @JsonKey(name: 'my_list_status')  MyListStatus? myListStatus, @JsonKey(name: 'start_season')  StartSeason? startSeason, @JsonKey(name: 'average_episode_duration')  int? averageEpisodeDuration,  List<MainPicture> pictures,  List<AnimeVideo> videos)?  $default,) {final _that = this;
 switch (_that) {
 case _AnimeDetail() when $default != null:
-return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_that.popularity,_that.numEpisodes,_that.status,_that.rating,_that.source,_that.synopsis,_that.startDate,_that.endDate,_that.mediaType,_that.numScoringUsers,_that.genres,_that.broadcast,_that.alternativeTitles,_that.relatedAnime,_that.myListStatus,_that.startSeason,_that.averageEpisodeDuration);case _:
+return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_that.popularity,_that.numEpisodes,_that.status,_that.rating,_that.source,_that.synopsis,_that.startDate,_that.endDate,_that.mediaType,_that.numScoringUsers,_that.genres,_that.broadcast,_that.alternativeTitles,_that.relatedAnime,_that.myListStatus,_that.startSeason,_that.averageEpisodeDuration,_that.pictures,_that.videos);case _:
   return null;
 
 }
@@ -290,7 +292,7 @@ return $default(_that.id,_that.title,_that.mainPicture,_that.mean,_that.rank,_th
 @JsonSerializable()
 
 class _AnimeDetail implements AnimeDetail {
-  const _AnimeDetail({required this.id, required this.title, @JsonKey(name: 'main_picture') this.mainPicture, this.mean, this.rank, this.popularity, @JsonKey(name: 'num_episodes') this.numEpisodes, this.status, this.rating, this.source, this.synopsis, @JsonKey(name: 'start_date') this.startDate, @JsonKey(name: 'end_date') this.endDate, @JsonKey(name: 'media_type') this.mediaType, @JsonKey(name: 'num_scoring_users') this.numScoringUsers,  List<Genre> genres = const [], this.broadcast, @JsonKey(name: 'alternative_titles') this.alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime = const [], @JsonKey(name: 'my_list_status') this.myListStatus, @JsonKey(name: 'start_season') this.startSeason, @JsonKey(name: 'average_episode_duration') this.averageEpisodeDuration}): _genres = genres,_relatedAnime = relatedAnime;
+  const _AnimeDetail({required this.id, required this.title, @JsonKey(name: 'main_picture') this.mainPicture, this.mean, this.rank, this.popularity, @JsonKey(name: 'num_episodes') this.numEpisodes, this.status, this.rating, this.source, this.synopsis, @JsonKey(name: 'start_date') this.startDate, @JsonKey(name: 'end_date') this.endDate, @JsonKey(name: 'media_type') this.mediaType, @JsonKey(name: 'num_scoring_users') this.numScoringUsers,  List<Genre> genres = const [], this.broadcast, @JsonKey(name: 'alternative_titles') this.alternativeTitles, @JsonKey(name: 'related_anime')  List<RelatedAnime> relatedAnime = const [], @JsonKey(name: 'my_list_status') this.myListStatus, @JsonKey(name: 'start_season') this.startSeason, @JsonKey(name: 'average_episode_duration') this.averageEpisodeDuration,  List<MainPicture> pictures = const [],  List<AnimeVideo> videos = const []}): _genres = genres,_relatedAnime = relatedAnime,_pictures = pictures,_videos = videos;
   factory _AnimeDetail.fromJson(Map<String, dynamic> json) => _$AnimeDetailFromJson(json);
 
 @override final  int id;
@@ -327,6 +329,20 @@ class _AnimeDetail implements AnimeDetail {
 @override@JsonKey(name: 'my_list_status') final  MyListStatus? myListStatus;
 @override@JsonKey(name: 'start_season') final  StartSeason? startSeason;
 @override@JsonKey(name: 'average_episode_duration') final  int? averageEpisodeDuration;
+ final  List<MainPicture> _pictures;
+@override@JsonKey() List<MainPicture> get pictures {
+  if (_pictures is EqualUnmodifiableListView) return _pictures;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_pictures);
+}
+
+ final  List<AnimeVideo> _videos;
+@override@JsonKey() List<AnimeVideo> get videos {
+  if (_videos is EqualUnmodifiableListView) return _videos;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_videos);
+}
+
 
 /// Create a copy of AnimeDetail
 /// with the given fields replaced by the non-null parameter values.
@@ -341,18 +357,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.source, source) || other.source == source)&&(identical(other.synopsis, synopsis) || other.synopsis == synopsis)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.numScoringUsers, numScoringUsers) || other.numScoringUsers == numScoringUsers)&&const DeepCollectionEquality().equals(other.genres, _genres)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other.relatedAnime, _relatedAnime)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus)&&(identical(other.startSeason, startSeason) || other.startSeason == startSeason)&&(identical(other.averageEpisodeDuration, averageEpisodeDuration) || other.averageEpisodeDuration == averageEpisodeDuration));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.mainPicture, mainPicture) || other.mainPicture == mainPicture)&&(identical(other.mean, mean) || other.mean == mean)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.popularity, popularity) || other.popularity == popularity)&&(identical(other.numEpisodes, numEpisodes) || other.numEpisodes == numEpisodes)&&(identical(other.status, status) || other.status == status)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.source, source) || other.source == source)&&(identical(other.synopsis, synopsis) || other.synopsis == synopsis)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.numScoringUsers, numScoringUsers) || other.numScoringUsers == numScoringUsers)&&const DeepCollectionEquality().equals(other.genres, _genres)&&(identical(other.broadcast, broadcast) || other.broadcast == broadcast)&&(identical(other.alternativeTitles, alternativeTitles) || other.alternativeTitles == alternativeTitles)&&const DeepCollectionEquality().equals(other.relatedAnime, _relatedAnime)&&(identical(other.myListStatus, myListStatus) || other.myListStatus == myListStatus)&&(identical(other.startSeason, startSeason) || other.startSeason == startSeason)&&(identical(other.averageEpisodeDuration, averageEpisodeDuration) || other.averageEpisodeDuration == averageEpisodeDuration)&&const DeepCollectionEquality().equals(other.pictures, _pictures)&&const DeepCollectionEquality().equals(other.videos, _videos));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,source,synopsis,startDate,endDate,mediaType,numScoringUsers,const DeepCollectionEquality().hash(_genres),broadcast,alternativeTitles,const DeepCollectionEquality().hash(_relatedAnime),myListStatus,startSeason,averageEpisodeDuration]);
+    return Object.hashAll([runtimeType,id,title,mainPicture,mean,rank,popularity,numEpisodes,status,rating,source,synopsis,startDate,endDate,mediaType,numScoringUsers,const DeepCollectionEquality().hash(_genres),broadcast,alternativeTitles,const DeepCollectionEquality().hash(_relatedAnime),myListStatus,startSeason,averageEpisodeDuration,const DeepCollectionEquality().hash(_pictures),const DeepCollectionEquality().hash(_videos)]);
 }
 
 @override
 String toString() {
-    return 'AnimeDetail(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, source: $source, synopsis: $synopsis, startDate: $startDate, endDate: $endDate, mediaType: $mediaType, numScoringUsers: $numScoringUsers, genres: $genres, broadcast: $broadcast, alternativeTitles: $alternativeTitles, relatedAnime: $relatedAnime, myListStatus: $myListStatus, startSeason: $startSeason, averageEpisodeDuration: $averageEpisodeDuration)';
+    return 'AnimeDetail(id: $id, title: $title, mainPicture: $mainPicture, mean: $mean, rank: $rank, popularity: $popularity, numEpisodes: $numEpisodes, status: $status, rating: $rating, source: $source, synopsis: $synopsis, startDate: $startDate, endDate: $endDate, mediaType: $mediaType, numScoringUsers: $numScoringUsers, genres: $genres, broadcast: $broadcast, alternativeTitles: $alternativeTitles, relatedAnime: $relatedAnime, myListStatus: $myListStatus, startSeason: $startSeason, averageEpisodeDuration: $averageEpisodeDuration, pictures: $pictures, videos: $videos)';
 }
 
 
@@ -363,7 +379,7 @@ abstract mixin class _$AnimeDetailCopyWith<$Res> implements $AnimeDetailCopyWith
   factory _$AnimeDetailCopyWith(_AnimeDetail value, $Res Function(_AnimeDetail) _then) = __$AnimeDetailCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String title,@JsonKey(name: 'main_picture') MainPicture? mainPicture, double? mean, int? rank, int? popularity,@JsonKey(name: 'num_episodes') int? numEpisodes, String? status, String? rating, String? source, String? synopsis,@JsonKey(name: 'start_date') String? startDate,@JsonKey(name: 'end_date') String? endDate,@JsonKey(name: 'media_type') String? mediaType,@JsonKey(name: 'num_scoring_users') int? numScoringUsers, List<Genre> genres, Broadcast? broadcast,@JsonKey(name: 'alternative_titles') AlternativeTitles? alternativeTitles,@JsonKey(name: 'related_anime') List<RelatedAnime> relatedAnime,@JsonKey(name: 'my_list_status') MyListStatus? myListStatus,@JsonKey(name: 'start_season') StartSeason? startSeason,@JsonKey(name: 'average_episode_duration') int? averageEpisodeDuration
+ int id, String title,@JsonKey(name: 'main_picture') MainPicture? mainPicture, double? mean, int? rank, int? popularity,@JsonKey(name: 'num_episodes') int? numEpisodes, String? status, String? rating, String? source, String? synopsis,@JsonKey(name: 'start_date') String? startDate,@JsonKey(name: 'end_date') String? endDate,@JsonKey(name: 'media_type') String? mediaType,@JsonKey(name: 'num_scoring_users') int? numScoringUsers, List<Genre> genres, Broadcast? broadcast,@JsonKey(name: 'alternative_titles') AlternativeTitles? alternativeTitles,@JsonKey(name: 'related_anime') List<RelatedAnime> relatedAnime,@JsonKey(name: 'my_list_status') MyListStatus? myListStatus,@JsonKey(name: 'start_season') StartSeason? startSeason,@JsonKey(name: 'average_episode_duration') int? averageEpisodeDuration, List<MainPicture> pictures, List<AnimeVideo> videos
 });
 
 
@@ -380,7 +396,7 @@ class __$AnimeDetailCopyWithImpl<$Res>
 
 /// Create a copy of AnimeDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? mainPicture = freezed,Object? mean = freezed,Object? rank = freezed,Object? popularity = freezed,Object? numEpisodes = freezed,Object? status = freezed,Object? rating = freezed,Object? source = freezed,Object? synopsis = freezed,Object? startDate = freezed,Object? endDate = freezed,Object? mediaType = freezed,Object? numScoringUsers = freezed,Object? genres = null,Object? broadcast = freezed,Object? alternativeTitles = freezed,Object? relatedAnime = null,Object? myListStatus = freezed,Object? startSeason = freezed,Object? averageEpisodeDuration = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? mainPicture = freezed,Object? mean = freezed,Object? rank = freezed,Object? popularity = freezed,Object? numEpisodes = freezed,Object? status = freezed,Object? rating = freezed,Object? source = freezed,Object? synopsis = freezed,Object? startDate = freezed,Object? endDate = freezed,Object? mediaType = freezed,Object? numScoringUsers = freezed,Object? genres = null,Object? broadcast = freezed,Object? alternativeTitles = freezed,Object? relatedAnime = null,Object? myListStatus = freezed,Object? startSeason = freezed,Object? averageEpisodeDuration = freezed,Object? pictures = null,Object? videos = null,}) {
   return _then(_AnimeDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -404,7 +420,9 @@ as AlternativeTitles?,relatedAnime: null == relatedAnime ? _self._relatedAnime :
 as List<RelatedAnime>,myListStatus: freezed == myListStatus ? _self.myListStatus : myListStatus // ignore: cast_nullable_to_non_nullable
 as MyListStatus?,startSeason: freezed == startSeason ? _self.startSeason : startSeason // ignore: cast_nullable_to_non_nullable
 as StartSeason?,averageEpisodeDuration: freezed == averageEpisodeDuration ? _self.averageEpisodeDuration : averageEpisodeDuration // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,pictures: null == pictures ? _self._pictures : pictures // ignore: cast_nullable_to_non_nullable
+as List<MainPicture>,videos: null == videos ? _self._videos : videos // ignore: cast_nullable_to_non_nullable
+as List<AnimeVideo>,
   ));
 }
 
@@ -469,6 +487,279 @@ $StartSeasonCopyWith<$Res>? get startSeason {
     return _then(_self.copyWith(startSeason: value));
   });
 }
+}
+
+
+/// @nodoc
+mixin _$AnimeVideo {
+
+ int get id; String get url; String? get title; String? get thumbnail;
+/// Create a copy of AnimeVideo
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AnimeVideoCopyWith<AnimeVideo> get copyWith => _$AnimeVideoCopyWithImpl<AnimeVideo>(this as AnimeVideo, _$identity);
+
+  /// Serializes this AnimeVideo to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as AnimeVideo;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnimeVideo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.thumbnail, _this.thumbnail) || other.thumbnail == _this.thumbnail));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as AnimeVideo;
+  return Object.hash(runtimeType,_this.id,_this.url,_this.title,_this.thumbnail);
+}
+
+@override
+String toString() {
+  final _this = this as AnimeVideo;
+  return 'AnimeVideo(id: ${_this.id}, url: ${_this.url}, title: ${_this.title}, thumbnail: ${_this.thumbnail})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AnimeVideoCopyWith<$Res>  {
+  factory $AnimeVideoCopyWith(AnimeVideo value, $Res Function(AnimeVideo) _then) = _$AnimeVideoCopyWithImpl;
+@useResult
+$Res call({
+ int id, String url, String? title, String? thumbnail
+});
+
+
+
+
+}
+/// @nodoc
+class _$AnimeVideoCopyWithImpl<$Res>
+    implements $AnimeVideoCopyWith<$Res> {
+  _$AnimeVideoCopyWithImpl(this._self, this._then);
+
+  final AnimeVideo _self;
+  final $Res Function(AnimeVideo) _then;
+
+/// Create a copy of AnimeVideo
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? url = null,Object? title = freezed,Object? thumbnail = freezed,}) {
+  return _then(AnimeVideo(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,thumbnail: freezed == thumbnail ? _self.thumbnail : thumbnail // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [AnimeVideo].
+extension AnimeVideoPatterns on AnimeVideo {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AnimeVideo value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _AnimeVideo() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AnimeVideo value)  $default,){
+final _that = this;
+switch (_that) {
+case _AnimeVideo():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AnimeVideo value)?  $default,){
+final _that = this;
+switch (_that) {
+case _AnimeVideo() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String url,  String? title,  String? thumbnail)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _AnimeVideo() when $default != null:
+return $default(_that.id,_that.url,_that.title,_that.thumbnail);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String url,  String? title,  String? thumbnail)  $default,) {final _that = this;
+switch (_that) {
+case _AnimeVideo():
+return $default(_that.id,_that.url,_that.title,_that.thumbnail);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String url,  String? title,  String? thumbnail)?  $default,) {final _that = this;
+switch (_that) {
+case _AnimeVideo() when $default != null:
+return $default(_that.id,_that.url,_that.title,_that.thumbnail);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _AnimeVideo implements AnimeVideo {
+  const _AnimeVideo({required this.id, required this.url, this.title, this.thumbnail});
+  factory _AnimeVideo.fromJson(Map<String, dynamic> json) => _$AnimeVideoFromJson(json);
+
+@override final  int id;
+@override final  String url;
+@override final  String? title;
+@override final  String? thumbnail;
+
+/// Create a copy of AnimeVideo
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AnimeVideoCopyWith<_AnimeVideo> get copyWith => __$AnimeVideoCopyWithImpl<_AnimeVideo>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$AnimeVideoToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnimeVideo&&(identical(other.id, id) || other.id == id)&&(identical(other.url, url) || other.url == url)&&(identical(other.title, title) || other.title == title)&&(identical(other.thumbnail, thumbnail) || other.thumbnail == thumbnail));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,url,title,thumbnail);
+}
+
+@override
+String toString() {
+    return 'AnimeVideo(id: $id, url: $url, title: $title, thumbnail: $thumbnail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AnimeVideoCopyWith<$Res> implements $AnimeVideoCopyWith<$Res> {
+  factory _$AnimeVideoCopyWith(_AnimeVideo value, $Res Function(_AnimeVideo) _then) = __$AnimeVideoCopyWithImpl;
+@override @useResult
+$Res call({
+ int id, String url, String? title, String? thumbnail
+});
+
+
+
+
+}
+/// @nodoc
+class __$AnimeVideoCopyWithImpl<$Res>
+    implements _$AnimeVideoCopyWith<$Res> {
+  __$AnimeVideoCopyWithImpl(this._self, this._then);
+
+  final _AnimeVideo _self;
+  final $Res Function(_AnimeVideo) _then;
+
+/// Create a copy of AnimeVideo
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? url = null,Object? title = freezed,Object? thumbnail = freezed,}) {
+  return _then(_AnimeVideo(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,thumbnail: freezed == thumbnail ? _self.thumbnail : thumbnail // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
 }
 
 

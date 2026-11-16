@@ -200,6 +200,36 @@ void main() {
     });
   });
 
+  group('MalApiClient.getAnimeDetail', () {
+    test(
+      'asks for the pictures and videos with the rest of the detail',
+      () async {
+        final adapter = FakeAdapter(
+          (_) => const FakeResponse.json({
+            'id': 52991,
+            'title': 'Frieren',
+            'pictures': [
+              {'medium': 'm1', 'large': 'l1'},
+            ],
+            'videos': [
+              {'id': 1, 'url': 'https://youtu.be/a', 'title': 'PV 1'},
+            ],
+          }),
+        );
+        final dio = fakeDio(adapter, baseUrl: 'https://example.test');
+
+        final detail = await MalApiClient(dio).getAnimeDetail(52991);
+
+        final fields =
+            (adapter.requests.single.queryParameters['fields']! as String)
+                .split(',');
+        expect(fields, containsAll(['pictures', 'videos', 'synopsis']));
+        expect(detail!.pictures.single.large, 'l1');
+        expect(detail.videos.single.title, 'PV 1');
+      },
+    );
+  });
+
   group('MalApiClient.getUndatedUpcomingAnime', () {
     Map<String, Object?> node(int id, {String? startDate}) => {
       'node': {

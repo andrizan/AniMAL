@@ -78,6 +78,8 @@ AnimeDetail _detail({
   MyListStatus? list,
   int? episodes = 12,
   String status = 'finished_airing',
+  List<AnimeVideo> videos = const [],
+  List<MainPicture> pictures = const [],
 }) => AnimeDetail(
   id: 1,
   title: 'Sousou no Frieren',
@@ -110,6 +112,8 @@ AnimeDetail _detail({
     ),
   ],
   myListStatus: list,
+  videos: videos,
+  pictures: pictures,
 );
 
 Future<void> tapVisible(WidgetTester tester, Finder finder) async {
@@ -414,6 +418,10 @@ void main() {
       addTearDown(tester.view.reset);
       await open(
         tester,
+        detail: () => _detail(
+          videos: const [AnimeVideo(id: 1, url: 'https://youtu.be/a')],
+          pictures: const [MainPicture(medium: 'https://img.test/p.jpg')],
+        ),
         extra: () => AniListAnimeExtra(
           nextAiring: AniListNextAiring(
             airingAt: DateTime.now().add(const Duration(hours: 5)),
@@ -441,6 +449,8 @@ void main() {
         'Next Episode',
         'Synopsis',
         'Information',
+        'Videos',
+        'Gallery',
         'Characters & Voice Actors',
         'Staff',
         'Related Anime',
@@ -455,6 +465,36 @@ void main() {
         lessThan(tops.first),
         reason: 'the score summary comes before everything else',
       );
+    });
+
+    testWidgets('leaves out the videos and the gallery when MAL lists none', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 9000);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await open(tester);
+
+      expect(find.text('Videos'), findsNothing);
+      expect(find.text('Gallery'), findsNothing);
+    });
+
+    testWidgets('leaves out videos whose address is not a web link', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 9000);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await open(
+        tester,
+        detail: () => _detail(
+          videos: const [AnimeVideo(id: 1, url: 'intent://x#Intent;end')],
+          pictures: const [MainPicture()],
+        ),
+      );
+
+      expect(find.text('Videos'), findsNothing);
+      expect(find.text('Gallery'), findsNothing);
     });
 
     testWidgets('an in-list anime shows its progress before the synopsis', (

@@ -718,8 +718,6 @@ class _Cover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final decodeWidth = (_coverWidth * MediaQuery.devicePixelRatioOf(context))
-        .round();
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.cover),
       child: SizedBox(
@@ -731,7 +729,7 @@ class _Cover extends StatelessWidget {
             AppCachedImage(
               imageUrl: anime.mainPicture?.medium ?? '',
               fallbackSize: 20,
-              memCacheWidth: decodeWidth,
+              memCacheWidth: decodeWidthFor(context, _coverWidth),
             ),
             if (rank case final rank?)
               Positioned(

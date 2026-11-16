@@ -41,6 +41,10 @@ void main() {
         runMigrations: false,
       );
       await db.raw.insert('anime', {'mal_id': 1, 'title': 'Kept anime'});
+      await db.raw.insert('anime_detail', {
+        'mal_id': 1,
+        'synopsis': 'Kept synopsis',
+      });
       await db.raw.insert('anilist_anime_extra', {
         'mal_id': 1,
         'next_airing_episode': 4,
@@ -90,6 +94,11 @@ void main() {
           'fetched_at': DateTime.now().millisecondsSinceEpoch,
         });
       }
+      if (version < 6) {
+        for (final col in ['pictures_json', 'videos_json']) {
+          await db.raw.execute('ALTER TABLE anime_detail DROP COLUMN $col');
+        }
+      }
       if (version < 5) {
         for (final table in [
           'anilist_character_media',
@@ -137,7 +146,7 @@ void main() {
         );
         addTearDown(db.close);
 
-        expect(await db.raw.getVersion(), 5);
+        expect(await db.raw.getVersion(), 6);
         expect(
           await columns(db, 'anilist_anime_extra'),
           containsAll(['characters_json', 'staff_json']),
@@ -179,7 +188,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 5);
+      expect(await db.raw.getVersion(), 6);
       expect(await columns(db, 'airing_schedule'), contains('next_airing_at'));
       expect(
         (await db.raw.query('anilist_anime_extra')).single['characters_json'],
@@ -199,7 +208,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 5);
+      expect(await db.raw.getVersion(), 6);
       expect((await db.raw.query('anime')).single['title'], 'Kept anime');
     });
 
@@ -212,7 +221,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 5);
+      expect(await db.raw.getVersion(), 6);
       expect(await columns(db, 'anilist_works_progress'), {
         'source',
         'id',
@@ -221,9 +230,8 @@ void main() {
       });
       expect(await db.raw.query('anilist_works_progress'), isEmpty);
       expect(await metaKeys(db), {
-        'detail_5',
         'animeExtra_5',
-      }, reason: 'only the 10-item works details are forgotten');
+      }, reason: 'the works details and the MAL details are forgotten');
       expect(
         (await db.raw.query('anilist_staff')).single['name'],
         'Kept staff',
@@ -243,7 +251,7 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await db.raw.getVersion(), 5);
+      expect(await db.raw.getVersion(), 6);
       for (final table in [
         'anilist_character_media',
         'anilist_staff_media',
@@ -261,14 +269,15 @@ void main() {
           reason: table,
         );
       }
-      expect(await metaKeys(db), {'detail_5', 'animeExtra_5'});
+      expect(await metaKeys(db), {'animeExtra_5'});
       expect(
         (await db.raw.query('anilist_staff_media')).single['title'],
         'Kept work',
       );
     });
 
-    test('a database already at v5 keeps its works lists', () async {
+    test('v5 gains the picture and video columns and refetches details, '
+        'keeping the stored ones', () async {
       final path = await oldDatabase(5);
 
       final db = await AppDatabase.open(
@@ -277,8 +286,60 @@ void main() {
       );
       addTearDown(db.close);
 
-      expect(await metaKeys(db), containsAll(['character_3', 'staff_8']));
+      expect(await db.raw.getVersion(), 6);
+      expect(
+        await columns(db, 'anime_detail'),
+        containsAll(['pictures_json', 'videos_json']),
+      );
+      expect(
+        (await db.raw.query('anime_detail')).single,
+        containsPair('synopsis', 'Kept synopsis'),
+        reason: 'the stored detail stays as the fallback until it is refetched',
+      );
+      expect(await metaKeys(db), {
+        'character_3',
+        'staff_8',
+        'studio_7',
+        'animeExtra_5',
+      }, reason: 'only the details are forgotten');
     });
+
+    test('v5 is safe when the detail columns already exist', () async {
+      final path = await oldDatabase(6);
+      final raw = await databaseFactory.openDatabase(path);
+      await raw.setVersion(5);
+      await raw.close();
+
+      final db = await AppDatabase.open(
+        pathOverride: path,
+        runMigrations: false,
+      );
+      addTearDown(db.close);
+
+      expect(await db.raw.getVersion(), 6);
+      expect(
+        await columns(db, 'anime_detail'),
+        containsAll(['pictures_json', 'videos_json']),
+      );
+    });
+
+    test(
+      'a database already at v6 keeps its details and works lists',
+      () async {
+        final path = await oldDatabase(6);
+
+        final db = await AppDatabase.open(
+          pathOverride: path,
+          runMigrations: false,
+        );
+        addTearDown(db.close);
+
+        expect(
+          await metaKeys(db),
+          containsAll(['character_3', 'staff_8', 'detail_5']),
+        );
+      },
+    );
   });
 
   group('startup cleanup keeps what is fresh and drops what is stale', () {

@@ -152,6 +152,12 @@ class CacheMappers {
           : jsonEncode(
               d.relatedAnime.map(_relatedAnimeToJson).toList(growable: false),
             ),
+      'pictures_json': d.pictures.isEmpty
+          ? null
+          : jsonEncode(d.pictures.map((p) => p.toJson()).toList()),
+      'videos_json': d.videos.isEmpty
+          ? null
+          : jsonEncode(d.videos.map((v) => v.toJson()).toList()),
     };
   }
 
@@ -181,6 +187,8 @@ class CacheMappers {
         : (jsonDecode(relatedJson) as List<dynamic>)
               .map((e) => _relatedAnimeFromJson(e as Map<String, dynamic>))
               .toList(growable: false);
+    final picturesJson = row['pictures_json'] as String?;
+    final videosJson = row['videos_json'] as String?;
     final seasonYear = row['start_season_year'] as int?;
     final seasonStr = row['start_season_season'] as String?;
     return AnimeDetail(
@@ -208,6 +216,16 @@ class CacheMappers {
           ? null
           : StartSeason(year: seasonYear, season: seasonStr),
       averageEpisodeDuration: row['average_episode_duration'] as int?,
+      pictures: picturesJson == null
+          ? const <MainPicture>[]
+          : (jsonDecode(picturesJson) as List<dynamic>)
+                .map((e) => MainPicture.fromJson(e as Map<String, dynamic>))
+                .toList(growable: false),
+      videos: videosJson == null
+          ? const <AnimeVideo>[]
+          : (jsonDecode(videosJson) as List<dynamic>)
+                .map((e) => AnimeVideo.fromJson(e as Map<String, dynamic>))
+                .toList(growable: false),
     );
   }
 
