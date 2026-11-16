@@ -1,3 +1,33 @@
+## [2.16.2] - 2026-11-16
+
+### Bug Fixes
+
+- Use AGP 9.3.3 to avoid the lint crash on JDK 17
+
+### Chores
+
+- Upgrade packages
+## [2.16.1] - 2026-11-16
+
+### Build
+
+- Move to Flutter 3.50 and Dart 3.14
+
+### CI
+
+- Pin CI to Flutter 3.50.0
+
+### Chores
+
+- Bump version to 2.16.0+23 [skip ci]
+
+### Performance
+
+- Decode covers at the screen's pixel density
+
+### Tests
+
+- Load the theme fonts before the cold start link test
 ## [2.16.0] - 2026-11-07
 
 ### Chores
